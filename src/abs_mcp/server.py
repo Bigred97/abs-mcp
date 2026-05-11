@@ -99,9 +99,25 @@ async def _resolve_filters(
     if cd is None:
         sdmx_filters: dict[str, list[str]] = {}
         for k, v in user.items():
-            # build_sdmx_key joins with "+"; non-string list elements would
-            # raise a bare TypeError there. Coerce here for a clean contract.
-            sdmx_filters[k] = [str(x) for x in v] if isinstance(v, list) else [str(v)]
+            # Mirror the curated path's contract: coerce to str, strip whitespace,
+            # reject empty lists / empty values. build_sdmx_key joins with "+",
+            # so a bare non-string would raise TypeError downstream.
+            if isinstance(v, list):
+                if not v:
+                    raise ValueError(
+                        f"Filter {k!r} has an empty list. "
+                        "Pass at least one value, or omit the filter to query all values."
+                    )
+                cleaned = [str(x).strip() for x in v]
+            else:
+                cleaned = [str(v).strip()]
+            for c in cleaned:
+                if not c:
+                    raise ValueError(
+                        f"Filter {k!r} has an empty value. "
+                        "Pass a non-empty SDMX code, or omit the filter."
+                    )
+            sdmx_filters[k] = cleaned
         return None, sdmx_filters, dict(user)
     sdmx_filters = curated.translate_filters(cd, user)
     sdmx_filters = curated.apply_defaults(cd, sdmx_filters)
@@ -235,6 +251,19 @@ async def _get_data_impl(
     if dataset_id not in dsd_msg.structure:
         raise ValueError(f"DSD for '{dataset_id}' missing in API response")
     dim_order = [d.id for d in dsd_msg.structure[dataset_id].dimensions.components]
+    # For non-curated dataflows, validate user keys against the DSD here —
+    # build_sdmx_key silently drops keys not in dim_order, which previously
+    # let a typoed dim name return unfiltered data while the response echoed
+    # the typo. Curated path already validates inside translate_filters.
+    if cd is None and sdmx_filters:
+        valid_dims = [d for d in dim_order if d != "TIME_PERIOD"]
+        unknown = [k for k in sdmx_filters if k not in dim_order]
+        if unknown:
+            raise ValueError(
+                f"Unknown filter key(s) {unknown} for dataset '{dataset_id}'. "
+                f"Valid SDMX dimensions: {valid_dims}. "
+                f"Try describe_dataset('{dataset_id}') to see filter shapes."
+            )
     sdmx_key = curated.build_sdmx_key(dim_order, sdmx_filters) or "all"
 
     try:

@@ -200,3 +200,29 @@ async def test_resolve_filters_non_curated_coerces_list_to_str():
 async def test_resolve_filters_non_curated_coerces_scalar_to_str():
     _, sdmx_filters, _ = await server._resolve_filters("ALC", {"REGION": 1})
     assert sdmx_filters == {"REGION": ["1"]}
+
+
+async def test_resolve_filters_non_curated_strips_whitespace():
+    """Path-asymmetry fix: non-curated path now strips like the curated path."""
+    _, sdmx_filters, _ = await server._resolve_filters("ALC", {"REGION": "  AUS  "})
+    assert sdmx_filters == {"REGION": ["AUS"]}
+
+
+async def test_resolve_filters_non_curated_strips_inside_list():
+    _, sdmx_filters, _ = await server._resolve_filters("ALC", {"REGION": [" AUS ", "VIC"]})
+    assert sdmx_filters == {"REGION": ["AUS", "VIC"]}
+
+
+async def test_resolve_filters_non_curated_rejects_empty_list():
+    with pytest.raises(ValueError, match="empty list"):
+        await server._resolve_filters("ALC", {"REGION": []})
+
+
+async def test_resolve_filters_non_curated_rejects_empty_value():
+    with pytest.raises(ValueError, match="empty value"):
+        await server._resolve_filters("ALC", {"REGION": "   "})
+
+
+async def test_resolve_filters_non_curated_rejects_empty_in_list():
+    with pytest.raises(ValueError, match="empty value"):
+        await server._resolve_filters("ALC", {"REGION": ["AUS", "  "]})

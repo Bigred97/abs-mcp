@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.2.6 (2026-05-11)
+
+Iteration 3 of the robustness audit. Closes the last of the
+curated-vs-non-curated path asymmetries.
+
+- **Non-curated dataflows now reject unknown filter keys.** Calling
+  `get_data("ALC", {"NOT_A_DIM": "X"})` used to silently drop the unknown
+  key inside `build_sdmx_key` (which only iterates the DSD's `dim_order`)
+  and return unfiltered data while the response echoed the bogus key in
+  `query`. A user thought they had filtered when they hadn't — a
+  correctness footgun for an analytics tool. Now: `ValueError` listing
+  the dataflow's valid SDMX dimensions, and suggesting `describe_dataset`.
+- **Non-curated `_resolve_filters` matches the curated contract.** Strips
+  whitespace on filter values, rejects empty lists, rejects empty values.
+  Previously you could pass `{"REGION": [""]}` or `{"REGION": "  AUS  "}`
+  on a non-curated dataflow and silently produce a malformed SDMX key.
+- **`describe_dataset` no longer silently truncates large codelists.**
+  `catalog.py:140` capped codelist values at 200; SA2-level geography
+  codelists routinely exceed this. Removed the cap — LLM agents can
+  handle the longer list.
+- **Documented the `_safe_value` contract** so future readers know why
+  NaN / None / unparseable values are coerced to `None` (ABS publishes
+  missing-data sentinels).
+- 6 new regression tests (130 total, was 124 in 0.2.5).
+- Verified gate 5: warm-cache `latest()` runs at ~22ms (gate <50ms),
+  cold-cache 191ms (gate <2000ms).
+
 ## 0.2.5 (2026-05-11)
 
 Iteration 2 of the robustness audit — closes the type-validation gaps that

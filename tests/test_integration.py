@@ -261,6 +261,14 @@ async def test_wpi_state_level_works():
     assert resp.records[0].dimensions["region"] == "New South Wales"
 
 
+async def test_get_data_rejects_unknown_filter_key_on_non_curated():
+    """Used to silently drop unknown keys via build_sdmx_key and return
+    unfiltered data — a dangerous correctness footgun. Now: ValueError
+    listing the valid SDMX dimensions for the dataflow."""
+    with pytest.raises(ValueError, match="Unknown filter key"):
+        await server.get_data("ALC", filters={"TOTALLY_NOT_A_DIM": "X"})
+
+
 async def test_query_echo_does_not_include_default_noise():
     """Query echo should reflect what the user asked, not internal default markers."""
     resp = await server.latest(

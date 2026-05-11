@@ -137,7 +137,7 @@ def describe_from_dsd(dataset_id: str, msg: StructureMessage) -> DatasetDetail:
                 name=dim.id.lower(),
                 sdmx_id=dim.id,
                 description=None,
-                values=values[:200],
+                values=values,
             )
         )
 

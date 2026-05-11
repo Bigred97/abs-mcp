@@ -60,6 +60,11 @@ def _hidden_dim_ids(curated: CuratedDataflow | None) -> set[str]:
 
 
 def _safe_value(v: Any) -> float | None:
+    """Coerce to float; return None for NaN, None, or unparseable values.
+
+    ABS publishes missing-data sentinels in some series; we surface them as
+    None so consumers can distinguish 'not reported' from 'zero'.
+    """
     if v is None:
         return None
     try:
