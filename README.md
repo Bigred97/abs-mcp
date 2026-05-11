@@ -133,7 +133,7 @@ Pass `start_period` / `end_period` in the matching format.
 ## Development
 
 ```bash
-git clone https://github.com/hvass97/abs-mcp.git
+git clone https://github.com/Bigred97/abs-mcp.git
 cd abs-mcp
 uv sync --extra dev
 uv pip install -e .

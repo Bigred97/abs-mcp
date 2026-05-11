@@ -42,8 +42,8 @@ dev = [
 abs-mcp = "abs_mcp.server:main"
 
 [project.urls]
-Homepage = "https://github.com/hvass97/abs-mcp"
-Issues = "https://github.com/hvass97/abs-mcp/issues"
+Homepage = "https://github.com/Bigred97/abs-mcp"
+Issues = "https://github.com/Bigred97/abs-mcp/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/abs_mcp"]
