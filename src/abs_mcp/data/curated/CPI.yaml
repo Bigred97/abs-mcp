@@ -5,6 +5,7 @@ description: |
   Source: ABS Catalogue 6401.0.
 update_frequency: quarterly
 source_url: https://www.abs.gov.au/statistics/economy/price-indexes-and-inflation/consumer-price-index-australia
+search_keywords: [inflation, cost of living, consumer prices, price index, basket of goods, deflation, cpi inflation, headline inflation]
 dimensions:
   measure:
     sdmx_id: MEASURE

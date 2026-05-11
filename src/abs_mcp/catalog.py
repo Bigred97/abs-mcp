@@ -43,15 +43,26 @@ def name_text(item) -> str:
 async def list_dataflows(
     client: ABSClient, curated_ids: set[str] | None = None
 ) -> list[DatasetSummary]:
+    """Build a flat list of summaries. For curated dataflows, concatenate the
+    curated YAML's description + search_keywords onto the API description so
+    the fuzzy search has rich keywords to match against ('mortgage' → LEND_HOUSING,
+    'inflation' → CPI, etc.)."""
+    from . import curated as curated_mod  # avoid circular import at module load
     msg = await client.get_dataflows()
     curated_ids = curated_ids or set()
     summaries: list[DatasetSummary] = []
     for df in msg.dataflow.values():
+        api_desc = description_text(df) or ""
+        if df.id in curated_ids:
+            cd = curated_mod.get(df.id)
+            if cd is not None:
+                extras = " ".join(filter(None, [cd.description, " ".join(cd.search_keywords)]))
+                api_desc = f"{api_desc} {extras}".strip()
         summaries.append(
             DatasetSummary(
                 id=df.id,
                 name=name_text(df),
-                description=description_text(df),
+                description=api_desc or None,
                 is_curated=df.id in curated_ids,
             )
         )
@@ -61,15 +72,28 @@ async def list_dataflows(
 def search_in_memory(
     summaries: list[DatasetSummary], query: str, limit: int = 10
 ) -> list[DatasetSummary]:
+    """Fuzzy-search summaries; curated dataflows are boosted so they outrank
+    the ~800 ABS census tables that otherwise dominate every common query."""
     if not query.strip():
-        raise ValueError("search query is empty")
+        raise ValueError(
+            "query is required. Try 'unemployment', 'inflation', 'gdp', "
+            "'wages', 'population', 'housing', or any other ABS topic."
+        )
     haystack = {
         i: f"{s.id} {s.name} {s.description or ''}" for i, s in enumerate(summaries)
     }
+    # Pull a wide candidate pool; rerank with curated bonus before truncating.
+    pool_size = max(limit * 8, 80)
     matches = process.extract(
-        query, haystack, scorer=fuzz.WRatio, limit=limit
+        query, haystack, scorer=fuzz.WRatio, limit=pool_size
     )
-    return [summaries[idx] for _, _score, idx in matches]
+    CURATED_BONUS = 25  # Score 0-100; +25 reliably moves a moderate match above noise.
+    rescored = [
+        (score + (CURATED_BONUS if summaries[idx].is_curated else 0), score, idx)
+        for _hay, score, idx in matches
+    ]
+    rescored.sort(key=lambda t: (-t[0], -t[1]))
+    return [summaries[idx] for _adj, _score, idx in rescored[:limit]]
 
 
 async def search(

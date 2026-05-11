@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.2.2 (2026-05-11)
+
+**Search relevance overhaul.** A polish audit found that common queries like
+`"gdp"`, `"inflation"`, `"labour force"`, and `"mortgage"` were returning
+ABS census tables (`ABS_C16_*`, `C21_*`, `ABORIGINAL_*`) instead of the
+curated dataflows that actually answer them. ABS publishes 1,200+ dataflows
+and ~800 are census tables that mention these keywords incidentally.
+
+- Each curated YAML now declares a `search_keywords` list folded into the
+  search haystack. `"mortgage"` finds `LEND_HOUSING`, `"gdp"` finds
+  `ANA_AGG`, etc.
+- Curated dataflows get a +25 score bonus in `search_in_memory` so they
+  outrank the noise even when the match is moderate.
+- Wider candidate pool (8× limit) before reranking — gives the boost room
+  to work.
+- Better error hints: `query is required` and `end_period < start_period`
+  now suggest specific next steps.
+- 12 new parametrised regression tests lock in search relevance for
+  common AU economic queries. 83 tests now (was 71 in 0.2.1).
+
+Before/after: 5/13 common queries hit the right curated → 13/13.
+
 ## 0.2.1 (2026-05-11)
 
 Customer stress-test pass — fixes for three real bugs surfaced by edge-case probing.

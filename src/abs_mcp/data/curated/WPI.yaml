@@ -5,6 +5,7 @@ description: |
   Pairs naturally with CPI for real-wage analysis. Source: ABS Catalogue 6345.0.
 update_frequency: quarterly
 source_url: https://www.abs.gov.au/statistics/economy/price-indexes-and-inflation/wage-price-index-australia
+search_keywords: [wages, wage growth, salary growth, pay rises, hourly rates, wage inflation, real wages, wage index, annual wage growth]
 dimensions:
   measure:
     sdmx_id: MEASURE

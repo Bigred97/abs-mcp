@@ -6,6 +6,7 @@ description: |
   Source: ABS Catalogue 5601.0.
 update_frequency: monthly
 source_url: https://www.abs.gov.au/statistics/economy/finance/lending-indicators
+search_keywords: [mortgage, mortgages, home loans, housing finance, housing loans, owner occupier loans, investor loans, first home buyers, fhb, lending, new loan commitments, refinancing]
 dimensions:
   measure:
     sdmx_id: MEASURE

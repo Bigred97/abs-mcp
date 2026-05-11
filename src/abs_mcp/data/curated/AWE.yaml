@@ -6,6 +6,7 @@ description: |
   Source: ABS Catalogue 6302.0.
 update_frequency: semi-annual
 source_url: https://www.abs.gov.au/statistics/labour/earnings-and-working-conditions/average-weekly-earnings-australia
+search_keywords: [average weekly earnings, take home pay, salary, weekly pay, weekly wages, gross earnings, wages by industry]
 dimensions:
   measure:
     sdmx_id: MEASURE

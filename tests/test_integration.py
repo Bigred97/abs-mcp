@@ -215,6 +215,31 @@ async def test_get_data_rejects_end_before_start():
         )
 
 
+@pytest.mark.parametrize("query,expected_top_id", [
+    ("unemployment", "LF"),
+    ("labour force", "LF"),
+    ("inflation", "CPI"),
+    ("consumer prices", "CPI"),
+    ("wage growth", "WPI"),
+    ("earnings", "AWE"),
+    ("job vacancies", "JV"),
+    ("gdp", "ANA_AGG"),
+    ("national accounts", "ANA_AGG"),
+    ("building approvals", "BA_GCCSA"),
+    ("housing finance", "LEND_HOUSING"),
+    ("mortgage", "LEND_HOUSING"),
+])
+async def test_common_search_query_finds_curated_at_top(query, expected_top_id):
+    """Common AU economic search terms must hit a curated dataflow at rank #1
+    or #2. Without keywords + boost, ABS's ~800 census tables drown out
+    every common query."""
+    results = await server.search_datasets(query=query, limit=5)
+    top_ids = [r.id for r in results]
+    assert expected_top_id in top_ids[:2], (
+        f"'{query}' should find {expected_top_id} in top 2; got {top_ids}"
+    )
+
+
 async def test_wpi_state_level_works():
     """Regression: WPI state-level query 404'd because default TSEST=20 isn't published per-state."""
     resp = await server.latest(

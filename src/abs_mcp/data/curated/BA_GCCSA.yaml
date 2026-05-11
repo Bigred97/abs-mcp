@@ -6,6 +6,7 @@ description: |
   Source: ABS Catalogue 8731.0.
 update_frequency: monthly
 source_url: https://www.abs.gov.au/statistics/industry/building-and-construction/building-approvals-australia
+search_keywords: [building approvals, dwellings approved, housing supply, construction, new homes, building permits, residential approvals, dwelling units]
 dimensions:
   measure:
     sdmx_id: MEASURE

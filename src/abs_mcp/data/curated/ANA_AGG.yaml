@@ -7,6 +7,7 @@ description: |
   Source: ABS Catalogue 5206.0.
 update_frequency: quarterly
 source_url: https://www.abs.gov.au/statistics/economy/national-accounts/australian-national-accounts-national-income-expenditure-and-product
+search_keywords: [gdp, gross domestic product, economic growth, national income, terms of trade, gni, real income, quarterly gdp, gdp per capita, economy size, recession]
 dimensions:
   measure:
     sdmx_id: MEASURE

@@ -5,6 +5,7 @@ description: |
   Source: ABS Catalogue 3218.0. ASGS Edition 3 (2021).
 update_frequency: annual
 source_url: https://www.abs.gov.au/statistics/people/population/national-state-and-territory-population
+search_keywords: [population, residents, demographics, population estimates, erp, people, headcount, sa2 population, lga population]
 dimensions:
   region:
     sdmx_id: ASGS_2021

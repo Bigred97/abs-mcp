@@ -35,7 +35,8 @@ class CuratedDataflow:
     description: str
     source_url: str | None
     update_frequency: str | None
-    dimensions: dict[str, CuratedDimension]  # plain-English dim name → CuratedDimension
+    dimensions: dict[str, CuratedDimension]
+    search_keywords: tuple[str, ...] = ()  # extra terms folded into the search haystack
 
 
 _REGISTRY: dict[str, CuratedDataflow] | None = None
@@ -94,6 +95,7 @@ def _load_one(path: Path) -> CuratedDataflow:
         source_url=raw.get("source_url"),
         update_frequency=raw.get("update_frequency"),
         dimensions=dims,
+        search_keywords=tuple(raw.get("search_keywords") or ()),
     )
 
 

@@ -6,6 +6,7 @@ description: |
   Source: ABS Catalogue 6354.0.
 update_frequency: quarterly
 source_url: https://www.abs.gov.au/statistics/labour/jobs/job-vacancies-australia
+search_keywords: [vacancies, job openings, hiring demand, labour demand, jobs available, job vacancies, open positions]
 dimensions:
   measure:
     sdmx_id: MEASURE

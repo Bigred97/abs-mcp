@@ -73,7 +73,10 @@ async def search_datasets(query: str, limit: int = 10) -> list[DatasetSummary]:
     "house prices".
     """
     if not query or not query.strip():
-        raise ValueError("query is required")
+        raise ValueError(
+            "query is required. Try 'unemployment', 'inflation', 'gdp', "
+            "'wages', 'population', 'housing', or any other ABS topic."
+        )
     client = await _get_client()
     try:
         summaries = await list_dataflows(client, curated_ids=set(curated.list_ids()))
@@ -147,7 +150,8 @@ async def _get_data_impl(
     if start_period and end_period and start_period > end_period:
         raise ValueError(
             f"end_period ({end_period}) is before start_period ({start_period}). "
-            "Periods are compared as strings; for monthly use 'YYYY-MM', quarterly 'YYYY-QN', annual 'YYYY'."
+            "Try swapping them. Period formats: monthly 'YYYY-MM', "
+            "quarterly 'YYYY-Q*', half-yearly 'YYYY-S*', annual 'YYYY'."
         )
     client = await _get_client()
     cd, sdmx_filters, user_query_echo = await _resolve_filters(dataset_id, filters)

@@ -5,6 +5,7 @@ description: |
   Source: ABS Catalogue 6202.0.
 update_frequency: monthly
 source_url: https://www.abs.gov.au/statistics/labour/employment-and-unemployment/labour-force-australia
+search_keywords: [labour force, labor force, employment, unemployment, jobs, workforce, participation rate, employed, unemployed, jobless]
 dimensions:
   measure:
     sdmx_id: MEASURE
