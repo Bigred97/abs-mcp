@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.2.11 (2026-05-12)
+
+Glama Tool Definition Quality pass — every parameter on every tool now
+carries an explicit `description` and `examples` in the MCP JSON schema,
+and every docstring carries an `Examples:` + `When to use:` + `Returns:`
+block. Targets the Glama sub-scores that were sitting at 2-3/5 on
+`describe_dataset` and `latest` (Parameters, Usage Guidelines).
+
+- **Annotated parameter schemas.** All 5 tools (`search_datasets`,
+  `describe_dataset`, `get_data`, `latest`, `list_curated`) now use
+  `Annotated[Type, Field(description=…, examples=[…])]` for every
+  parameter. The FastMCP-generated JSON schema now exposes:
+    - a human-readable description on each parameter
+    - 2–5 worked examples per parameter
+    - numeric bounds where applicable (`ge`, `le` on `limit`)
+- **Richer docstrings.** Each tool gains worked code examples (real
+  filter dicts, expected response shape), an explicit "When to use"
+  section, and a Returns block. The 10 curated dataflows are listed by
+  topic in `list_curated`'s docstring so an LLM can plan a multi-tool
+  call without needing to invoke it first.
+- No behavioural changes. All 117 unit tests + 48 live tests still
+  green; schema verified end-to-end through the FastMCP Client.
+
 ## 0.2.10 (2026-05-12)
 
 Cross-portfolio consistency pass — three fixes that bring abs-mcp to parity

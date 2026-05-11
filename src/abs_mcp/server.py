@@ -8,9 +8,10 @@ from __future__ import annotations
 
 import asyncio
 import re
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from fastmcp import FastMCP
+from pydantic import Field
 
 from . import catalog, curated
 from .catalog import describe_from_dsd, list_dataflows, search_in_memory
@@ -144,12 +145,56 @@ async def _resolve_filters(
 
 
 @mcp.tool
-async def search_datasets(query: str, limit: int = 10) -> list[DatasetSummary]:
-    """Fuzzy-search ABS dataflow names and descriptions.
+async def search_datasets(
+    query: Annotated[
+        str,
+        Field(
+            description=(
+                "Free-text search query. Matches against dataflow IDs, names, "
+                "descriptions, and each curated YAML's search_keywords. "
+                "Case-insensitive."
+            ),
+            examples=["unemployment", "inflation", "gdp", "housing finance", "wage growth"],
+        ),
+    ],
+    limit: Annotated[
+        int,
+        Field(
+            description=(
+                "Maximum number of results to return, ranked by relevance. "
+                "Curated dataflows get a +25 score bonus so they surface above "
+                "ABS's ~800 census tables for common queries."
+            ),
+            examples=[5, 10, 20],
+            ge=1,
+            le=100,
+        ),
+    ] = 10,
+) -> list[DatasetSummary]:
+    """Fuzzy-search ABS dataflow names, descriptions, and keywords.
 
-    Returns the top matching dataflows ranked by relevance. Use this when you
-    don't know the exact dataset ID — for example, search "unemployment" or
-    "house prices".
+    Use this when you don't know the exact dataset ID. The 10 curated dataflows
+    (LF, CPI, ANA_AGG, etc.) get a relevance boost so common queries like
+    "unemployment" or "gdp" return the right dataset at rank #1 — not one of
+    ABS's 800+ census tables that mention these keywords incidentally.
+
+    Examples:
+        # Discover which dataflow answers "what's NSW unemployment?"
+        results = await search_datasets("unemployment")
+        # → [{id: 'LF', name: 'Labour Force', is_curated: True}, ...]
+
+        # Broader topic exploration
+        results = await search_datasets("housing", limit=5)
+        # → top 5 housing-related dataflows, curated first
+
+    When to use:
+        - You have a natural-language question and need to identify the dataset
+        - You want to discover what ABS publishes on a topic
+        - You're not sure if a topic has a plain-English (curated) mapping yet
+
+    Returns:
+        List of DatasetSummary (id, name, description, is_curated), ranked
+        by relevance. Curated dataflows surface above raw SDMX dataflows.
     """
     if not isinstance(query, str):
         raise ValueError(
@@ -179,12 +224,48 @@ async def search_datasets(query: str, limit: int = 10) -> list[DatasetSummary]:
 
 
 @mcp.tool
-async def describe_dataset(dataset_id: str) -> DatasetDetail:
-    """Describe an ABS dataflow's dimensions, measures, and source.
+async def describe_dataset(
+    dataset_id: Annotated[
+        str,
+        Field(
+            description=(
+                "ABS dataflow ID. Use search_datasets to discover, or list_curated "
+                "to enumerate the 10 dataflows with plain-English support. "
+                "Case-insensitive — 'lf', 'LF', and ' LF ' all resolve to 'LF'."
+            ),
+            examples=["LF", "CPI", "LEND_HOUSING", "ANA_AGG", "ABS_ANNUAL_ERP_ASGS2021"],
+        ),
+    ],
+) -> DatasetDetail:
+    """Describe an ABS dataflow's filter dimensions, value codes, and source.
 
-    For curated datasets (LF, CPI, ABS_ANNUAL_ERP_ASGS2021, BA_GCCSA, LEND_HOUSING),
-    returns plain-English dimension names and value mappings. For other dataflows,
-    returns raw SDMX dimensions translated to a uniform shape.
+    For curated dataflows (LF, CPI, ANA_AGG, AWE, BA_GCCSA, ERP_Q, JV,
+    LEND_HOUSING, WPI, ABS_ANNUAL_ERP_ASGS2021), returns plain-English
+    dimension names + curated value keys + the ABS source URL.
+
+    For other dataflows (~1,200 in total), returns raw SDMX dimensions
+    and codelists translated to the same response shape — pass raw SDMX
+    codes to get_data when querying these.
+
+    Examples:
+        # Curated path — plain-English values
+        detail = await describe_dataset("LF")
+        # detail.dimensions = [{'name': 'region', 'values': [{'key': 'nsw',
+        #   'sdmx_code': '1'}, {'key': 'vic', 'sdmx_code': '2'}, ...]}, ...]
+
+        # Raw path — full SDMX codelist
+        detail = await describe_dataset("ALC")  # Apparent Consumption of Alcohol
+        # detail.is_curated == False; values are raw SDMX codes
+
+    When to use:
+        - Before calling get_data on an unfamiliar dataflow — to discover
+          valid filter dim names and value keys
+        - To get the canonical source URL on the ABS site
+        - To see whether a dataflow is curated (plain-English) or raw SDMX
+
+    Returns:
+        DatasetDetail with id, name, description, is_curated flag, the list
+        of filter dimensions (name, sdmx_id, values), and abs_url.
     """
     dataset_id = _normalize_dataset_id(dataset_id)
     cd = curated.get(dataset_id)
@@ -320,49 +401,203 @@ async def _get_data_impl(
 
 @mcp.tool
 async def get_data(
-    dataset_id: str,
-    filters: dict[str, Any] | None = None,
-    start_period: str | None = None,
-    end_period: str | None = None,
-    format: Literal["records", "series", "csv"] = "records",
+    dataset_id: Annotated[
+        str,
+        Field(
+            description="ABS dataflow ID like 'LF', 'CPI'. Use search_datasets to discover.",
+            examples=["LF", "CPI", "LEND_HOUSING", "ANA_AGG"],
+        ),
+    ],
+    filters: Annotated[
+        dict[str, Any] | None,
+        Field(
+            description=(
+                "Dimension filters. For curated dataflows: plain-English keys and "
+                "values, e.g. {'region': 'nsw', 'measure': 'unemployment_rate'}. "
+                "For raw dataflows: SDMX dimension IDs and codes. Pass a list as "
+                "the value to query multiple values for a dimension. Whitespace "
+                "is stripped; empty list / empty value rejected with a hint."
+            ),
+            examples=[
+                {"region": "nsw", "measure": "unemployment_rate"},
+                {"region": ["nsw", "vic", "qld"], "measure": "employed_persons"},
+                {"region": "australia", "measure": "change_year"},
+            ],
+        ),
+    ] = None,
+    start_period: Annotated[
+        str | None,
+        Field(
+            description=(
+                "Inclusive start period. Format follows the dataflow's cadence: "
+                "annual 'YYYY' (e.g. '2020'), monthly 'YYYY-MM' (e.g. '2024-03'), "
+                "quarterly 'YYYY-Q1', half-yearly 'YYYY-S1', daily 'YYYY-MM-DD'. "
+                "URL-unsafe characters (?, &, /, etc.) are rejected at the boundary."
+            ),
+            examples=["2020", "2024-03", "2024-Q1", "2024-S1"],
+        ),
+    ] = None,
+    end_period: Annotated[
+        str | None,
+        Field(
+            description="Inclusive end period. Same format as start_period.",
+            examples=["2025", "2025-12", "2025-Q4"],
+        ),
+    ] = None,
+    format: Annotated[
+        Literal["records", "series", "csv"],
+        Field(
+            description=(
+                "Response shape. 'records' (default): flat list of observations. "
+                "'series': observations grouped by dimension key for chart-friendly "
+                "shapes. 'csv': returns the table as a CSV string in the `csv` field "
+                "with records empty."
+            ),
+            examples=["records", "series", "csv"],
+        ),
+    ] = "records",
 ) -> DataResponse:
-    """Query an ABS dataflow.
+    """Query an ABS dataflow and return observations.
 
-    For curated datasets, `filters` accepts plain-English keys and values
-    (e.g. `{"region": "nsw", "measure": "unemployment_rate"}`). For other
-    dataflows, pass raw SDMX dimension IDs and codes.
+    Pass filters and/or a period range — unfiltered queries on large
+    dataflows can return tens of thousands of observations.
 
-    `start_period` / `end_period` accept the dataflow's native period format:
-    monthly = 'YYYY-MM', quarterly = 'YYYY-Q1', annual = 'YYYY'. Always pass
-    filters or a period range — unfiltered queries can return tens of thousands
-    of observations.
+    Curated dataflows accept plain-English filter keys and values that
+    are translated to SDMX codes server-side. For example, on LF:
+    `{"region": "nsw", "measure": "unemployment_rate"}` resolves to
+    SDMX key `M13.3.1599.20.1.M` with hidden-dim defaults auto-applied.
 
-    `format`: 'records' (default; flat list), 'series' (grouped by dimensions),
-    or 'csv' (returns the table as a CSV string in the `csv` field).
+    Examples:
+        # NSW unemployment monthly for 2024
+        resp = await get_data(
+            "LF",
+            filters={"region": "nsw", "measure": "unemployment_rate"},
+            start_period="2024",
+            end_period="2024-12",
+        )
+        # → resp.records[0]: period='2024-01', value=4.8, unit='Percent'
+
+        # Multi-state comparison
+        resp = await get_data(
+            "LF",
+            filters={"region": ["nsw","vic","qld"], "measure": "unemployment_rate"},
+            start_period="2024",
+            format="csv",
+        )
+        # → resp.csv contains 36 rows (3 states × 12 months)
+
+        # Australia quarterly CPI annual change
+        resp = await get_data(
+            "CPI",
+            filters={"region": "australia", "measure": "change_year"},
+            start_period="2020",
+        )
+
+    When to use:
+        - You want observations over a time range (use latest() for the most-recent only)
+        - You want a multi-state or multi-measure comparison via list filters
+        - You want a CSV for downstream charting / spreadsheet tools
+
+    Returns:
+        DataResponse with records (list of {period, value, dimensions, unit}),
+        unit (when homogeneous), period bounds, the resolved query echo,
+        the ABS source URL, and the CC-BY 4.0 attribution string.
     """
     return await _get_data_impl(dataset_id, filters, start_period, end_period, format)
 
 
 @mcp.tool
 async def latest(
-    dataset_id: str,
-    filters: dict[str, Any] | None = None,
+    dataset_id: Annotated[
+        str,
+        Field(
+            description="ABS dataflow ID. Use search_datasets to discover.",
+            examples=["LF", "CPI", "ANA_AGG", "LEND_HOUSING"],
+        ),
+    ],
+    filters: Annotated[
+        dict[str, Any] | None,
+        Field(
+            description=(
+                "Dimension filters. For curated dataflows: plain-English keys and "
+                "values. Without filters, expect one observation per dimension "
+                "combination (often hundreds) — pass at least region + measure for "
+                "a clean single number."
+            ),
+            examples=[
+                {"region": "nsw", "measure": "unemployment_rate"},
+                {"region": "australia", "measure": "change_year"},
+                {"region": "1GSYD", "region_type": "gccsa"},
+            ],
+        ),
+    ] = None,
 ) -> DataResponse:
     """Return the most recent observation(s) for a dataflow.
 
-    Wraps `get_data` with `lastNObservations=1` and a shorter cache TTL.
-    Pass filters to narrow the result — without filters, expect one
-    observation per dimension combination (often hundreds).
+    Wraps get_data with lastNObservations=1 and a 15-minute cache TTL
+    (vs 1 hour for general data calls). Use this for "what's the current
+    X?" questions — it's a cheap, fast call: warm-cache p50 ~22ms,
+    cold-cache ~200ms.
+
+    Examples:
+        # Latest NSW unemployment rate
+        resp = await latest("LF", {"region": "nsw", "measure": "unemployment_rate"})
+        # → resp.records[0]: period='2026-03', value=4.61, unit='Percent'
+
+        # Latest Australia headline annual inflation
+        resp = await latest("CPI", {"region": "australia", "measure": "change_year"})
+        # → resp.records[0]: period='2026-Q1', value=4.6, unit='Percent'
+
+        # Latest Greater Sydney population
+        resp = await latest("ABS_ANNUAL_ERP_ASGS2021",
+                            {"region": "greater_sydney", "region_type": "gccsa"})
+        # → resp.records[0]: period='2025', value=5640000, unit='Persons'
+
+    When to use:
+        - You want "the current value" of an indicator (most common workflow)
+        - You're answering a "what's the unemployment rate?" style question
+        - You want sub-50ms warm-cache latency for chat/agent integration
+
+    Returns:
+        DataResponse with one most-recent observation per matched dimension
+        combination. Same envelope as get_data.
     """
     return await _get_data_impl(dataset_id, filters, None, None, "records", last_n=1)
 
 
 @mcp.tool
 def list_curated() -> list[str]:
-    """List dataflow IDs that have hand-curated plain-English support.
+    """List the 10 ABS dataflow IDs with hand-curated plain-English support.
 
-    For these IDs, `describe_dataset` returns a rich human-readable description
-    and `get_data` accepts plain-English filter values.
+    These are the dataflows where get_data accepts plain-English filter
+    keys (`{"region": "nsw"}`) and describe_dataset returns rich
+    human-readable metadata. All other ABS dataflows (~1,200) are still
+    accessible via get_data with raw SDMX dimension IDs and codes.
+
+    The 10 curated dataflows:
+        - LF — Labour Force (unemployment, employment, participation)
+        - CPI — Consumer Price Index (inflation)
+        - WPI — Wage Price Index (wage growth)
+        - AWE — Average Weekly Earnings
+        - JV — Job Vacancies
+        - BA_GCCSA — Building Approvals (by Greater Capital City)
+        - LEND_HOUSING — Lending Indicators / Housing Finance
+        - ANA_AGG — National Accounts (GDP)
+        - ERP_Q — Estimated Resident Population (quarterly)
+        - ABS_ANNUAL_ERP_ASGS2021 — Population (annual; supports SA2/SA3/SA4)
+
+    Example:
+        ids = list_curated()
+        # → ['ABS_ANNUAL_ERP_ASGS2021', 'ANA_AGG', 'AWE', 'BA_GCCSA', 'CPI',
+        #    'ERP_Q', 'JV', 'LEND_HOUSING', 'LF', 'WPI']
+
+    When to use:
+        - You want to know which dataflows have plain-English support
+        - You're enumerating capabilities programmatically (e.g. building a UI)
+        - You're showing users a "supported topics" list
+
+    Returns:
+        Sorted list of dataflow IDs. Always 10 entries today.
     """
     return curated.list_ids()
 
