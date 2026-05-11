@@ -1,10 +1,10 @@
 id: LEND_HOUSING
 name: Lending Indicators - Housing Finance
 description: |
-  Monthly housing loan commitments by purpose, lender type, and state.
+  Quarterly housing loan commitments by purpose, lender type, and state.
   Covers new loan commitments to households for owner-occupier and investor housing.
   Source: ABS Catalogue 5601.0.
-update_frequency: monthly
+update_frequency: quarterly
 source_url: https://www.abs.gov.au/statistics/economy/finance/lending-indicators
 search_keywords: [mortgage, mortgages, home loans, housing finance, housing loans, owner occupier loans, investor loans, first home buyers, fhb, lending, new loan commitments, refinancing]
 dimensions:

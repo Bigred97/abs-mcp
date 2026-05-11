@@ -1,5 +1,42 @@
 # Changelog
 
+## 0.2.4 (2026-05-11)
+
+Robustness pass — input validation, filter ergonomics, and a curated-data correction.
+
+- **Input-type validation across all tools.** Non-string `dataset_id`,
+  non-string `query`, non-dict `filters`, and non-int `limit` used to crash
+  with raw `AttributeError`/`TypeError` from deep inside the call stack.
+  Now: a `ValueError` with an actionable hint at the boundary. Negative
+  `limit`, empty `dataset_id`, and `dataset_id` containing URL-unsafe
+  characters (spaces, slashes, query marks) are also rejected explicitly
+  rather than leaking unencoded user input into the request URL.
+- **Whitespace-tolerant filter values.** `{"region": " nsw "}` (a common
+  LLM/agent payload shape) used to fail "Unknown value ' nsw '". Values
+  are now stripped before lookup.
+- **Empty-list filters rejected with a hint.** `{"region": []}` used to
+  silently expand to "all regions" via the empty SDMX dot-segment. Now:
+  `ValueError` telling the user to pass at least one value or omit the
+  filter.
+- **Hidden curated dims now error cleanly.** Passing an auto-managed
+  hidden dimension (e.g. `{"age": "15-19"}` on LF) used to produce
+  `Try one of: ` with an empty list, because hidden dims have no
+  user-facing value map. Now: an explicit "auto-managed" message
+  pointing the user at the visible filters.
+- **LEND_HOUSING declared `update_frequency: monthly` but publishes
+  quarterly.** ABS switched Lending Indicators from monthly to quarterly
+  cadence in 2025. The YAML's `FREQ` default was already `Q`, and the
+  monthly endpoint 404s, but the top-level metadata still claimed
+  monthly. Fixed to `quarterly` and updated the description.
+- **shaping.py: latent period-extraction bug.** The unit-index builder
+  iterated `obs.dim.values` and let the loop variable overwrite itself,
+  which would silently corrupt the period key if SDMX ever returned >1
+  observation dim. Replaced with explicit single-value extraction.
+- **shaping.py: removed double `to_records()` call.** csv and series
+  formats each parsed the SDMX message twice; now once.
+- 34 new regression tests (118 total, was 84 in 0.2.3) — 27 covering
+  server-tool input validation, 7 covering filter translation hardening.
+
 ## 0.2.3 (2026-05-11)
 
 - LEND_HOUSING measure now defaults to `value` (Australian Dollars) — was returning loan counts (Number) when measure was unspecified, which surprised LLM users asking "what are NSW housing loans?". Headline housing-finance figure is the dollar value.

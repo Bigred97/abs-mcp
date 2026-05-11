@@ -136,18 +136,43 @@ def translate_filters(
     when building the SDMX dot-string.
     """
     out: dict[str, list[str]] = {}
+    visible_dims = {name: dim for name, dim in curated.dimensions.items() if not dim.hidden}
     for user_dim, user_val in filters.items():
-        if user_dim not in curated.dimensions:
-            valid = sorted(curated.dimensions.keys())
+        if user_dim not in visible_dims:
+            valid = sorted(visible_dims.keys())
+            # Hidden dims are auto-managed via YAML defaults; surfacing them as
+            # "Unknown filter" with empty Try-one-of: would be a worse hint.
+            if user_dim in curated.dimensions:
+                raise ValueError(
+                    f"Filter '{user_dim}' is auto-managed for dataset '{curated.id}' "
+                    "and cannot be set by users. "
+                    f"User-facing filters: {', '.join(valid)}."
+                )
             raise ValueError(
                 f"Unknown filter '{user_dim}' for dataset '{curated.id}'. "
                 f"Try one of: {', '.join(valid)}"
             )
-        dim = curated.dimensions[user_dim]
-        values = user_val if isinstance(user_val, list) else [user_val]
+        dim = visible_dims[user_dim]
+        if isinstance(user_val, list):
+            if not user_val:
+                raise ValueError(
+                    f"Filter '{user_dim}' has an empty list. "
+                    "Pass at least one value, or omit the filter to query all values."
+                )
+            values = user_val
+        else:
+            values = [user_val]
         codes: list[str] = []
         for v in values:
-            v_str = str(v)
+            # Whitespace is never meaningful in a curated value key.
+            v_str = str(v).strip()
+            if not v_str:
+                valid_keys = sorted(dim.values.keys())
+                raise ValueError(
+                    f"Filter '{user_dim}' has an empty value. "
+                    f"Try one of: {', '.join(valid_keys[:15])}"
+                    + ("..." if len(valid_keys) > 15 else "")
+                )
             if v_str in dim.values:
                 codes.append(dim.values[v_str].sdmx_code)
             else:

@@ -151,8 +151,10 @@ def _obs_unit_index(msg: DataMessage) -> dict[tuple[tuple[str, ...], str], tuple
             for obs in observations:
                 period = ""
                 if hasattr(obs, "dim") and hasattr(obs.dim, "values"):
-                    for _did, kv in obs.dim.values.items():
-                        period = str(kv.value)
+                    # SDMX observation dim is always the single time period.
+                    dim_values = obs.dim.values
+                    if dim_values:
+                        period = str(next(iter(dim_values.values())).value)
                 attrib = getattr(obs, "attrib", {}) or {}
                 unit_code = None
                 mult = 0
@@ -176,23 +178,23 @@ def to_csv(msg: DataMessage) -> str:
     return df.to_csv(index=False)
 
 
+def _group_records_as_series(records: list[Observation]) -> list[dict[str, Any]]:
+    grouped: dict[tuple[tuple[str, str], ...], list[dict[str, Any]]] = {}
+    for r in records:
+        key = tuple(sorted(r.dimensions.items()))
+        grouped.setdefault(key, []).append({"period": r.period, "value": r.value})
+    return [{"dimensions": dict(key), "observations": obs} for key, obs in grouped.items()]
+
+
 def to_series(
     msg: DataMessage,
     dsd_msg: StructureMessage,
     dataset_id: str,
     curated: CuratedDataflow | None = None,
 ) -> list[dict[str, Any]]:
-    records = to_records(msg, dsd_msg, dataset_id, curated=curated)
-    grouped: dict[tuple[tuple[str, str], ...], list[dict[str, Any]]] = {}
-    for r in records:
-        key = tuple(sorted(r.dimensions.items()))
-        grouped.setdefault(key, []).append(
-            {"period": r.period, "value": r.value}
-        )
-    out: list[dict[str, Any]] = []
-    for key, obs in grouped.items():
-        out.append({"dimensions": dict(key), "observations": obs})
-    return out
+    return _group_records_as_series(
+        to_records(msg, dsd_msg, dataset_id, curated=curated)
+    )
 
 
 def _dataset_name(dsd_msg: StructureMessage, dataset_id: str) -> str:
@@ -214,19 +216,19 @@ def build_response(
 ) -> DataResponse:
     name = curated.name if curated else _dataset_name(dsd_msg, dataset_id)
 
+    # underlying is always the records list; csv/series derive their shape from it
+    # without re-parsing the SDMX message a second time.
+    underlying = to_records(msg, dsd_msg, dataset_id, curated=curated)
+    records: list[Observation] | list[dict[str, Any]]
     if fmt == "csv":
-        records: list[Observation] | list[dict[str, Any]] = []
+        records = []
         csv_text = to_csv(msg)
-        # csv format still needs unit/period derived from the parsed records — do it.
-        underlying = to_records(msg, dsd_msg, dataset_id, curated=curated)
     elif fmt == "series":
-        records = to_series(msg, dsd_msg, dataset_id, curated=curated)
+        records = _group_records_as_series(underlying)
         csv_text = None
-        underlying = to_records(msg, dsd_msg, dataset_id, curated=curated)
-    else:  # 'records' or anything else
-        records = to_records(msg, dsd_msg, dataset_id, curated=curated)
+    else:  # 'records'
+        records = underlying
         csv_text = None
-        underlying = records  # type: ignore[assignment]
 
     response_unit: str | None = None
     if underlying:

@@ -121,3 +121,55 @@ def test_all_curated_dataflows_load_without_error():
         assert df is not None
         assert df.id == ds_id
         assert df.dimensions  # at least one dim
+
+
+def test_translate_filters_strips_whitespace_on_values():
+    """LLM agents commonly pass padded strings; whitespace is never meaningful."""
+    lf = curated.get("LF")
+    sdmx = curated.translate_filters(lf, {"region": " nsw "})
+    assert sdmx == {"REGION": ["1"]}
+
+
+def test_translate_filters_strips_whitespace_inside_list():
+    lf = curated.get("LF")
+    sdmx = curated.translate_filters(lf, {"region": ["  nsw", "vic  "]})
+    assert sdmx == {"REGION": ["1", "2"]}
+
+
+def test_translate_filters_rejects_empty_list_with_hint():
+    """An empty list filter used to silently expand to 'all values'."""
+    lf = curated.get("LF")
+    with pytest.raises(ValueError, match="empty list"):
+        curated.translate_filters(lf, {"region": []})
+
+
+def test_translate_filters_rejects_empty_value():
+    lf = curated.get("LF")
+    with pytest.raises(ValueError, match="empty value"):
+        curated.translate_filters(lf, {"region": "   "})
+
+
+def test_translate_filters_rejects_hidden_dim_with_clean_error():
+    """Hidden dims have no user-facing value map. Passing one used to produce
+    'Try one of: ' (empty list). Now: explicit auto-managed message."""
+    lf = curated.get("LF")
+    with pytest.raises(ValueError, match="auto-managed"):
+        curated.translate_filters(lf, {"age": "15-19"})
+
+
+def test_lend_housing_yaml_declares_quarterly():
+    """LEND_HOUSING was misdeclared 'monthly' but FREQ default is Q; ABS
+    publishes Lending Indicators quarterly."""
+    cd = curated.get("LEND_HOUSING")
+    assert cd.update_frequency == "quarterly"
+    assert "quarterly" in cd.description.lower()
+
+
+def test_apply_defaults_still_injects_hidden_dim_defaults():
+    """Regression: hidden dims are no longer user-passable, but their defaults
+    must still be auto-applied so curated queries hit valid SDMX series."""
+    lf = curated.get("LF")
+    full = curated.apply_defaults(lf, {"REGION": ["1"], "MEASURE": ["M13"]})
+    assert full["AGE"] == ["1599"]
+    assert full["FREQ"] == ["M"]
+    assert full["TSEST"] == ["20"]

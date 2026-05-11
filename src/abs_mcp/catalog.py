@@ -9,6 +9,7 @@ from __future__ import annotations
 from rapidfuzz import fuzz, process
 from sdmx.message import StructureMessage
 
+from . import curated as curated_mod
 from .client import ABSClient
 from .models import (
     CuratedFilter,
@@ -47,7 +48,6 @@ async def list_dataflows(
     curated YAML's description + search_keywords onto the API description so
     the fuzzy search has rich keywords to match against ('mortgage' → LEND_HOUSING,
     'inflation' → CPI, etc.)."""
-    from . import curated as curated_mod  # avoid circular import at module load
     msg = await client.get_dataflows()
     curated_ids = curated_ids or set()
     summaries: list[DatasetSummary] = []

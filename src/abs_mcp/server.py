@@ -7,6 +7,7 @@ module doesn't open the SQLite cache.
 from __future__ import annotations
 
 import asyncio
+import re
 from typing import Any, Literal
 
 from fastmcp import FastMCP
@@ -14,8 +15,18 @@ from fastmcp import FastMCP
 from . import catalog, curated
 from .catalog import describe_from_dsd, list_dataflows, search_in_memory
 from .client import ABSAPIError, ABSClient
-from .models import DatasetDetail, DatasetSummary, DataResponse
+from .models import (
+    CuratedFilter,
+    CuratedFilterValue,
+    DatasetDetail,
+    DatasetSummary,
+    DataResponse,
+)
 from .shaping import build_response
+
+# ABS dataflow IDs are uppercase letters, digits, and underscores (e.g. LF, BA_GCCSA,
+# ABS_ANNUAL_ERP_ASGS2021). We validate so unencoded user input never reaches a URL.
+_DATASET_ID_PATTERN = re.compile(r"^[A-Z0-9_]+$")
 
 mcp = FastMCP("abs-mcp")
 
@@ -48,6 +59,37 @@ def _abs_url(dataset_id: str) -> str:
     return f"https://explore.data.abs.gov.au/?fs[0]=Topic&pg=0&df[id]={dataset_id}&df[ag]=ABS&dq=all"
 
 
+def _normalize_dataset_id(dataset_id: Any) -> str:
+    if not isinstance(dataset_id, str):
+        raise ValueError(
+            f"dataset_id must be a string, got {type(dataset_id).__name__}. "
+            "Try search_datasets() to discover valid IDs like 'LF', 'CPI', or 'ANA_AGG'."
+        )
+    normalized = dataset_id.strip().upper()
+    if not normalized:
+        raise ValueError(
+            "dataset_id is empty. Try search_datasets() to discover IDs like 'LF', 'CPI', or 'ANA_AGG'."
+        )
+    if not _DATASET_ID_PATTERN.match(normalized):
+        raise ValueError(
+            f"dataset_id {dataset_id!r} contains invalid characters — "
+            "ABS dataflow IDs use only letters, digits, and underscores. "
+            "Try search_datasets() to discover valid IDs."
+        )
+    return normalized
+
+
+def _validate_filters(filters: Any) -> dict[str, Any]:
+    if filters is None:
+        return {}
+    if not isinstance(filters, dict):
+        raise ValueError(
+            f"filters must be a dict mapping dimension to value, got {type(filters).__name__}. "
+            "Example: {'region': 'nsw', 'measure': 'unemployment_rate'}."
+        )
+    return filters
+
+
 async def _resolve_filters(
     dataset_id: str, filters: dict[str, Any] | None
 ) -> tuple[curated.CuratedDataflow | None, dict[str, list[str]], dict[str, Any]]:
@@ -72,10 +114,24 @@ async def search_datasets(query: str, limit: int = 10) -> list[DatasetSummary]:
     don't know the exact dataset ID — for example, search "unemployment" or
     "house prices".
     """
-    if not query or not query.strip():
+    if not isinstance(query, str):
+        raise ValueError(
+            f"query must be a string, got {type(query).__name__}. "
+            "Try 'unemployment', 'inflation', 'gdp', 'wages', 'population', or 'housing'."
+        )
+    if not query.strip():
         raise ValueError(
             "query is required. Try 'unemployment', 'inflation', 'gdp', "
             "'wages', 'population', 'housing', or any other ABS topic."
+        )
+    # bool is a subclass of int — reject explicitly so True/False don't silently coerce.
+    if isinstance(limit, bool) or not isinstance(limit, int):
+        raise ValueError(
+            f"limit must be a positive integer, got {limit!r} ({type(limit).__name__})."
+        )
+    if limit < 1:
+        raise ValueError(
+            f"limit must be >= 1, got {limit}. Use a value between 1 and 100."
         )
     client = await _get_client()
     try:
@@ -93,10 +149,9 @@ async def describe_dataset(dataset_id: str) -> DatasetDetail:
     returns plain-English dimension names and value mappings. For other dataflows,
     returns raw SDMX dimensions translated to a uniform shape.
     """
-    dataset_id = dataset_id.upper()
+    dataset_id = _normalize_dataset_id(dataset_id)
     cd = curated.get(dataset_id)
     if cd is not None:
-        from .models import CuratedFilter, CuratedFilterValue
         dims = []
         for human_name, dim in cd.dimensions.items():
             if dim.hidden:
@@ -141,7 +196,8 @@ async def _get_data_impl(
     fmt: str,
     last_n: int | None = None,
 ) -> DataResponse:
-    dataset_id = dataset_id.upper().strip()
+    dataset_id = _normalize_dataset_id(dataset_id)
+    filters = _validate_filters(filters)
     fmt_norm = (fmt or "records").lower()
     if fmt_norm not in _VALID_FORMATS:
         raise ValueError(
@@ -156,8 +212,6 @@ async def _get_data_impl(
     client = await _get_client()
     cd, sdmx_filters, user_query_echo = await _resolve_filters(dataset_id, filters)
 
-    # Most calls hit a cached DSD (7-day TTL), so the parallelism mainly helps
-    # cold first-uses; either way it costs nothing to gather.
     try:
         dsd_msg = await client.get_datastructure(dataset_id)
     except ABSAPIError as e:
