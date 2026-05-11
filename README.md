@@ -5,9 +5,11 @@
 [![Python](https://img.shields.io/pypi/pyversions/abs-mcp.svg)](https://pypi.org/project/abs-mcp/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-An MCP server that wraps the [Australian Bureau of Statistics Data API](https://data.api.abs.gov.au/) and hides SDMX behind plain-English tools. Ask Claude "What's the unemployment rate in NSW?" and get a real answer with a source link, instead of a wall of SDMX codes.
+**Ask Claude about the Australian economy and get real, current numbers** — not "I don't have access to that data." This MCP server gives Claude (and other MCP clients like Cursor) live access to the [ABS Data API](https://data.api.abs.gov.au/), with curated mappings for the 10 most-asked Australian economic indicators.
 
-Five tools, ten curated dataflows: Labour Force, CPI, Wage Price Index, Job Vacancies, Average Weekly Earnings, GDP / National Accounts, quarterly + annual Estimated Resident Population, Building Approvals, and Lending Indicators.
+![abs-mcp answering "What's the unemployment rate in NSW?" in Claude Desktop](docs/demo.png)
+
+Behind the scenes it wraps SDMX 2.1, but you never see SDMX codes — just plain-English filters like `region: "nsw"` and `measure: "unemployment_rate"`. Five tools, ten curated dataflows (Labour Force, CPI, Wage Price Index, Job Vacancies, Average Weekly Earnings, GDP / National Accounts, quarterly + annual Estimated Resident Population, Building Approvals, Lending Indicators), and 1,200+ other ABS dataflows accessible via raw codes.
 
 ## What you can ask
 
@@ -180,6 +182,14 @@ uv run pytest -m live
 ```
 
 The SQLite cache lives at `~/.abs-mcp/cache.db`. Catalogue refreshes every 24h, codelists every 7 days, data responses every hour, latest 15 minutes. Delete the file to force a refresh.
+
+## How it works
+
+When you ask Claude an ABS question, it picks the right tool, fills in the curated filters, and calls the live ABS API. You see the reasoning + tool call inline:
+
+![Claude reasoning + tool call panel](docs/tool-call.png)
+
+Claude does the picking; this server does the SDMX translation, unit attribution, and clean response shaping. You don't have to know what `M13.3.1599.20.1.M` means — and neither does Claude.
 
 ## How it differs from existing ABS MCP servers
 

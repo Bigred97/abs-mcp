@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.8 (2026-05-11)
+
+Docs polish — the artifact every successful MCP launch had.
+
+- **Hero screenshot in README** showing Claude Desktop answering "What's the unemployment rate in NSW?" with the line chart, state-comparison bar chart, and analysis. The proof-of-utility every visitor needs in the first scroll.
+- **"How it works" section** with a tool-call detail screenshot showing Claude's reasoning + the `latest` MCP call.
+- **Tightened README first paragraph** — leads with what's unlocked ("get real, current numbers — not 'I don't have access to that data'") and keeps SDMX as the "how" not the "what".
+- **Fixed `__version__` drift.** `src/abs_mcp/__init__.py` now reads from `importlib.metadata.version("abs-mcp")` so it can never go stale relative to `pyproject.toml`.
+
 ## 0.2.7 (2026-05-11)
 
 Iteration 4. URL-injection guard on user-supplied filter values and period
