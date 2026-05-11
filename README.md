@@ -4,6 +4,7 @@
 [![PyPI](https://img.shields.io/pypi/v/abs-mcp.svg)](https://pypi.org/project/abs-mcp/)
 [![Python](https://img.shields.io/pypi/pyversions/abs-mcp.svg)](https://pypi.org/project/abs-mcp/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Glama MCP server quality](https://glama.ai/mcp/servers/Bigred97/abs-mcp/badges/score.svg)](https://glama.ai/mcp/servers/Bigred97/abs-mcp)
 
 **Ask Claude about the Australian economy and get real, current numbers** — not "I don't have access to that data." This MCP server gives Claude (and other MCP clients like Cursor) live access to the [ABS Data API](https://data.api.abs.gov.au/), with curated mappings for the 10 most-asked Australian economic indicators.
 
