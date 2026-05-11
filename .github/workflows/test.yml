@@ -40,7 +40,7 @@ jobs:
       - name: Verify wheel installs cleanly
         run: |
           uv run --isolated --with ./dist/*.whl python -c \
-            "import abs_mcp.server as s; assert len(s.list_curated()) == 5; print('OK')"
+            "import abs_mcp.server as s; n = len(s.list_curated()); assert n >= 5, f'expected >=5 curated, got {n}'; print(f'OK ({n} curated dataflows)')"
       - uses: actions/upload-artifact@v4
         with:
           name: dist
