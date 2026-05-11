@@ -6,11 +6,20 @@ defaults so users don't have to reason about SDMX boilerplate (FREQ, TSEST).
 """
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from importlib import resources
 from pathlib import Path
 
 import yaml
+
+# Real ABS sub-state SDMX codes contain at least one digit (SA2/SA3/SA4 are
+# pure digits, GCCSA codes are like '1GSYD'). Requiring a digit rules out
+# pure-letter strings — uppercase or lowercase — which on a permissive dim
+# are almost always typos of the plain-English curated keys (e.g. 'NSW',
+# 'QUEENSLAND', 'queensland'). Those fall through to the existing curated
+# "Try one of:" hint instead of being sent to ABS as a raw code and 404ing.
+_SDMX_CODE_PATTERN = re.compile(r"^(?=.*\d)[A-Z0-9_\-]+$")
 
 
 @dataclass(frozen=True)
@@ -26,6 +35,11 @@ class CuratedDimension:
     values: dict[str, CuratedValue] = field(default_factory=dict)
     hidden: bool = False
     default: str | None = None  # SDMX code applied when user doesn't pass this dim
+    # When True, user-supplied values not in `values` and not in the known-codes
+    # set are accepted as raw SDMX codes (validated only against URL safety).
+    # Use this for dims whose codelist is too large to curate in full — e.g.
+    # ASGS sub-state region codes (~3,000 SA2/SA3/SA4 entries).
+    permissive: bool = False
 
 
 @dataclass(frozen=True)
@@ -79,6 +93,7 @@ def _parse_dimension(name: str, raw: dict) -> CuratedDimension:
         values=values,
         hidden=bool(raw.get("hidden", False)),
         default=str(raw["default"]) if "default" in raw else None,
+        permissive=bool(raw.get("permissive", False)),
     )
 
 
@@ -179,6 +194,12 @@ def translate_filters(
                 # Allow raw SDMX codes to pass through (escape hatch).
                 known_codes = {cv.sdmx_code for cv in dim.values.values()}
                 if v_str in known_codes:
+                    codes.append(v_str)
+                elif dim.permissive and _SDMX_CODE_PATTERN.match(v_str):
+                    # Dim opts in to accepting raw SDMX codes that look like
+                    # codes (uppercase + digits + at least one digit). Lets
+                    # the ~2,985 ASGS sub-state codes through without us
+                    # having to enumerate them.
                     codes.append(v_str)
                 else:
                     valid_keys = sorted(dim.values.keys())

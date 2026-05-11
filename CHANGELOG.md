@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.2.9 (2026-05-11)
+
+Curated-feature-promise fix surfaced by a real-user QA pass.
+
+- **ABS_ANNUAL_ERP_ASGS2021.region now accepts the ~2,985 sub-state ASGS
+  codes the YAML promised.** The YAML description said *"pass a raw ASGS
+  2021 code for sub-state regions (greater capital cities, SA4/SA3/SA2).
+  2,985 codes available"*, but the curated translate-filters path only
+  accepted values that were in the YAML's 14-entry value map (or whose
+  SDMX code was in that same map). Passing a real SA2 code like
+  `101021010` (Queanbeyan-East) was rejected with "Unknown value" —
+  exactly the kind of bug that would make a property-analytics user stop
+  trusting the tool.
+- **New `permissive: true` YAML flag on `CuratedDimension`** lets a dim
+  opt in to accepting raw SDMX codes that match a strict shape
+  (`[A-Z0-9_-]+` with at least one digit) without having to enumerate
+  every code in the value map. The digit requirement is load-bearing: it
+  rules out uppercase typos of curated keys (`NSW`, `QUEENSLAND`) which
+  on a permissive dim would otherwise be sent to ABS as raw codes and
+  surface as opaque 404s. Lowercase typos (`queensland`) also fall
+  through to the existing curated "Try one of:" hint.
+- URL-injection guard from 0.2.7 still applies — a permissive value with
+  `?`, `&`, `=`, `/`, etc. is rejected at the boundary, not sent to ABS.
+- 9 new regression tests covering the SA2 path, typo preservation,
+  injection block on permissive dims, and that non-permissive dims still
+  reject unknown values cleanly. 161 tests (was 152 in 0.2.7).
+
 ## 0.2.8 (2026-05-11)
 
 Docs polish — the artifact every successful MCP launch had.

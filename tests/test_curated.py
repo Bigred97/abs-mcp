@@ -173,3 +173,75 @@ def test_apply_defaults_still_injects_hidden_dim_defaults():
     assert full["AGE"] == ["1599"]
     assert full["FREQ"] == ["M"]
     assert full["TSEST"] == ["20"]
+
+
+# ---------- permissive dim escape hatch (ASGS sub-state codes) ----------
+
+def test_asgs_region_dim_is_permissive():
+    """The YAML promises 2,985 sub-state codes work — the YAML must declare
+    the dim permissive for that promise to hold."""
+    cd = curated.get("ABS_ANNUAL_ERP_ASGS2021")
+    assert cd.dimensions["region"].permissive is True
+
+
+def test_translate_filters_permissive_accepts_sa2_numeric_code():
+    """SA2 codes are nine-digit numerics. They're not in the curated value
+    map (only 14 entries) but the permissive flag lets them through."""
+    cd = curated.get("ABS_ANNUAL_ERP_ASGS2021")
+    sdmx = curated.translate_filters(cd, {"region": "101021010", "region_type": "sa2"})
+    assert sdmx["ASGS_2021"] == ["101021010"]
+
+
+def test_translate_filters_permissive_accepts_sa4_short_numeric():
+    cd = curated.get("ABS_ANNUAL_ERP_ASGS2021")
+    sdmx = curated.translate_filters(cd, {"region": "117", "region_type": "sa4"})
+    assert sdmx["ASGS_2021"] == ["117"]
+
+
+def test_translate_filters_permissive_rejects_uppercase_typo():
+    """'NSW' (uppercase) is not in the curated map and has no digits — should
+    fall through to the curated 'Try one of:' hint, not be sent to ABS."""
+    cd = curated.get("ABS_ANNUAL_ERP_ASGS2021")
+    with pytest.raises(ValueError, match="Try one of"):
+        curated.translate_filters(cd, {"region": "NSW"})
+
+
+def test_translate_filters_permissive_rejects_lowercase_typo():
+    """'queensland' is a typo of 'qld' — must get curated hint."""
+    cd = curated.get("ABS_ANNUAL_ERP_ASGS2021")
+    with pytest.raises(ValueError, match="Try one of"):
+        curated.translate_filters(cd, {"region": "queensland"})
+
+
+def test_translate_filters_permissive_rejects_injection_chars():
+    """URL-injection guard still applies on the permissive escape hatch.
+    A code-like value with '?' or '&' must NOT slip through."""
+    cd = curated.get("ABS_ANNUAL_ERP_ASGS2021")
+    with pytest.raises(ValueError, match="Try one of"):
+        curated.translate_filters(cd, {"region": "101021010?inject=1"})
+
+
+def test_translate_filters_non_permissive_dim_still_rejects_unknown():
+    """Other curated dataflows (LF, CPI etc.) are not permissive — passing
+    a code-like value that's not in the YAML must still error with the
+    curated hint."""
+    lf = curated.get("LF")
+    assert lf.dimensions["region"].permissive is False
+    with pytest.raises(ValueError, match="Try one of"):
+        curated.translate_filters(lf, {"region": "999"})
+
+
+def test_translate_filters_curated_key_still_resolves_on_permissive_dim():
+    """The escape hatch must not break the curated-key path: 'nsw' still
+    resolves to '1'."""
+    cd = curated.get("ABS_ANNUAL_ERP_ASGS2021")
+    sdmx = curated.translate_filters(cd, {"region": "nsw"})
+    assert sdmx["ASGS_2021"] == ["1"]
+
+
+def test_translate_filters_known_sdmx_code_still_resolves_on_permissive_dim():
+    """The escape hatch for known codes ('AUS', '1GSYD') must still work even
+    though the permissive path could also accept them."""
+    cd = curated.get("ABS_ANNUAL_ERP_ASGS2021")
+    sdmx = curated.translate_filters(cd, {"region": "1GSYD"})
+    assert sdmx["ASGS_2021"] == ["1GSYD"]

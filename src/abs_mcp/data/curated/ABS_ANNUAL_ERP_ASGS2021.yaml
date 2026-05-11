@@ -14,6 +14,7 @@ dimensions:
       or pass a raw ASGS 2021 code for sub-state regions (greater capital cities,
       SA4/SA3/SA2). 2,985 codes available — use sub-state codes from the ABS
       ASGS reference if you need finer geography.
+    permissive: true
     values:
       australia: { sdmx_code: "AUS" }
       nsw: { sdmx_code: "1" }
