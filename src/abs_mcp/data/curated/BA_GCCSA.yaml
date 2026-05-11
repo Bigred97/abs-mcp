@@ -17,6 +17,7 @@ dimensions:
   building_type:
     sdmx_id: BUILDING_TYPE
     description: Type of building (defaults to total residential)
+    default: "100"
     values:
       total_residential: { sdmx_code: "100" }
       houses: { sdmx_code: "110" }
@@ -25,11 +26,12 @@ dimensions:
       other_residential: { sdmx_code: "150" }
   sector:
     sdmx_id: SECTOR
-    description: Owning sector (defaults to all sectors)
+    description: Owning sector (defaults to private — public-only and total-only series have spotty coverage at this geography)
+    default: "1"
     values:
-      all_sectors: { sdmx_code: "9" }
       private: { sdmx_code: "1" }
       public: { sdmx_code: "5" }
+      all_sectors: { sdmx_code: "9" }
   region:
     sdmx_id: REGION
     description: State or Greater Capital City Statistical Area
@@ -60,9 +62,9 @@ dimensions:
     default: "TOT"
   adjustment:
     sdmx_id: TSEST
-    description: Defaults to seasonally adjusted
+    description: BA_GCCSA's state-level series are published Original (TSEST=10); SA aren't broken out at this geography.
     hidden: true
-    default: "20"
+    default: "10"
   frequency:
     sdmx_id: FREQ
     hidden: true

@@ -130,3 +130,26 @@ async def test_latest_jv_total_vacancies_nsw():
     assert obs.value is not None
     assert obs.value > 0
     assert obs.dimensions["region"] == "New South Wales"
+    # JV is published in thousands; the unit fix should multiply through
+    assert obs.value > 1000, f"JV scaled value should be in raw count: {obs.value}"
+    assert obs.unit == "Number"
+
+
+@pytest.mark.parametrize("dataset_id, filters, expect_unit", [
+    ("LF", {"region": "nsw", "measure": "unemployment_rate"}, "Percent"),
+    ("LF", {"region": "nsw", "measure": "employed_persons"}, "Number"),
+    ("CPI", {"region": "australia", "measure": "change_year"}, "Percent"),
+    ("ABS_ANNUAL_ERP_ASGS2021", {"region": "nsw", "region_type": "states"}, "Persons"),
+    ("BA_GCCSA", {"region": "nsw", "measure": "dwelling_units"}, "Number"),
+    ("LEND_HOUSING", {"region": "nsw", "measure": "value"}, "Australian Dollars"),
+    ("WPI", {"region": "australia", "measure": "change_year"}, "Percent"),
+    ("JV", {"region": "australia", "measure": "vacancies"}, "Number"),
+])
+async def test_every_curated_dataflow_returns_useful_record(dataset_id, filters, expect_unit):
+    """Every curated dataflow must answer a minimal sensible query — the kind a
+    user would actually ask. Catches missing/wrong YAML defaults."""
+    resp = await server.latest(dataset_id=dataset_id, filters=filters)
+    assert len(resp.records) >= 1, f"{dataset_id} returned no records for {filters}"
+    obs = resp.records[0]
+    assert obs.value is not None, f"{dataset_id} value is None for {filters}"
+    assert obs.unit == expect_unit, f"{dataset_id} unit was {obs.unit!r}, expected {expect_unit!r}"

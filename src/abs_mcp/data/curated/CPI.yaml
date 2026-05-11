@@ -17,6 +17,7 @@ dimensions:
   category:
     sdmx_id: INDEX
     description: CPI category (defaults to All groups)
+    default: "10001"
     values:
       all_groups: { sdmx_code: "10001", description: "All groups CPI" }
       food: { sdmx_code: "20001", description: "Food and non-alcoholic beverages" }
@@ -50,5 +51,6 @@ dimensions:
     default: "10"
   frequency:
     sdmx_id: FREQ
+    description: ABS publishes CPI's annual % change series under FREQ='M' even though the underlying CPI is quarterly.
     hidden: true
-    default: "Q"
+    default: "M"

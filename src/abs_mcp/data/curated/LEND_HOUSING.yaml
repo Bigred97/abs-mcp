@@ -16,16 +16,18 @@ dimensions:
       average: { sdmx_code: "FIN_AVG", description: "Average new loan size" }
   housing_purpose:
     sdmx_id: HOUSING_PURPOSE
-    description: Borrower category (defaults to total)
+    description: Borrower category (defaults to owner-occupier)
+    default: "DV5167"
     values:
-      total: { sdmx_code: "TOT" }
       owner_occupier: { sdmx_code: "DV5167" }
       investor: { sdmx_code: "DV5168" }
       first_home_buyers: { sdmx_code: "TOT_FHB", description: "Total first home buyers" }
       owner_occupier_fhb: { sdmx_code: "DV5167_FHB" }
+      total: { sdmx_code: "TOT" }
   lender_type:
     sdmx_id: LENDER_TYPE
     description: Type of lender (defaults to all)
+    default: "TOT"
     values:
       all: { sdmx_code: "TOT" }
       major_banks: { sdmx_code: "MAJ_B" }
@@ -46,19 +48,18 @@ dimensions:
       act: { sdmx_code: "8" }
   data_item:
     sdmx_id: DATA_ITEM
-    description: Defaults to new applications received
+    description: Defaults to new commitments — the headline reported figure
     hidden: true
-    default: "NEWAPPLS"
+    default: "NEWCOMMITS"
   loan_type:
     sdmx_id: LOAN_TYPE
-    description: Defaults to fixed-term loans
     hidden: true
-    default: "DV8270"
+    default: "DV8368"
   loan_purpose:
     sdmx_id: LOAN_PURPOSE
-    description: Defaults to total purposes including refinancing
+    description: Defaults to total dwellings (the broadest residential aggregate ABS publishes)
     hidden: true
-    default: "TOTLOANPURP"
+    default: "TOTDWELL"
   adjustment:
     sdmx_id: TSEST
     description: Defaults to seasonally adjusted
@@ -66,5 +67,6 @@ dimensions:
     default: "20"
   frequency:
     sdmx_id: FREQ
+    description: Lending Indicators are published quarterly
     hidden: true
-    default: "M"
+    default: "Q"

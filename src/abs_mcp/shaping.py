@@ -79,6 +79,8 @@ def to_records(
 
     code_labels = _codelists_by_dim(dsd_msg, dataset_id)
     dim_display = _dim_display_names(curated)
+    unit_labels = _attribute_codelist(dsd_msg, "UNIT_MEASURE")
+    obs_units = _obs_unit_index(msg)  # (series_key_tuple, time_period) -> (unit_label, mult)
 
     df = series.reset_index()
     columns = list(df.columns)
@@ -92,19 +94,68 @@ def to_records(
         for i, col in enumerate(columns[:-1])
         if col != TIME_PERIOD
     ]
+    series_key_idxs = [i for i, col in enumerate(columns[:-1]) if col != TIME_PERIOD]
 
     records: list[Observation] = []
     for row in df.itertuples(index=False, name=None):
         period = str(row[time_idx]) if time_idx >= 0 else ""
-        value = _safe_value(row[value_col_idx])
+        raw_value = _safe_value(row[value_col_idx])
+        series_key = tuple(str(row[i]) for i in series_key_idxs)
+        unit_code, mult = obs_units.get((series_key, period), (None, 0))
+        scaled_value = raw_value * (10 ** mult) if (raw_value is not None and mult) else raw_value
+        unit_label = unit_labels.get(unit_code, unit_code) if unit_code else None
         dims = {
             display_name: labels.get(str(row[i]), str(row[i]))
             for i, _col, display_name, labels in dim_cols
         }
         records.append(
-            Observation(period=period, value=value, dimensions=dims, unit=None)
+            Observation(period=period, value=scaled_value, dimensions=dims, unit=unit_label)
         )
     return records
+
+
+def _attribute_codelist(dsd_msg: StructureMessage, attr_id: str) -> dict[str, str]:
+    """Map attribute code → human label for a DSD attribute (e.g. UNIT_MEASURE)."""
+    for dsd in dsd_msg.structure.values():
+        for attr in getattr(dsd.attributes, "components", []):
+            if attr.id != attr_id:
+                continue
+            try:
+                cl_id = attr.local_representation.enumerated.id
+                cl = dsd_msg.codelist[cl_id]
+            except (AttributeError, KeyError):
+                return {}
+            return {code.id: name_text(code) for code in cl.items.values()}
+    return {}
+
+
+def _obs_unit_index(msg: DataMessage) -> dict[tuple[tuple[str, ...], str], tuple[str | None, int]]:
+    """Build (series_key_tuple, time_period) → (unit_measure_code, unit_mult).
+
+    sdmx1 stores UNIT_MEASURE and UNIT_MULT on the Observation.attrib dict but
+    `to_pandas` drops them. We rebuild the index by walking the message.
+    """
+    out: dict[tuple[tuple[str, ...], str], tuple[str | None, int]] = {}
+    for ds in msg.data:
+        for sk, observations in ds.series.items():
+            sk_dims = tuple(str(kv.value) for _dim_id, kv in sk.values.items())
+            for obs in observations:
+                period = ""
+                if hasattr(obs, "dim") and hasattr(obs.dim, "values"):
+                    for _did, kv in obs.dim.values.items():
+                        period = str(kv.value)
+                attrib = getattr(obs, "attrib", {}) or {}
+                unit_code = None
+                mult = 0
+                if "UNIT_MEASURE" in attrib:
+                    unit_code = str(attrib["UNIT_MEASURE"].value)
+                if "UNIT_MULT" in attrib:
+                    try:
+                        mult = int(str(attrib["UNIT_MULT"].value))
+                    except (ValueError, TypeError):
+                        mult = 0
+                out[(sk_dims, period)] = (unit_code, mult)
+    return out
 
 
 def to_csv(msg: DataMessage) -> str:
