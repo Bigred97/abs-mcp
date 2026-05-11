@@ -73,7 +73,12 @@ class ABSClient:
         self, url: str, kind: CacheKind, accept: str, expected: type[M]
     ) -> M:
         body = await self._fetch_bytes(url, kind, accept)
-        msg = sdmx.read_sdmx(BytesIO(body))
+        try:
+            msg = sdmx.read_sdmx(BytesIO(body))
+        except Exception as e:
+            # Callers catch ABSAPIError; anything else escapes the contract.
+            # Happens on schema drift or an HTML error page slipping past status checks.
+            raise ABSAPIError(f"Failed to parse SDMX response from {url}: {e}") from e
         if not isinstance(msg, expected):
             raise ABSAPIError(
                 f"ABS API returned a {type(msg).__name__} where {expected.__name__} was expected"

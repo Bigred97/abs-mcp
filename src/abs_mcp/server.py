@@ -99,7 +99,9 @@ async def _resolve_filters(
     if cd is None:
         sdmx_filters: dict[str, list[str]] = {}
         for k, v in user.items():
-            sdmx_filters[k] = v if isinstance(v, list) else [str(v)]
+            # build_sdmx_key joins with "+"; non-string list elements would
+            # raise a bare TypeError there. Coerce here for a clean contract.
+            sdmx_filters[k] = [str(x) for x in v] if isinstance(v, list) else [str(v)]
         return None, sdmx_filters, dict(user)
     sdmx_filters = curated.translate_filters(cd, user)
     sdmx_filters = curated.apply_defaults(cd, sdmx_filters)
@@ -198,11 +200,22 @@ async def _get_data_impl(
 ) -> DataResponse:
     dataset_id = _normalize_dataset_id(dataset_id)
     filters = _validate_filters(filters)
+    if fmt is not None and not isinstance(fmt, str):
+        raise ValueError(
+            f"format must be a string, got {type(fmt).__name__}. "
+            f"Valid options: {sorted(_VALID_FORMATS)}."
+        )
     fmt_norm = (fmt or "records").lower()
     if fmt_norm not in _VALID_FORMATS:
         raise ValueError(
             f"Unknown format '{fmt}'. Valid options: {sorted(_VALID_FORMATS)}"
         )
+    for _name, _v in (("start_period", start_period), ("end_period", end_period)):
+        if _v is not None and not isinstance(_v, str):
+            raise ValueError(
+                f"{_name} must be a string like '2024', '2024-Q1', '2024-03', "
+                f"or '2024-S1', got {type(_v).__name__}."
+            )
     if start_period and end_period and start_period > end_period:
         raise ValueError(
             f"end_period ({end_period}) is before start_period ({start_period}). "

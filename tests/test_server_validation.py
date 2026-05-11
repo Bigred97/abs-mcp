@@ -164,3 +164,39 @@ async def test_latest_rejects_non_string_id():
 async def test_latest_rejects_non_dict_filters():
     with pytest.raises(ValueError, match="filters must be a dict"):
         await server.latest("LF", filters="region=nsw")  # type: ignore[arg-type]
+
+
+# ---------- get_data: format / period type guards ----------
+
+async def test_get_data_rejects_non_string_format():
+    """format used to crash with raw AttributeError on int/bool/list."""
+    for bad in (1, True, ["records"], {"fmt": "records"}):
+        with pytest.raises(ValueError, match="format must be a string"):
+            await server.get_data("LF", format=bad)  # type: ignore[arg-type]
+
+
+async def test_get_data_rejects_non_string_start_period():
+    """start_period=2024 (int) used to crash on `start > end` comparison."""
+    with pytest.raises(ValueError, match="start_period must be a string"):
+        await server.get_data("LF", start_period=2024)  # type: ignore[arg-type]
+
+
+async def test_get_data_rejects_non_string_end_period():
+    with pytest.raises(ValueError, match="end_period must be a string"):
+        await server.get_data("LF", end_period=["2024"])  # type: ignore[arg-type]
+
+
+# ---------- _resolve_filters: non-curated list coercion ----------
+
+async def test_resolve_filters_non_curated_coerces_list_to_str():
+    """Non-curated dataflows accept raw filters. List elements that are not
+    strings used to survive into build_sdmx_key and raise a bare TypeError
+    from '+'.join(non_strings)."""
+    # 'ALC' is a real ABS dataflow (Alcohol consumption); not in our curated set.
+    _, sdmx_filters, _ = await server._resolve_filters("ALC", {"REGION": [1, 2]})
+    assert sdmx_filters == {"REGION": ["1", "2"]}
+
+
+async def test_resolve_filters_non_curated_coerces_scalar_to_str():
+    _, sdmx_filters, _ = await server._resolve_filters("ALC", {"REGION": 1})
+    assert sdmx_filters == {"REGION": ["1"]}

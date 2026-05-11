@@ -6,6 +6,7 @@ later without renaming.
 """
 from __future__ import annotations
 
+import asyncio
 import time
 from datetime import timedelta
 from pathlib import Path
@@ -40,15 +41,21 @@ class Cache:
         self.db_path = db_path
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._initialized = False
+        self._init_lock = asyncio.Lock()
 
     async def _ensure_init(self) -> None:
         if self._initialized:
             return
-        async with aiosqlite.connect(self.db_path) as conn:
-            await conn.execute("PRAGMA journal_mode=WAL")
-            await conn.executescript(_SCHEMA)
-            await conn.commit()
-        self._initialized = True
+        async with self._init_lock:
+            # Re-check under the lock: another waiter may have initialised
+            # while we were queued.
+            if self._initialized:
+                return
+            async with aiosqlite.connect(self.db_path) as conn:
+                await conn.execute("PRAGMA journal_mode=WAL")
+                await conn.executescript(_SCHEMA)
+                await conn.commit()
+            self._initialized = True
 
     async def get(self, key: str, ttl: timedelta) -> bytes | None:
         await self._ensure_init()

@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.2.5 (2026-05-11)
+
+Iteration 2 of the robustness audit — closes the type-validation gaps that
+0.2.4 missed, plus two latent error-handling cracks.
+
+- **`format`, `start_period`, `end_period` now type-validated** at the tool
+  boundary. 0.2.4 added guards for `dataset_id` / `query` / `limit` / `filters`
+  but missed these three. `format=1` used to crash on `.lower()`,
+  `start_period=2024` (int) used to crash on the `start > end` comparison,
+  and `end_period=["2024"]` crashed even later inside Pydantic when the
+  response model tried to coerce the value back into the period field.
+  Now: clean `ValueError` with the valid shape examples.
+- **Non-curated filter coercion.** `get_data("ALC", {"REGION": [1, 2]})`
+  used to raise a bare `TypeError` from `"+".join([1, 2])` deep inside
+  `build_sdmx_key`. The non-curated branch of `_resolve_filters` now
+  coerces list elements to strings, matching the curated branch's contract.
+- **`sdmx.read_sdmx` errors now wrap as `ABSAPIError`.** If ABS returns
+  a 200 with a body that isn't valid SDMX (schema drift, an HTML error
+  page slipping past status checks, a truncated response), the parse
+  exception used to escape the `ABSAPIError` contract that the server
+  tools catch — surfacing as an unstructured crash. Now wrapped.
+- **`Cache._ensure_init` is now lock-guarded.** Two concurrent first
+  calls used to both pass the `if self._initialized` check and both run
+  the schema-creation script. SQL is `CREATE … IF NOT EXISTS`, so no
+  data loss, but the double-execute on every cold start is wasteful.
+  Added `asyncio.Lock` + double-checked locking.
+- 6 new regression tests (124 total, was 118 in 0.2.4).
+
 ## 0.2.4 (2026-05-11)
 
 Robustness pass — input validation, filter ergonomics, and a curated-data correction.

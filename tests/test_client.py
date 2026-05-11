@@ -50,6 +50,20 @@ async def test_4xx_raises_abs_api_error(db_path: Path) -> None:
             await client.get_datastructure("DOES_NOT_EXIST")
 
 
+async def test_parse_error_wraps_as_abs_api_error(db_path: Path) -> None:
+    """If ABS returns a 200 with a malformed body (HTML error page slipping
+    through, schema drift, truncated XML), sdmx.read_sdmx raises a library
+    exception. That used to escape the ABSAPIError contract and crash the
+    server tool with an unstructured error."""
+    transport = httpx.MockTransport(
+        lambda req: httpx.Response(200, content=b"<html>this is not sdmx</html>")
+    )
+    cache = Cache(db_path)
+    async with ABSClient(cache=cache, transport=transport) as client:
+        with pytest.raises(ABSAPIError, match="parse SDMX response"):
+            await client.get_dataflows()
+
+
 async def test_get_data_url_includes_filters(db_path: Path) -> None:
     fixture = (Path(__file__).parent / "fixtures" / "lf_one_obs.xml").read_bytes()
     captured: dict[str, str] = {}
