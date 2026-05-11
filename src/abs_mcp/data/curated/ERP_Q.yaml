@@ -1,0 +1,48 @@
+id: ERP_Q
+name: Estimated Resident Population (quarterly)
+description: |
+  Quarterly Estimated Resident Population by state/territory, sex, and age.
+  More current than the annual ERP. Use this for the most recent population reads.
+  Source: ABS Catalogue 3101.0.
+update_frequency: quarterly
+source_url: https://www.abs.gov.au/statistics/people/population/national-state-and-territory-population
+dimensions:
+  measure:
+    sdmx_id: MEASURE
+    description: What is being measured (defaults to total population count)
+    default: "1"
+    values:
+      population: { sdmx_code: "1", description: "Estimated Resident Population" }
+      change: { sdmx_code: "2", description: "ERP change over previous year" }
+      change_pct: { sdmx_code: "3", description: "ERP % change over previous year" }
+  region:
+    sdmx_id: REGION
+    description: State or territory
+    default: "AUS"
+    values:
+      australia: { sdmx_code: "AUS" }
+      nsw: { sdmx_code: "1" }
+      vic: { sdmx_code: "2" }
+      qld: { sdmx_code: "3" }
+      sa:  { sdmx_code: "4" }
+      wa:  { sdmx_code: "5" }
+      tas: { sdmx_code: "6" }
+      nt:  { sdmx_code: "7" }
+      act: { sdmx_code: "8" }
+  sex:
+    sdmx_id: SEX
+    description: Defaults to persons (use male/female to break out by sex)
+    default: "3"
+    values:
+      persons: { sdmx_code: "3" }
+      male: { sdmx_code: "1" }
+      female: { sdmx_code: "2" }
+  age:
+    sdmx_id: AGE
+    description: Age range (defaults to all ages — pass 'A04', 'A59', etc. for 5-year bands)
+    hidden: true
+    default: "TOT"
+  frequency:
+    sdmx_id: FREQ
+    hidden: true
+    default: "Q"

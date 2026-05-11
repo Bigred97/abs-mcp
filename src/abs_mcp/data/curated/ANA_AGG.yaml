@@ -1,0 +1,52 @@
+id: ANA_AGG
+name: National Accounts Key Aggregates (GDP)
+description: |
+  Quarterly Australian National Accounts headline aggregates: GDP, GDP per capita,
+  real income, hours worked, terms of trade, gross national income.
+  Data is national-level only (not state-level).
+  Source: ABS Catalogue 5206.0.
+update_frequency: quarterly
+source_url: https://www.abs.gov.au/statistics/economy/national-accounts/australian-national-accounts-national-income-expenditure-and-product
+dimensions:
+  measure:
+    sdmx_id: MEASURE
+    description: Pricing concept (defaults to chain volume % change — the headline GDP growth figure)
+    default: "M2"
+    values:
+      change: { sdmx_code: "M2", description: "Chain volume measures - % change from previous quarter" }
+      level: { sdmx_code: "M1", description: "Chain volume measures (level)" }
+      current_prices: { sdmx_code: "M3", description: "Current prices (level)" }
+      current_prices_change: { sdmx_code: "M4", description: "Current prices - % change" }
+      index: { sdmx_code: "M5" }
+      ratio: { sdmx_code: "M7" }
+  series:
+    sdmx_id: DATA_ITEM
+    description: Which national-accounts series (defaults to GDP)
+    default: "GPM"
+    values:
+      gdp: { sdmx_code: "GPM", description: "Gross domestic product" }
+      gdp_per_capita: { sdmx_code: "GPM_PCA" }
+      gva_market: { sdmx_code: "GVA_MKT", description: "Gross value added (market sector)" }
+      net_domestic_product: { sdmx_code: "NDP" }
+      real_gdi: { sdmx_code: "RDI", description: "Real gross domestic income" }
+      real_nndi: { sdmx_code: "NNDI", description: "Real net national disposable income" }
+      real_nndi_per_capita: { sdmx_code: "NNDI_PCA" }
+      hours_worked: { sdmx_code: "GPM_HRW" }
+      gdp_per_hour_worked: { sdmx_code: "GPM_PHW" }
+      terms_of_trade: { sdmx_code: "TTR" }
+      gross_national_income: { sdmx_code: "GNI" }
+  region:
+    sdmx_id: REGION
+    description: Australia only — national accounts aren't published by state in this dataflow
+    default: "AUS"
+    values:
+      australia: { sdmx_code: "AUS" }
+  adjustment:
+    sdmx_id: TSEST
+    description: Defaults to seasonally adjusted (the headline reported figure)
+    hidden: true
+    default: "20"
+  frequency:
+    sdmx_id: FREQ
+    hidden: true
+    default: "Q"

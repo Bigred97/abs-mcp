@@ -1,0 +1,75 @@
+id: AWE
+name: Average Weekly Earnings
+description: |
+  Half-yearly Average Weekly Earnings by industry, sector, and state.
+  Pairs with WPI (price of labour) for total earnings analysis.
+  Source: ABS Catalogue 6302.0.
+update_frequency: semi-annual
+source_url: https://www.abs.gov.au/statistics/labour/earnings-and-working-conditions/average-weekly-earnings-australia
+dimensions:
+  measure:
+    sdmx_id: MEASURE
+    description: Earnings measure (defaults to all-employee total AWE — the headline figure)
+    default: "1"
+    values:
+      total: { sdmx_code: "1", description: "All employees average weekly total earnings" }
+      full_time_total: { sdmx_code: "2", description: "Full-time adult average weekly total earnings" }
+      full_time_ordinary: { sdmx_code: "3", description: "Full-time adult average weekly ordinary time earnings" }
+  sex:
+    sdmx_id: SEX
+    description: Sex (defaults to persons)
+    default: "3"
+    values:
+      persons: { sdmx_code: "3" }
+      male: { sdmx_code: "1" }
+      female: { sdmx_code: "2" }
+  industry:
+    sdmx_id: INDUSTRY
+    description: ANZSIC industry division (defaults to all industries)
+    default: "TOT"
+    values:
+      all: { sdmx_code: "TOT" }
+      mining: { sdmx_code: "B" }
+      manufacturing: { sdmx_code: "C" }
+      construction: { sdmx_code: "E" }
+      retail_trade: { sdmx_code: "G" }
+      accommodation_food: { sdmx_code: "H" }
+      financial_insurance: { sdmx_code: "K" }
+      professional_services: { sdmx_code: "M" }
+      public_admin: { sdmx_code: "O" }
+      education: { sdmx_code: "P" }
+      health_care: { sdmx_code: "Q" }
+  region:
+    sdmx_id: REGION
+    description: State or territory
+    default: "AUS"
+    values:
+      australia: { sdmx_code: "AUS" }
+      nsw: { sdmx_code: "1" }
+      vic: { sdmx_code: "2" }
+      qld: { sdmx_code: "3" }
+      sa:  { sdmx_code: "4" }
+      wa:  { sdmx_code: "5" }
+      tas: { sdmx_code: "6" }
+      nt:  { sdmx_code: "7" }
+      act: { sdmx_code: "8" }
+  estimate_type:
+    sdmx_id: ESTIMATE_TYPE
+    description: Defaults to earnings estimate (not standard error)
+    hidden: true
+    default: "1"
+  sector:
+    sdmx_id: SECTOR
+    description: Defaults to all sectors (private + public)
+    hidden: true
+    default: "7"
+  adjustment:
+    sdmx_id: TSEST
+    description: Defaults to seasonally adjusted
+    hidden: true
+    default: "20"
+  frequency:
+    sdmx_id: FREQ
+    description: AWE is published half-yearly (May and November)
+    hidden: true
+    default: "S"

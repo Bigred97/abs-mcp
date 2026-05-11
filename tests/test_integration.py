@@ -101,11 +101,11 @@ async def test_describe_curated_returns_plain_english_dims():
     assert "frequency" not in dim_names
 
 
-async def test_list_curated_returns_seven():
+async def test_list_curated_returns_ten():
     ids = server.list_curated()
     assert set(ids) == {
         "LF", "CPI", "ABS_ANNUAL_ERP_ASGS2021", "BA_GCCSA", "LEND_HOUSING",
-        "WPI", "JV",
+        "WPI", "JV", "ANA_AGG", "AWE", "ERP_Q",
     }
 
 
@@ -144,6 +144,9 @@ async def test_latest_jv_total_vacancies_nsw():
     ("LEND_HOUSING", {"region": "nsw", "measure": "value"}, "Australian Dollars"),
     ("WPI", {"region": "australia", "measure": "change_year"}, "Percent"),
     ("JV", {"region": "australia", "measure": "vacancies"}, "Number"),
+    ("ANA_AGG", {"series": "gdp", "measure": "change"}, "Percent"),
+    ("AWE", {"region": "australia"}, "Australian Dollars"),
+    ("ERP_Q", {"region": "nsw"}, "Persons"),
 ])
 async def test_every_curated_dataflow_returns_useful_record(dataset_id, filters, expect_unit):
     """Every curated dataflow must answer a minimal sensible query — the kind a

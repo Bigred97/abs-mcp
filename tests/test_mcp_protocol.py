@@ -51,7 +51,7 @@ async def test_call_list_curated_returns_five() -> None:
     assert isinstance(payload, list)
     assert set(payload) == {
         "LF", "CPI", "ABS_ANNUAL_ERP_ASGS2021", "BA_GCCSA", "LEND_HOUSING",
-        "WPI", "JV",
+        "WPI", "JV", "ANA_AGG", "AWE", "ERP_Q",
     }
 
 

@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.0 (2026-05-11)
+
+- 3 new curated dataflows: **ANA_AGG** (GDP / National Accounts), **AWE** (Average Weekly Earnings), **ERP_Q** (quarterly Estimated Resident Population)
+- Fix: hidden curated dimensions no longer leak into record dimensions
+- Fix: `DataResponse.unit` now populated when all observations share a unit
+- Fix: query echo no longer includes `_default_*` noise
+- Fix: csv format now populates `period.start` / `period.end`
+- Fix: unit attribution — values are scaled by `UNIT_MULT` and labelled by `UNIT_MEASURE`, so JV vacancies show 101,200 Number instead of 101.2
+- Curated default fixes: CPI / BA_GCCSA / LEND_HOUSING defaults now point to series with actual data
+- 67 tests (was 50 in 0.1.0)
+
 ## 0.1.0 (2026-05-11)
 
 Initial release.

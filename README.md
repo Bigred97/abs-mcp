@@ -71,13 +71,18 @@ Add to `~/.cursor/mcp.json` (or workspace `.cursor/mcp.json`):
 
 ## Curated dataflows
 
-For these five, `filters` accepts plain-English values (e.g. `"region": "nsw"` instead of `"REGION": "1"`):
+For these ten, `filters` accepts plain-English values (e.g. `"region": "nsw"` instead of `"REGION": "1"`):
 
 - **LF** — Labour Force, monthly: employment, unemployment, participation by state/sex
 - **CPI** — Consumer Price Index, quarterly inflation by capital city and category
+- **WPI** — Wage Price Index, quarterly wage growth by industry/sector/state
+- **JV** — Job Vacancies, quarterly labour demand by industry/sector/state
+- **AWE** — Average Weekly Earnings, half-yearly by industry/sector/state
+- **ANA_AGG** — National Accounts: GDP, GDP per capita, terms of trade, real income (Australia, quarterly)
 - **ABS_ANNUAL_ERP_ASGS2021** — Estimated Resident Population, annual by state and sub-state geography
+- **ERP_Q** — Quarterly Estimated Resident Population, by state/sex/age
 - **BA_GCCSA** — Building Approvals, monthly by state/capital region and building type
-- **LEND_HOUSING** — Lending Indicators, monthly housing finance commitments by purpose, lender, and state
+- **LEND_HOUSING** — Lending Indicators, quarterly housing finance commitments by purpose, lender, and state
 
 Any other ABS dataflow still works — pass raw SDMX dimension IDs and codes.
 
