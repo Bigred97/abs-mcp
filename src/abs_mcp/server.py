@@ -28,6 +28,19 @@ from .shaping import build_response
 # ABS_ANNUAL_ERP_ASGS2021). We validate so unencoded user input never reaches a URL.
 _DATASET_ID_PATTERN = re.compile(r"^[A-Z0-9_]+$")
 
+# Non-curated filter values land directly in the SDMX key (URL path). SDMX codes
+# per ABS convention are alphanumeric + underscore (e.g. "TOT", "DV5167_FHB").
+# Allow hyphen for future-proofing. Anything else risks URL injection: '?'/'&'/'='
+# alter query parameters, '/' adds path segments, '#' truncates, '+' is the multi-
+# value separator we own, '.' is the dim separator we own.
+_SDMX_VALUE_PATTERN = re.compile(r"^[A-Za-z0-9_\-]+$")
+
+# Period codes land in the URL query string. ABS publishes 'YYYY', 'YYYY-MM',
+# 'YYYY-Q[1-4]', 'YYYY-S[12]'. We allow any of those plus daily 'YYYY-MM-DD' as
+# digits + dash + letters. The regex is permissive on shape (ABS will 4xx on
+# semantic garbage) but strict on URL safety.
+_PERIOD_SAFE_PATTERN = re.compile(r"^[A-Za-z0-9\-]+$")
+
 mcp = FastMCP("abs-mcp")
 
 _client: ABSClient | None = None
@@ -116,6 +129,12 @@ async def _resolve_filters(
                     raise ValueError(
                         f"Filter {k!r} has an empty value. "
                         "Pass a non-empty SDMX code, or omit the filter."
+                    )
+                if not _SDMX_VALUE_PATTERN.match(c):
+                    raise ValueError(
+                        f"Filter value {c!r} for {k!r} contains invalid characters. "
+                        "SDMX codes are alphanumeric + underscore/hyphen (e.g. 'TOT', "
+                        "'DV5167_FHB'). For multiple values, pass a list."
                     )
             sdmx_filters[k] = cleaned
         return None, sdmx_filters, dict(user)
@@ -231,6 +250,12 @@ async def _get_data_impl(
             raise ValueError(
                 f"{_name} must be a string like '2024', '2024-Q1', '2024-03', "
                 f"or '2024-S1', got {type(_v).__name__}."
+            )
+        if _v and not _PERIOD_SAFE_PATTERN.match(_v):
+            raise ValueError(
+                f"{_name} {_v!r} contains invalid characters. "
+                "Period formats: 'YYYY' (annual), 'YYYY-MM' (monthly), "
+                "'YYYY-Q1' (quarterly), 'YYYY-S1' (half-yearly)."
             )
     if start_period and end_period and start_period > end_period:
         raise ValueError(

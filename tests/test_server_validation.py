@@ -226,3 +226,76 @@ async def test_resolve_filters_non_curated_rejects_empty_value():
 async def test_resolve_filters_non_curated_rejects_empty_in_list():
     with pytest.raises(ValueError, match="empty value"):
         await server._resolve_filters("ALC", {"REGION": ["AUS", "  "]})
+
+
+# ---------- URL-injection guard: non-curated filter values & periods ----------
+
+@pytest.mark.parametrize("bad_value", [
+    "x?dimensionAtObservation=AllDimensions",  # query-param injection
+    "a/b",                                     # extra path segment
+    "a&b",                                     # query-string injection
+    "a#frag",                                  # fragment truncation
+    "a=b",                                     # query-param assignment
+    "a.b",                                     # SDMX dim-separator collision
+    "a+b",                                     # SDMX multi-value collision
+    "a%20b",                                   # percent-encoded space
+    "a;b",                                     # semicolon
+    "a b",                                     # raw space
+])
+async def test_resolve_filters_non_curated_rejects_url_injection_values(bad_value):
+    """Non-curated filter values flow into the SDMX URL path. Anything outside
+    [A-Za-z0-9_-] would either change the request shape or hand the user a
+    surprising response."""
+    with pytest.raises(ValueError, match="invalid characters"):
+        await server._resolve_filters("ALC", {"REGION": bad_value})
+
+
+async def test_resolve_filters_non_curated_rejects_injection_inside_list():
+    with pytest.raises(ValueError, match="invalid characters"):
+        await server._resolve_filters("ALC", {"REGION": ["AUS", "a?b"]})
+
+
+async def test_resolve_filters_non_curated_accepts_valid_sdmx_codes():
+    """Sanity: legit SDMX codes with underscores/digits/letters still work."""
+    _, sdmx_filters, _ = await server._resolve_filters(
+        "ALC", {"MEASURE": "DV5167_FHB", "REGION": ["1", "2", "TOT_FHB"]}
+    )
+    assert sdmx_filters == {"MEASURE": ["DV5167_FHB"], "REGION": ["1", "2", "TOT_FHB"]}
+
+
+@pytest.mark.parametrize("bad_period", [
+    "2024&format=jsonstat",   # query-param injection
+    "2024?foo=bar",            # extra query
+    "2024#frag",               # fragment
+    "2024/extra",              # path segment
+    "2024=evil",               # assignment
+    "2024+x",                  # plus
+    "May 2024",                # space
+    "2024,2025",               # comma
+])
+async def test_get_data_rejects_url_injection_in_start_period(bad_period):
+    """start_period lands in the URL query string. URL-unsafe chars must be
+    rejected at the boundary, not handed to ABS."""
+    with pytest.raises(ValueError, match="invalid characters"):
+        await server.get_data("LF", start_period=bad_period)
+
+
+async def test_get_data_rejects_url_injection_in_end_period():
+    with pytest.raises(ValueError, match="invalid characters"):
+        await server.get_data("LF", end_period="2024&injected=1")
+
+
+async def test_get_data_accepts_valid_period_formats():
+    """Sanity: the period guard must NOT reject the four ABS-valid shapes.
+    We can't run a real query in a unit test, so just confirm the validation
+    layer passes them through (we expect a later error from cd lookup or
+    network, but NOT the period-shape ValueError)."""
+    valid = ["2024", "2024-03", "2024-Q1", "2024-S1", "2024-12-31"]
+    for p in valid:
+        # Should NOT raise "invalid characters". May raise something else later.
+        try:
+            await server.get_data("LF_NONEXISTENT_DATASET_FOR_TEST", start_period=p)
+        except ValueError as e:
+            assert "invalid characters" not in str(e), (
+                f"period {p!r} should have passed the URL-safety guard: {e}"
+            )

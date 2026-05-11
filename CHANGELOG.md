@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.2.7 (2026-05-11)
+
+Iteration 4. URL-injection guard on user-supplied filter values and period
+strings. The dataset_id guard from 0.2.4 covered the path-prefix vector but
+the dot-separated SDMX key and the period query string were still open.
+
+- **Non-curated filter values are now rejected if they contain URL-unsafe
+  characters.** Calling `get_data("ALC", {"REGION": "x?foo=bar"})` used to
+  flow the raw value into the SDMX URL path, where `?` truncated the key
+  and the rest got interpreted as query parameters — silently changing the
+  request shape. Same for `&`, `/`, `#`, `+`, `.`, `=`, `%`, space, and
+  `;`. Now: `ValueError` listing the SDMX code shape (`[A-Za-z0-9_-]+`)
+  and pointing at multi-value lists for the multi-value case. Curated
+  dataflows were never vulnerable — values are validated against the YAML
+  codelist before reaching the URL.
+- **`start_period` / `end_period` are now shape-checked.** A user passing
+  `start_period="2024&format=jsonstat"` used to inject an extra query
+  parameter into the ABS request. Now restricted to the same URL-safe
+  pattern (digits, dashes, letters — covers `YYYY`, `YYYY-MM`, `YYYY-Q1`,
+  `YYYY-S1`, `YYYY-MM-DD`). Permissive on ABS-period shape (the API will
+  still 4xx semantic garbage), strict on URL safety.
+- 22 new parametrised regression tests (152 total, was 130 in 0.2.6).
+
 ## 0.2.6 (2026-05-11)
 
 Iteration 3 of the robustness audit. Closes the last of the
