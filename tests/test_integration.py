@@ -153,3 +153,38 @@ async def test_every_curated_dataflow_returns_useful_record(dataset_id, filters,
     obs = resp.records[0]
     assert obs.value is not None, f"{dataset_id} value is None for {filters}"
     assert obs.unit == expect_unit, f"{dataset_id} unit was {obs.unit!r}, expected {expect_unit!r}"
+    # Hidden curated dims must not leak into record dimensions
+    for ugly in ("age", "tsest", "frequency", "freq", "value_band", "work_type",
+                 "data_item", "loan_type", "loan_purpose"):
+        assert ugly not in obs.dimensions, (
+            f"hidden dim {ugly!r} leaked into {dataset_id} record dimensions: {obs.dimensions}"
+        )
+    # Response-level unit echoes observation unit when homogeneous
+    assert resp.unit == expect_unit
+
+
+async def test_get_data_csv_format_returns_csv_with_period():
+    resp = await server.get_data(
+        dataset_id="LF",
+        filters={"region": "nsw", "measure": "unemployment_rate", "sex": "persons"},
+        start_period="2024",
+        format="csv",
+    )
+    assert resp.csv is not None
+    assert "TIME_PERIOD" in resp.csv
+    assert resp.records == []
+    # csv format still populates period bounds (was None before fix)
+    assert resp.period["start"] is not None
+    assert resp.period["end"] is not None
+    assert resp.unit == "Percent"
+
+
+async def test_query_echo_does_not_include_default_noise():
+    """Query echo should reflect what the user asked, not internal default markers."""
+    resp = await server.latest(
+        dataset_id="LF",
+        filters={"region": "nsw", "measure": "unemployment_rate", "sex": "persons"},
+    )
+    assert resp.query == {"region": "nsw", "measure": "unemployment_rate", "sex": "persons"}
+    for k in resp.query:
+        assert not k.startswith("_default"), f"default-noise key leaked: {k}"

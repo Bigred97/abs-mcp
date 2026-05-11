@@ -53,6 +53,12 @@ def _dim_display_names(curated: CuratedDataflow | None) -> dict[str, str]:
     return out
 
 
+def _hidden_dim_ids(curated: CuratedDataflow | None) -> set[str]:
+    if curated is None:
+        return set()
+    return {dim.sdmx_id for dim in curated.dimensions.values() if dim.hidden}
+
+
 def _safe_value(v: Any) -> float | None:
     if v is None:
         return None
@@ -79,6 +85,7 @@ def to_records(
 
     code_labels = _codelists_by_dim(dsd_msg, dataset_id)
     dim_display = _dim_display_names(curated)
+    hidden_ids = _hidden_dim_ids(curated)
     unit_labels = _attribute_codelist(dsd_msg, "UNIT_MEASURE")
     obs_units = _obs_unit_index(msg)  # (series_key_tuple, time_period) -> (unit_label, mult)
 
@@ -89,11 +96,13 @@ def to_records(
         time_idx = columns.index(TIME_PERIOD)
     except ValueError:
         time_idx = -1
+    # User-facing dimensions exclude hidden curated dims (they're noise — defaults the user didn't ask about).
     dim_cols = [
         (i, col, dim_display.get(col, col.lower()), code_labels.get(col, {}))
         for i, col in enumerate(columns[:-1])
-        if col != TIME_PERIOD
+        if col != TIME_PERIOD and col not in hidden_ids
     ]
+    # Series key (for unit lookup) still uses the FULL set of dim columns since UNIT_MULT is per-series.
     series_key_idxs = [i for i, col in enumerate(columns[:-1]) if col != TIME_PERIOD]
 
     records: list[Observation] = []
@@ -208,16 +217,25 @@ def build_response(
     if fmt == "csv":
         records: list[Observation] | list[dict[str, Any]] = []
         csv_text = to_csv(msg)
+        # csv format still needs unit/period derived from the parsed records — do it.
+        underlying = to_records(msg, dsd_msg, dataset_id, curated=curated)
     elif fmt == "series":
         records = to_series(msg, dsd_msg, dataset_id, curated=curated)
         csv_text = None
+        underlying = to_records(msg, dsd_msg, dataset_id, curated=curated)
     else:  # 'records' or anything else
         records = to_records(msg, dsd_msg, dataset_id, curated=curated)
         csv_text = None
+        underlying = records  # type: ignore[assignment]
 
-    # Compute period bounds from the data when caller didn't pass them
-    if (start_period is None or end_period is None) and isinstance(records, list) and records and isinstance(records[0], Observation):
-        periods = sorted({r.period for r in records if r.period})  # type: ignore[union-attr]
+    response_unit: str | None = None
+    if underlying:
+        units = {o.unit for o in underlying if o.unit}  # type: ignore[union-attr]
+        if len(units) == 1:
+            response_unit = next(iter(units))
+
+    if (start_period is None or end_period is None) and underlying:
+        periods = sorted({o.period for o in underlying if o.period})  # type: ignore[union-attr]
         start_period = start_period or (periods[0] if periods else None)
         end_period = end_period or (periods[-1] if periods else None)
 
@@ -226,7 +244,7 @@ def build_response(
         dataset_name=name,
         query=user_query,
         period={"start": start_period, "end": end_period},
-        unit=None,
+        unit=response_unit,
         records=records,
         csv=csv_text,
         retrieved_at=datetime.now(timezone.utc),

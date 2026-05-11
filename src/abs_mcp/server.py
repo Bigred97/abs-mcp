@@ -55,20 +55,13 @@ async def _resolve_filters(
     cd = curated.get(dataset_id)
     user = filters or {}
     if cd is None:
-        # Non-curated: caller passes raw SDMX codes; we still wrap into list form
         sdmx_filters: dict[str, list[str]] = {}
         for k, v in user.items():
             sdmx_filters[k] = v if isinstance(v, list) else [str(v)]
         return None, sdmx_filters, dict(user)
     sdmx_filters = curated.translate_filters(cd, user)
     sdmx_filters = curated.apply_defaults(cd, sdmx_filters)
-    # Echo back the user's original query plus any auto-applied hidden defaults
-    query_for_response = dict(user)
-    for dim in cd.dimensions.values():
-        if dim.hidden and dim.default is not None and dim.sdmx_id in sdmx_filters:
-            # Surface that we applied a default
-            query_for_response.setdefault(f"_default_{dim.sdmx_id.lower()}", dim.default)
-    return cd, sdmx_filters, query_for_response
+    return cd, sdmx_filters, dict(user)
 
 
 @mcp.tool

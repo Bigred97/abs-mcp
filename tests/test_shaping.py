@@ -104,3 +104,38 @@ def test_build_response_csv_format_returns_csv_string():
     assert resp.csv is not None
     assert "TIME_PERIOD" in resp.csv
     assert resp.records == []
+    # CSV format still derives period bounds from underlying records
+    assert resp.period["start"] is not None
+
+
+def test_records_omit_hidden_curated_dimensions():
+    """Hidden dims (age, tsest, freq) must not appear in record dimensions."""
+    data_msg, dsd_msg = _load_lf_msgs()
+    lf = curated_mod.get("LF")
+    records = to_records(data_msg, dsd_msg, "LF", curated=lf)
+    assert records, "expected at least one record"
+    for r in records:
+        for hidden_human in ("age", "tsest", "frequency", "freq"):
+            assert hidden_human not in r.dimensions, (
+                f"hidden dim {hidden_human!r} leaked into record dimensions: {r.dimensions}"
+            )
+
+
+def test_response_unit_populated_when_homogeneous():
+    """When every observation shares a unit, DataResponse.unit reflects it."""
+    data_msg, dsd_msg = _load_lf_msgs()
+    lf = curated_mod.get("LF")
+    resp = build_response(
+        dataset_id="LF",
+        msg=data_msg,
+        dsd_msg=dsd_msg,
+        user_query={},
+        fmt="records",
+        abs_url="https://abs.gov.au/...",
+        curated=lf,
+    )
+    # The fixture is mixed-measure (some Number, some Percent), so unit may be None;
+    # but when set, it should match observation units.
+    if resp.unit is not None:
+        units_in_records = {o.unit for o in resp.records if hasattr(o, "unit") and o.unit}
+        assert {resp.unit} == units_in_records
