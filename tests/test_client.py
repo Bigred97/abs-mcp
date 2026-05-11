@@ -86,3 +86,16 @@ async def test_get_data_url_includes_filters(db_path: Path) -> None:
     assert "startPeriod=2024" in captured["url"]
     assert "lastNObservations=1" in captured["url"]
     assert "genericdata+xml" in captured["accept"]
+
+
+async def test_get_data_rejects_non_positive_last_n(db_path: Path) -> None:
+    """0.2.10 audit finding: `if last_n:` used to silently drop `last_n=0`
+    and negative values via the falsy check, returning a full fetch instead
+    of an error. The defensive guard now raises ValueError. Internal-only
+    today (latest hardcodes last_n=1), but the latent footgun is sealed."""
+    cache = Cache(db_path)
+    async with ABSClient(cache=cache, transport=_mock_transport({})) as client:
+        with pytest.raises(ValueError, match="last_n must be a positive integer"):
+            await client.get_data("LF", last_n=0)
+        with pytest.raises(ValueError, match="last_n must be a positive integer"):
+            await client.get_data("LF", last_n=-5)

@@ -1,5 +1,40 @@
 # Changelog
 
+## 0.2.10 (2026-05-12)
+
+Cross-portfolio consistency pass — three fixes that bring abs-mcp to parity
+with rba-mcp 0.1.6's gate-4 and licence-compliance guards. Surfaced by an
+adversarial / domain-correctness / production-stress audit against the
+shipped 0.2.9 wheel.
+
+- **Fix: `DataResponse.attribution` now carries the CC-BY 4.0 string in
+  every response body.** Previously only `source` ("Australian Bureau of
+  Statistics") and `abs_url` were populated. CC-BY 4.0 requires the
+  attribution to travel WITH the data, not just be reachable via a link.
+  Matches rba-mcp's `DataResponse.attribution` shape. The string points
+  at https://www.abs.gov.au/about/copyright-and-creative-commons.
+- **Fix: cache self-heals on corruption / schema-mismatch.**
+  `Cache._ensure_init()` now catches `sqlite3.DatabaseError` on initial
+  schema setup and deletes-and-recreates the file. Previously, a corrupt
+  `~/.abs-mcp/cache.db` (partial write after a crash, older-version schema,
+  or user accident) would leak `sqlite3.DatabaseError("file is not a
+  database")` to the MCP tool surface — a raw library exception escaping
+  the contract, against gate 4. The cache is a performance optimisation,
+  not a source of truth, so silently recreating it is always safe.
+  Mirrors rba-mcp 0.1.2.
+- **Fix: defensive `last_n > 0` guard in `ABSClient.get_data`.**
+  Previously, `if last_n:` falsy-checked `last_n=0` and silently dropped
+  it, returning a full fetch. Today this is internal-only (`latest()`
+  hardcodes 1, the public `get_data` tool doesn't expose `last_n`), but
+  the latent footgun is sealed against future use.
+- **New: `DataResponse.server_version`** field echoed in every response
+  (parity with rba-mcp 0.1.5). Set from `importlib.metadata.version
+  ("abs-mcp")`. Makes it trivial to verify which wheel served the call
+  when debugging uvx cache staleness.
+- **Tests**: +4 regressions (2 cache self-heal in `test_cache.py`, 1
+  attribution + server_version in `test_shaping.py`, 1 last_n guard in
+  `test_client.py`). 117 unit tests now (was 113).
+
 ## 0.2.9 (2026-05-11)
 
 Curated-feature-promise fix surfaced by a real-user QA pass.

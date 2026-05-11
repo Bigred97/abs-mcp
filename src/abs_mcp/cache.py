@@ -7,6 +7,7 @@ later without renaming.
 from __future__ import annotations
 
 import asyncio
+import sqlite3
 import time
 from datetime import timedelta
 from pathlib import Path
@@ -51,11 +52,25 @@ class Cache:
             # while we were queued.
             if self._initialized:
                 return
-            async with aiosqlite.connect(self.db_path) as conn:
-                await conn.execute("PRAGMA journal_mode=WAL")
-                await conn.executescript(_SCHEMA)
-                await conn.commit()
+            try:
+                await self._init_schema()
+            except sqlite3.DatabaseError:
+                # Pre-existing cache.db is corrupt or has an incompatible
+                # schema (e.g. left over from an older version, partial
+                # write after a crash, or user accident). The cache is a
+                # performance optimisation, not a source of truth — dropping
+                # and recreating it is always safe. Mirrors the rba-mcp
+                # 0.1.2 fix; gate 4 says raw library exceptions must not
+                # leak to the MCP tool surface.
+                self.db_path.unlink(missing_ok=True)
+                await self._init_schema()
             self._initialized = True
+
+    async def _init_schema(self) -> None:
+        async with aiosqlite.connect(self.db_path) as conn:
+            await conn.execute("PRAGMA journal_mode=WAL")
+            await conn.executescript(_SCHEMA)
+            await conn.commit()
 
     async def get(self, key: str, ttl: timedelta) -> bytes | None:
         await self._ensure_init()

@@ -121,6 +121,30 @@ def test_records_omit_hidden_curated_dimensions():
             )
 
 
+def test_response_includes_ccby_attribution_and_server_version():
+    """0.2.10 audit finding: DataResponse used to ship `source` + `abs_url`
+    but no CC-BY 4.0 attribution string in the response body. The licence
+    requires the attribution to travel WITH the data, not just be reachable
+    via a link. Also locks in `server_version` for stale-cache diagnostics
+    (parity with rba-mcp 0.1.5)."""
+    data_msg, dsd_msg = _load_lf_msgs()
+    lf = curated_mod.get("LF")
+    resp = build_response(
+        dataset_id="LF",
+        msg=data_msg,
+        dsd_msg=dsd_msg,
+        user_query={},
+        fmt="records",
+        abs_url="https://abs.gov.au/...",
+        curated=lf,
+    )
+    assert "Creative Commons" in resp.attribution
+    assert "CC BY 4.0" in resp.attribution
+    assert "Australian Bureau of Statistics" in resp.attribution
+    assert resp.server_version
+    assert resp.server_version[0].isdigit()
+
+
 def test_response_unit_populated_when_homogeneous():
     """When every observation shares a unit, DataResponse.unit reflects it."""
     data_msg, dsd_msg = _load_lf_msgs()

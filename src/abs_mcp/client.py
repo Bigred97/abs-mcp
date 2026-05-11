@@ -101,12 +101,22 @@ class ABSClient:
         end_period: str | None = None,
         last_n: int | None = None,
     ) -> DataMessage:
+        # Defensive: `last_n` is internal (latest() hardcodes 1; the public
+        # get_data tool doesn't expose it). The previous `if last_n:` falsy
+        # check silently dropped `last_n=0` and negative values. Future
+        # callers should get a clear ValueError instead of a silent
+        # fetch-everything if they pass a bad value.
+        if last_n is not None and last_n <= 0:
+            raise ValueError(
+                f"last_n must be a positive integer, got {last_n}. "
+                "Use last_n=None to fetch all observations."
+            )
         params: list[str] = []
         if start_period:
             params.append(f"startPeriod={start_period}")
         if end_period:
             params.append(f"endPeriod={end_period}")
-        if last_n:
+        if last_n is not None:
             params.append(f"lastNObservations={last_n}")
         query = ("?" + "&".join(params)) if params else ""
         url = f"{self.base_url}/data/ABS,{dataset_id}/{key}{query}"
