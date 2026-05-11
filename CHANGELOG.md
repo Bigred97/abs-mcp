@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.1 (2026-05-11)
+
+Customer stress-test pass — fixes for three real bugs surfaced by edge-case probing.
+
+- `format` parameter is now validated and case-normalised. `format='JSON'` raises `ValueError("Unknown format 'JSON'. Valid options: ['csv','records','series'])`. `format='CSV'` is normalised to `'csv'` (was previously falling through to records).
+- Reversed periods (`start_period > end_period`) are now rejected client-side with a clear message before hitting the ABS API.
+- WPI state-level queries (e.g. `region='nsw'`) now work — the default `TSEST` was `20` (Seasonally Adjusted), but WPI's SA series is only published nationally. Default changed to `10` (Original); `adjustment` is now a visible filter so users can pick `'seasonally_adjusted'` for the headline national figure.
+- 4 new regression tests cover the above. 71 tests now (was 67 in 0.2.0).
+
 ## 0.2.0 (2026-05-11)
 
 - 3 new curated dataflows: **ANA_AGG** (GDP / National Accounts), **AWE** (Average Weekly Earnings), **ERP_Q** (quarterly Estimated Resident Population)

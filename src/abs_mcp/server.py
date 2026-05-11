@@ -127,6 +127,9 @@ async def describe_dataset(dataset_id: str) -> DatasetDetail:
     return describe_from_dsd(dataset_id, dsd_msg)
 
 
+_VALID_FORMATS = {"records", "series", "csv"}
+
+
 async def _get_data_impl(
     dataset_id: str,
     filters: dict[str, Any] | None,
@@ -135,7 +138,17 @@ async def _get_data_impl(
     fmt: str,
     last_n: int | None = None,
 ) -> DataResponse:
-    dataset_id = dataset_id.upper()
+    dataset_id = dataset_id.upper().strip()
+    fmt_norm = (fmt or "records").lower()
+    if fmt_norm not in _VALID_FORMATS:
+        raise ValueError(
+            f"Unknown format '{fmt}'. Valid options: {sorted(_VALID_FORMATS)}"
+        )
+    if start_period and end_period and start_period > end_period:
+        raise ValueError(
+            f"end_period ({end_period}) is before start_period ({start_period}). "
+            "Periods are compared as strings; for monthly use 'YYYY-MM', quarterly 'YYYY-QN', annual 'YYYY'."
+        )
     client = await _get_client()
     cd, sdmx_filters, user_query_echo = await _resolve_filters(dataset_id, filters)
 
@@ -172,7 +185,7 @@ async def _get_data_impl(
         msg=data_msg,
         dsd_msg=dsd_msg,
         user_query=user_query_echo,
-        fmt=fmt,
+        fmt=fmt_norm,
         abs_url=cd.source_url if (cd and cd.source_url) else _abs_url(dataset_id),
         curated=cd,
         start_period=start_period,

@@ -182,6 +182,50 @@ async def test_get_data_csv_format_returns_csv_with_period():
     assert resp.unit == "Percent"
 
 
+async def test_get_data_rejects_invalid_format():
+    """format='JSON' (or any non-{records,series,csv}) should error cleanly, not silently fall through."""
+    with pytest.raises(ValueError, match="Unknown format"):
+        await server.get_data(
+            dataset_id="LF",
+            filters={"region": "nsw", "measure": "unemployment_rate"},
+            format="JSON",  # type: ignore[arg-type]
+        )
+
+
+async def test_get_data_normalises_format_case():
+    """format='CSV' (uppercase) should work like 'csv'."""
+    resp = await server.get_data(
+        dataset_id="LF",
+        filters={"region": "nsw", "measure": "unemployment_rate", "sex": "persons"},
+        start_period="2024",
+        format="CSV",  # type: ignore[arg-type]
+    )
+    assert resp.csv is not None
+    assert "TIME_PERIOD" in resp.csv
+
+
+async def test_get_data_rejects_end_before_start():
+    """Catch reversed periods client-side rather than letting ABS return a confusing 4xx."""
+    with pytest.raises(ValueError, match="end_period .* is before start_period"):
+        await server.get_data(
+            dataset_id="LF",
+            filters={"region": "nsw", "measure": "unemployment_rate"},
+            start_period="2025",
+            end_period="2020",
+        )
+
+
+async def test_wpi_state_level_works():
+    """Regression: WPI state-level query 404'd because default TSEST=20 isn't published per-state."""
+    resp = await server.latest(
+        dataset_id="WPI",
+        filters={"region": "nsw"},
+    )
+    assert len(resp.records) >= 1
+    assert resp.records[0].value is not None
+    assert resp.records[0].dimensions["region"] == "New South Wales"
+
+
 async def test_query_echo_does_not_include_default_noise():
     """Query echo should reflect what the user asked, not internal default markers."""
     resp = await server.latest(

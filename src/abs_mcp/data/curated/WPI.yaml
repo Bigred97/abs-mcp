@@ -8,11 +8,12 @@ source_url: https://www.abs.gov.au/statistics/economy/price-indexes-and-inflatio
 dimensions:
   measure:
     sdmx_id: MEASURE
-    description: What is being measured (defaults to annual % change)
+    description: What is being measured (defaults to annual % change — the headline wage growth figure)
+    default: "3"
     values:
-      index: { sdmx_code: "1", description: "Quarterly index" }
-      change_quarter: { sdmx_code: "2", description: "% change from previous quarter" }
       change_year: { sdmx_code: "3", description: "% change from previous year (annual wage growth)" }
+      change_quarter: { sdmx_code: "2", description: "% change from previous quarter" }
+      index: { sdmx_code: "1", description: "Quarterly index" }
       financial_year_index: { sdmx_code: "4" }
   sector:
     sdmx_id: SECTOR
@@ -70,9 +71,17 @@ dimensions:
     default: "THRPEB"
   adjustment:
     sdmx_id: TSEST
-    description: Defaults to seasonally adjusted
-    hidden: true
-    default: "20"
+    description: |
+      Defaults to original (TSEST=10) so state-level queries work — WPI's
+      seasonally adjusted series is only published nationally. For the
+      headline national SA figure, query with region='australia' and pass
+      adjustment='seasonally_adjusted' explicitly.
+    values:
+      original: { sdmx_code: "10" }
+      seasonally_adjusted: { sdmx_code: "20" }
+      trend: { sdmx_code: "30" }
+    hidden: false
+    default: "10"
   frequency:
     sdmx_id: FREQ
     hidden: true
