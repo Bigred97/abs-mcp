@@ -10,7 +10,8 @@ search_keywords: [mortgage, mortgages, home loans, housing finance, housing loan
 dimensions:
   measure:
     sdmx_id: MEASURE
-    description: What is being measured
+    description: What is being measured (defaults to dollar value of new loans — the headline housing-finance figure)
+    default: "FIN_VAL"
     values:
       value: { sdmx_code: "FIN_VAL", description: "Value of new loans ($)" }
       number: { sdmx_code: "FIN_NUM", description: "Number of new loans" }

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.3 (2026-05-11)
+
+- LEND_HOUSING measure now defaults to `value` (Australian Dollars) — was returning loan counts (Number) when measure was unspecified, which surprised LLM users asking "what are NSW housing loans?". Headline housing-finance figure is the dollar value.
+- 1 new regression test (84 total).
+
 ## 0.2.2 (2026-05-11)
 
 **Search relevance overhaul.** A polish audit found that common queries like

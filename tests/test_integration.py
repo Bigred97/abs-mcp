@@ -240,6 +240,16 @@ async def test_common_search_query_finds_curated_at_top(query, expected_top_id):
     )
 
 
+async def test_lend_housing_no_measure_returns_dollar_value():
+    """Regression: LEND_HOUSING without measure filter used to return loan
+    counts (Number) — surprising for an LLM asking 'NSW housing loans?'.
+    Default is now value (dollars)."""
+    resp = await server.latest(dataset_id="LEND_HOUSING", filters={"region": "nsw"})
+    assert resp.records[0].unit == "Australian Dollars"
+    # NSW quarterly housing loan commitments are in the billions
+    assert resp.records[0].value > 1_000_000_000
+
+
 async def test_wpi_state_level_works():
     """Regression: WPI state-level query 404'd because default TSEST=20 isn't published per-state."""
     resp = await server.latest(
