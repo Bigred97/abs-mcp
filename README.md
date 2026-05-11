@@ -11,6 +11,8 @@
 
 Behind the scenes it wraps SDMX 2.1, but you never see SDMX codes — just plain-English filters like `region: "nsw"` and `measure: "unemployment_rate"`. Five tools, ten curated dataflows (Labour Force, CPI, Wage Price Index, Job Vacancies, Average Weekly Earnings, GDP / National Accounts, quarterly + annual Estimated Resident Population, Building Approvals, Lending Indicators), and 1,200+ other ABS dataflows accessible via raw codes.
 
+Companion to [rba-mcp](https://github.com/Bigred97/rba-mcp) (Reserve Bank of Australia — cash rate, FX, lending rates). Install both for the AU macro stack.
+
 ## What you can ask
 
 Once installed, your LLM can answer questions like:
