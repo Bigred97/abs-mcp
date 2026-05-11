@@ -1,0 +1,123 @@
+import pytest
+
+from abs_mcp import curated
+
+
+@pytest.fixture(autouse=True)
+def reset_registry():
+    curated.reset_registry()
+    yield
+    curated.reset_registry()
+
+
+def test_list_ids_returns_curated_dataflows():
+    ids = curated.list_ids()
+    assert set(ids) == {
+        "LF", "CPI", "ABS_ANNUAL_ERP_ASGS2021", "BA_GCCSA", "LEND_HOUSING",
+        "WPI", "JV",
+    }
+
+
+def test_get_lf_loads_dimensions():
+    lf = curated.get("LF")
+    assert lf is not None
+    assert lf.name == "Labour Force"
+    assert "measure" in lf.dimensions
+    assert "region" in lf.dimensions
+    # Hidden dims present but flagged
+    assert lf.dimensions["age"].hidden is True
+    assert lf.dimensions["age"].default == "1599"
+
+
+def test_get_is_case_insensitive():
+    assert curated.get("lf") is not None
+    assert curated.get("LF") is not None
+
+
+def test_get_returns_none_for_unknown():
+    assert curated.get("NOPE_NOT_REAL") is None
+
+
+def test_translate_filters_lf_unemployment_nsw():
+    """Brief-required: curated.LF resolves plain-English values to SDMX codes."""
+    lf = curated.get("LF")
+    sdmx = curated.translate_filters(lf, {"region": "nsw", "measure": "unemployment_rate"})
+    assert sdmx == {"REGION": ["1"], "MEASURE": ["M13"]}
+
+
+def test_translate_filters_accepts_list_for_multi_value():
+    lf = curated.get("LF")
+    sdmx = curated.translate_filters(lf, {"region": ["nsw", "vic"]})
+    assert sdmx == {"REGION": ["1", "2"]}
+
+
+def test_translate_filters_unknown_dim_raises_with_suggestion():
+    lf = curated.get("LF")
+    with pytest.raises(ValueError, match="Unknown filter 'state'"):
+        curated.translate_filters(lf, {"state": "nsw"})
+
+
+def test_translate_filters_unknown_value_raises_with_suggestion():
+    lf = curated.get("LF")
+    with pytest.raises(ValueError, match="Unknown value 'queensland'"):
+        curated.translate_filters(lf, {"region": "queensland"})
+
+
+def test_translate_filters_accepts_raw_sdmx_code_as_escape_hatch():
+    lf = curated.get("LF")
+    sdmx = curated.translate_filters(lf, {"region": "1"})  # raw SDMX code
+    assert sdmx == {"REGION": ["1"]}
+
+
+def test_apply_defaults_injects_hidden_dim_values():
+    lf = curated.get("LF")
+    user_filters = {"REGION": ["1"], "MEASURE": ["M13"]}
+    full = curated.apply_defaults(lf, user_filters)
+    # Hidden dims got their defaults
+    assert full["AGE"] == ["1599"]
+    assert full["TSEST"] == ["20"]
+    assert full["FREQ"] == ["M"]
+    # User filters preserved
+    assert full["REGION"] == ["1"]
+    assert full["MEASURE"] == ["M13"]
+
+
+def test_apply_defaults_does_not_overwrite_user_value():
+    lf = curated.get("LF")
+    full = curated.apply_defaults(lf, {"AGE": ["1564"]})  # user overrode default age
+    assert full["AGE"] == ["1564"]
+
+
+def test_build_sdmx_key_uses_dim_order_and_skips_time():
+    """LF dimension order: MEASURE.SEX.AGE.TSEST.REGION.FREQ (TIME_PERIOD skipped)."""
+    order = ["MEASURE", "SEX", "AGE", "TSEST", "REGION", "FREQ", "TIME_PERIOD"]
+    filters = {
+        "MEASURE": ["M13"],
+        "SEX": ["3"],
+        "AGE": ["1599"],
+        "TSEST": ["20"],
+        "REGION": ["1"],
+        "FREQ": ["M"],
+    }
+    key = curated.build_sdmx_key(order, filters)
+    assert key == "M13.3.1599.20.1.M"
+
+
+def test_build_sdmx_key_leaves_unspecified_dims_blank():
+    order = ["A", "B", "C"]
+    key = curated.build_sdmx_key(order, {"A": ["x"], "C": ["z"]})
+    assert key == "x..z"
+
+
+def test_build_sdmx_key_joins_multi_value_with_plus():
+    order = ["A"]
+    key = curated.build_sdmx_key(order, {"A": ["x", "y"]})
+    assert key == "x+y"
+
+
+def test_all_curated_dataflows_load_without_error():
+    for ds_id in curated.list_ids():
+        df = curated.get(ds_id)
+        assert df is not None
+        assert df.id == ds_id
+        assert df.dimensions  # at least one dim

@@ -1,0 +1,74 @@
+from pathlib import Path
+
+import httpx
+import pytest
+
+from abs_mcp.cache import Cache
+from abs_mcp.client import ABSAPIError, ABSClient
+
+
+@pytest.fixture
+def db_path(tmp_path: Path) -> Path:
+    return tmp_path / "cache.db"
+
+
+def _mock_transport(responses: dict[str, httpx.Response]) -> httpx.MockTransport:
+    def handler(request: httpx.Request) -> httpx.Response:
+        url = str(request.url)
+        if url in responses:
+            return responses[url]
+        return httpx.Response(404, text=f"No mock for {url}")
+
+    return httpx.MockTransport(handler)
+
+
+async def test_get_dataflows_caches(db_path: Path) -> None:
+    """First call hits HTTP; second call hits cache."""
+    fixture = (Path(__file__).parent / "fixtures" / "dataflows_min.xml").read_bytes()
+    call_count = {"n": 0}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        call_count["n"] += 1
+        return httpx.Response(200, content=fixture)
+
+    transport = httpx.MockTransport(handler)
+    cache = Cache(db_path)
+    async with ABSClient(cache=cache, transport=transport) as client:
+        msg1 = await client.get_dataflows()
+        msg2 = await client.get_dataflows()
+    assert call_count["n"] == 1, "second call should hit the cache"
+    # Both messages should parse to a StructureMessage with dataflow content
+    assert hasattr(msg1, "dataflow")
+    assert hasattr(msg2, "dataflow")
+
+
+async def test_4xx_raises_abs_api_error(db_path: Path) -> None:
+    transport = _mock_transport({})  # all 404
+    cache = Cache(db_path)
+    async with ABSClient(cache=cache, transport=transport) as client:
+        with pytest.raises(ABSAPIError):
+            await client.get_datastructure("DOES_NOT_EXIST")
+
+
+async def test_get_data_url_includes_filters(db_path: Path) -> None:
+    fixture = (Path(__file__).parent / "fixtures" / "lf_one_obs.xml").read_bytes()
+    captured: dict[str, str] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["url"] = str(request.url)
+        captured["accept"] = request.headers.get("accept", "")
+        return httpx.Response(200, content=fixture)
+
+    transport = httpx.MockTransport(handler)
+    cache = Cache(db_path)
+    async with ABSClient(cache=cache, transport=transport) as client:
+        await client.get_data(
+            "LF",
+            key="M13.3.1599.20.1.M",
+            start_period="2024",
+            last_n=1,
+        )
+    assert "data/ABS,LF/M13.3.1599.20.1.M" in captured["url"]
+    assert "startPeriod=2024" in captured["url"]
+    assert "lastNObservations=1" in captured["url"]
+    assert "genericdata+xml" in captured["accept"]

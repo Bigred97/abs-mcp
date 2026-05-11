@@ -1,0 +1,56 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "abs-mcp"
+version = "0.1.0"
+description = "MCP server for the Australian Bureau of Statistics Data API. Hides SDMX behind plain-English tools, with curated mappings for Labour Force, CPI, ERP, Building Approvals, and Lending Indicators."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Harry Vass" }]
+keywords = ["mcp", "abs", "statistics", "australia", "sdmx", "claude"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+]
+dependencies = [
+    "fastmcp>=2.0,<4",
+    "httpx>=0.27",
+    "pydantic>=2.7",
+    "rapidfuzz>=3.9",
+    "pandas>=2.2,<3",
+    "sdmx1>=2.20",
+    "aiosqlite>=0.20",
+    "PyYAML>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.23",
+    "respx>=0.21",
+]
+
+[project.scripts]
+abs-mcp = "abs_mcp.server:main"
+
+[project.urls]
+Homepage = "https://github.com/hvass97/abs-mcp"
+Issues = "https://github.com/hvass97/abs-mcp/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/abs_mcp"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+markers = ["live: hits the real ABS API"]
+addopts = "-m 'not live'"
+testpaths = ["tests"]
+pythonpath = ["src"]

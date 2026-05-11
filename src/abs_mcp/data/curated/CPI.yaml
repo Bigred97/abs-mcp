@@ -1,0 +1,54 @@
+id: CPI
+name: Consumer Price Index
+description: |
+  Quarterly Consumer Price Index by capital city and All groups / sub-categories.
+  Source: ABS Catalogue 6401.0.
+update_frequency: quarterly
+source_url: https://www.abs.gov.au/statistics/economy/price-indexes-and-inflation/consumer-price-index-australia
+dimensions:
+  measure:
+    sdmx_id: MEASURE
+    description: What is being measured
+    values:
+      index: { sdmx_code: "1", description: "Index numbers" }
+      change_quarter: { sdmx_code: "2", description: "% change from previous quarter" }
+      change_year: { sdmx_code: "3", description: "% change from previous year (annual inflation)" }
+      contribution_to_index: { sdmx_code: "4" }
+  category:
+    sdmx_id: INDEX
+    description: CPI category (defaults to All groups)
+    values:
+      all_groups: { sdmx_code: "10001", description: "All groups CPI" }
+      food: { sdmx_code: "20001", description: "Food and non-alcoholic beverages" }
+      alcohol_tobacco: { sdmx_code: "20002", description: "Alcohol and tobacco" }
+      clothing: { sdmx_code: "20003", description: "Clothing and footwear" }
+      housing: { sdmx_code: "20004", description: "Housing" }
+      furnishings: { sdmx_code: "20005", description: "Furnishings, household equipment and services" }
+      health: { sdmx_code: "20006", description: "Health" }
+      transport: { sdmx_code: "20007", description: "Transport" }
+      communication: { sdmx_code: "20008", description: "Communication" }
+      recreation: { sdmx_code: "20009", description: "Recreation and culture" }
+      education: { sdmx_code: "20010", description: "Education" }
+      insurance_financial: { sdmx_code: "20011", description: "Insurance and financial services" }
+  region:
+    sdmx_id: REGION
+    description: Capital city (or 'australia' for the weighted average)
+    values:
+      australia: { sdmx_code: "50", description: "Weighted average of eight capital cities" }
+      sydney: { sdmx_code: "1" }
+      melbourne: { sdmx_code: "2" }
+      brisbane: { sdmx_code: "3" }
+      adelaide: { sdmx_code: "4" }
+      perth: { sdmx_code: "5" }
+      hobart: { sdmx_code: "6" }
+      darwin: { sdmx_code: "7" }
+      canberra: { sdmx_code: "8" }
+  adjustment:
+    sdmx_id: TSEST
+    description: Time-series treatment (CPI defaults to original — the official figure)
+    hidden: true
+    default: "10"
+  frequency:
+    sdmx_id: FREQ
+    hidden: true
+    default: "Q"

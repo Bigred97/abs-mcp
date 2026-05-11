@@ -1,0 +1,49 @@
+id: ABS_ANNUAL_ERP_ASGS2021
+name: Estimated Resident Population (annual, ASGS 2021)
+description: |
+  Annual Estimated Resident Population by state/territory and sub-state geographic regions.
+  Source: ABS Catalogue 3218.0. ASGS Edition 3 (2021).
+update_frequency: annual
+source_url: https://www.abs.gov.au/statistics/people/population/national-state-and-territory-population
+dimensions:
+  region:
+    sdmx_id: ASGS_2021
+    description: |
+      Geographic region. Use 'AUS' for Australia, '1'–'8' for states/territories,
+      or pass a raw ASGS 2021 code for sub-state regions (greater capital cities,
+      SA4/SA3/SA2). 2,985 codes available — use sub-state codes from the ABS
+      ASGS reference if you need finer geography.
+    values:
+      australia: { sdmx_code: "AUS" }
+      nsw: { sdmx_code: "1" }
+      vic: { sdmx_code: "2" }
+      qld: { sdmx_code: "3" }
+      sa:  { sdmx_code: "4" }
+      wa:  { sdmx_code: "5" }
+      tas: { sdmx_code: "6" }
+      nt:  { sdmx_code: "7" }
+      act: { sdmx_code: "8" }
+      greater_sydney: { sdmx_code: "1GSYD" }
+      greater_melbourne: { sdmx_code: "2GMEL" }
+      greater_brisbane: { sdmx_code: "3GBRI" }
+      greater_adelaide: { sdmx_code: "4GADE" }
+      greater_perth: { sdmx_code: "5GPER" }
+  region_type:
+    sdmx_id: REGION_TYPE
+    description: Geographic granularity (defaults to states & territories)
+    values:
+      states: { sdmx_code: "STE", description: "States and Territories" }
+      gccsa: { sdmx_code: "GCCSA", description: "Greater Capital City Statistical Areas" }
+      sa4: { sdmx_code: "SA4" }
+      sa3: { sdmx_code: "SA3" }
+      sa2: { sdmx_code: "SA2" }
+      australia: { sdmx_code: "AUS" }
+  measure:
+    sdmx_id: MEASURE
+    description: Only ERP available
+    hidden: true
+    default: "ERP"
+  frequency:
+    sdmx_id: FREQ
+    hidden: true
+    default: "A"

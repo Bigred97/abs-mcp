@@ -1,0 +1,76 @@
+id: JV
+name: Job Vacancies
+description: |
+  Quarterly job vacancies by industry, sector, and state.
+  Headline indicator of labour demand. Pairs with LF for labour-market-tightness analysis.
+  Source: ABS Catalogue 6354.0.
+update_frequency: quarterly
+source_url: https://www.abs.gov.au/statistics/labour/jobs/job-vacancies-australia
+dimensions:
+  measure:
+    sdmx_id: MEASURE
+    description: Vacancies count
+    values:
+      vacancies: { sdmx_code: "M1", description: "Number of job vacancies" }
+  sector:
+    sdmx_id: SECTOR
+    description: Public / private / both (defaults to combined)
+    default: "7"
+    values:
+      all: { sdmx_code: "7", description: "Private and Public" }
+      private: { sdmx_code: "1" }
+      public: { sdmx_code: "2" }
+  industry:
+    sdmx_id: INDUSTRY
+    description: ANZSIC industry division (defaults to all industries)
+    default: "TOT"
+    values:
+      all: { sdmx_code: "TOT" }
+      agriculture: { sdmx_code: "A", description: "Agriculture, Forestry and Fishing" }
+      mining: { sdmx_code: "B" }
+      manufacturing: { sdmx_code: "C" }
+      utilities: { sdmx_code: "D" }
+      construction: { sdmx_code: "E" }
+      wholesale_trade: { sdmx_code: "F" }
+      retail_trade: { sdmx_code: "G" }
+      accommodation_food: { sdmx_code: "H" }
+      transport: { sdmx_code: "I" }
+      information_media: { sdmx_code: "J" }
+      financial_insurance: { sdmx_code: "K" }
+      real_estate: { sdmx_code: "L" }
+      professional_services: { sdmx_code: "M" }
+      admin_support: { sdmx_code: "N" }
+      public_admin: { sdmx_code: "O" }
+      education: { sdmx_code: "P" }
+      health_care: { sdmx_code: "Q" }
+      arts_recreation: { sdmx_code: "R" }
+      other_services: { sdmx_code: "S" }
+  region:
+    sdmx_id: REGION
+    description: State or territory
+    values:
+      australia: { sdmx_code: "AUS" }
+      nsw: { sdmx_code: "1" }
+      vic: { sdmx_code: "2" }
+      qld: { sdmx_code: "3" }
+      sa:  { sdmx_code: "4" }
+      wa:  { sdmx_code: "5" }
+      tas: { sdmx_code: "6" }
+      nt:  { sdmx_code: "7" }
+      act: { sdmx_code: "8" }
+  adjustment:
+    sdmx_id: TSEST
+    description: |
+      Defaults to original (unadjusted) — JV's seasonally adjusted series is
+      only published at the national level, so the default has to work for
+      state queries too. Pass measure='vacancies' with region='australia' and
+      adjustment='seasonally_adjusted' for the SA national figure.
+    values:
+      original: { sdmx_code: "10" }
+      seasonally_adjusted: { sdmx_code: "20" }
+    hidden: false
+    default: "10"
+  frequency:
+    sdmx_id: FREQ
+    hidden: true
+    default: "Q"

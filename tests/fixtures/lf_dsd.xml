@@ -1,0 +1,1731 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--NSI Web Service v8.19.9.0-->
+<message:Structure xmlns:message="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/message" xmlns:structure="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/structure" xmlns:common="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/common">
+  <message:Header>
+    <message:ID>IDREF5515</message:ID>
+    <message:Test>false</message:Test>
+    <message:Prepared>2026-05-11T00:31:23.1039676+00:00</message:Prepared>
+    <message:Sender id="Unknown" />
+    <message:Receiver id="Unknown" />
+  </message:Header>
+  <message:Structures>
+    <structure:Dataflows>
+      <structure:Dataflow id="LF" agencyID="ABS" version="1.0.0" isFinal="true">
+        <common:Annotations>
+          <common:Annotation>
+            <common:AnnotationType>NonProductionDataflow</common:AnnotationType>
+            <common:AnnotationText xml:lang="en">true</common:AnnotationText>
+          </common:Annotation>
+          <common:Annotation>
+            <common:AnnotationTitle>TIME_PERIOD</common:AnnotationTitle>
+            <common:AnnotationType>LAYOUT_COLUMN</common:AnnotationType>
+          </common:Annotation>
+          <common:Annotation>
+            <common:AnnotationTitle>MEASURE</common:AnnotationTitle>
+            <common:AnnotationType>LAYOUT_ROW</common:AnnotationType>
+          </common:Annotation>
+          <common:Annotation>
+            <common:AnnotationTitle>TSEST</common:AnnotationTitle>
+            <common:AnnotationType>LAYOUT_ROW_SECTION</common:AnnotationType>
+          </common:Annotation>
+          <common:Annotation>
+            <common:AnnotationTitle>REGION=AUS,SEX=3,AGE=1599,FREQ=M,TIME_PERIOD_START=2023-08</common:AnnotationTitle>
+            <common:AnnotationType>DEFAULT</common:AnnotationType>
+          </common:Annotation>
+          <common:Annotation>
+            <common:AnnotationType>EXT_RESOURCE</common:AnnotationType>
+            <common:AnnotationText xml:lang="en">Methodology|https://www.abs.gov.au/statistics/labour/employment-and-unemployment/labour-force-australia/latest-release#methodology|https://www.abs.gov.au/ausstats/wmdata.nsf/activeimages/methodology/$File/methodology.png</common:AnnotationText>
+          </common:Annotation>
+        </common:Annotations>
+        <common:Name xml:lang="en">Labour Force</common:Name>
+        <common:Description xml:lang="en">Dataset: LF. Headline estimates of employment, unemployment, underemployment, participation and hours worked from the monthly Labour Force Survey. Unit of measure: Persons/rate/ratio/percent. Geographic coverage: Australia/State. Catalogue number: 6202.0</common:Description>
+        <structure:Structure>
+          <Ref id="LF" version="1.0.0" agencyID="ABS" package="datastructure" class="DataStructure" />
+        </structure:Structure>
+      </structure:Dataflow>
+    </structure:Dataflows>
+    <structure:Codelists>
+      <structure:Codelist id="CL_DECIMALS" agencyID="ABS" version="1.0.0" isFinal="true">
+        <common:Name xml:lang="en">Decimals</common:Name>
+        <structure:Code id="0">
+          <common:Name xml:lang="en">Zero</common:Name>
+        </structure:Code>
+        <structure:Code id="1">
+          <common:Name xml:lang="en">One</common:Name>
+        </structure:Code>
+        <structure:Code id="2">
+          <common:Name xml:lang="en">Two</common:Name>
+        </structure:Code>
+        <structure:Code id="3">
+          <common:Name xml:lang="en">Three</common:Name>
+        </structure:Code>
+        <structure:Code id="4">
+          <common:Name xml:lang="en">Four</common:Name>
+        </structure:Code>
+        <structure:Code id="5">
+          <common:Name xml:lang="en">Five</common:Name>
+        </structure:Code>
+        <structure:Code id="6">
+          <common:Name xml:lang="en">Six</common:Name>
+        </structure:Code>
+        <structure:Code id="7">
+          <common:Name xml:lang="en">Seven</common:Name>
+        </structure:Code>
+        <structure:Code id="8">
+          <common:Name xml:lang="en">Eight</common:Name>
+        </structure:Code>
+      </structure:Codelist>
+      <structure:Codelist id="CL_FREQ" agencyID="ABS" version="1.0.0" isFinal="true">
+        <common:Name xml:lang="en">Frequency</common:Name>
+        <structure:Code id="H">
+          <common:Name xml:lang="en">Hourly</common:Name>
+          <common:Description xml:lang="en">To be used for data collected or disseminated every hour.</common:Description>
+        </structure:Code>
+        <structure:Code id="D">
+          <common:Name xml:lang="en">Daily</common:Name>
+          <common:Description xml:lang="en">To be used for data collected or disseminated every day.</common:Description>
+        </structure:Code>
+        <structure:Code id="N">
+          <common:Name xml:lang="en">Minutely</common:Name>
+          <common:Description xml:lang="en">While N denotes "minutely", usually, there may be no observations every minute (for several series the frequency is usually "irregular" within a day/days). And though observations may be sparse (not collected or disseminated every minute), missing values do not need to be given for the minutes when no observations exist: in any case the time stamp determines when an observation is observed.</common:Description>
+        </structure:Code>
+        <structure:Code id="B">
+          <common:Name xml:lang="en">Daily or businessweek</common:Name>
+          <common:Description xml:lang="en">Similar to "daily", however there are no observations for Saturdays and Sundays (so, neither "missing values" nor "numeric values" should be provided for Saturday and Sunday). This treatment ("business") is one way to deal with such cases, but it is not the only option. Such a time series could alternatively be considered daily ("D"), thus, with missing values in the weekend.</common:Description>
+        </structure:Code>
+        <structure:Code id="W">
+          <common:Name xml:lang="en">Weekly</common:Name>
+          <common:Description xml:lang="en">To be used for data collected or disseminated every week.</common:Description>
+        </structure:Code>
+        <structure:Code id="S">
+          <common:Name xml:lang="en">Half-yearly, semester</common:Name>
+          <common:Description xml:lang="en">To be used for data collected or disseminated every semester.</common:Description>
+        </structure:Code>
+        <structure:Code id="A">
+          <common:Name xml:lang="en">Annual</common:Name>
+          <common:Description xml:lang="en">To be used for data collected or disseminated every year.</common:Description>
+        </structure:Code>
+        <structure:Code id="M">
+          <common:Name xml:lang="en">Monthly</common:Name>
+          <common:Description xml:lang="en">To be used for data collected or disseminated every month.</common:Description>
+        </structure:Code>
+        <structure:Code id="Q">
+          <common:Name xml:lang="en">Quarterly</common:Name>
+          <common:Description xml:lang="en">To be used for data collected or disseminated every quarter.</common:Description>
+        </structure:Code>
+      </structure:Codelist>
+      <structure:Codelist id="CL_LF_AGE" agencyID="ABS" version="1.0.0" isFinal="true">
+        <common:Name xml:lang="en">Labour Force Age</common:Name>
+        <structure:Code id="1599">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">600</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">Total (age)</common:Name>
+          <common:Description xml:lang="en">Total (age)</common:Description>
+        </structure:Code>
+        <structure:Code id="1564">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">500</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">15 - 64 years</common:Name>
+          <structure:Parent>
+            <Ref id="1599" />
+          </structure:Parent>
+        </structure:Code>
+        <structure:Code id="1524">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">115</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">15 - 24 years</common:Name>
+          <common:Description xml:lang="en">15 - 24 years</common:Description>
+          <structure:Parent>
+            <Ref id="1564" />
+          </structure:Parent>
+        </structure:Code>
+        <structure:Code id="1519">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">100</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">15 - 19 years</common:Name>
+          <common:Description xml:lang="en">15 - 19 years</common:Description>
+          <structure:Parent>
+            <Ref id="1524" />
+          </structure:Parent>
+        </structure:Code>
+        <structure:Code id="15">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">15</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">15</common:Name>
+          <common:Description xml:lang="en">15</common:Description>
+          <structure:Parent>
+            <Ref id="1519" />
+          </structure:Parent>
+        </structure:Code>
+        <structure:Code id="16">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">16</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">16</common:Name>
+          <common:Description xml:lang="en">16</common:Description>
+          <structure:Parent>
+            <Ref id="1519" />
+          </structure:Parent>
+        </structure:Code>
+        <structure:Code id="17">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">17</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">17</common:Name>
+          <common:Description xml:lang="en">17</common:Description>
+          <structure:Parent>
+            <Ref id="1519" />
+          </structure:Parent>
+        </structure:Code>
+        <structure:Code id="18">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">18</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">18</common:Name>
+          <common:Description xml:lang="en">18</common:Description>
+          <structure:Parent>
+            <Ref id="1519" />
+          </structure:Parent>
+        </structure:Code>
+        <structure:Code id="19">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">19</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">19</common:Name>
+          <common:Description xml:lang="en">19</common:Description>
+          <structure:Parent>
+            <Ref id="1519" />
+          </structure:Parent>
+        </structure:Code>
+        <structure:Code id="2024">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">110</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">20 - 24 years</common:Name>
+          <common:Description xml:lang="en">20 - 24 years</common:Description>
+          <structure:Parent>
+            <Ref id="1524" />
+          </structure:Parent>
+        </structure:Code>
+        <structure:Code id="20">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">20</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">20</common:Name>
+          <common:Description xml:lang="en">20</common:Description>
+          <structure:Parent>
+            <Ref id="2024" />
+          </structure:Parent>
+        </structure:Code>
+        <structure:Code id="21">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">21</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">21</common:Name>
+          <common:Description xml:lang="en">21</common:Description>
+          <structure:Parent>
+            <Ref id="2024" />
+          </structure:Parent>
+        </structure:Code>
+        <structure:Code id="22">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">22</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">22</common:Name>
+          <common:Description xml:lang="en">22</common:Description>
+          <structure:Parent>
+            <Ref id="2024" />
+          </structure:Parent>
+        </structure:Code>
+        <structure:Code id="23">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">23</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">23</common:Name>
+          <common:Description xml:lang="en">23</common:Description>
+          <structure:Parent>
+            <Ref id="2024" />
+          </structure:Parent>
+        </structure:Code>
+        <structure:Code id="24">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">24</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">24</common:Name>
+          <common:Description xml:lang="en">24</common:Description>
+          <structure:Parent>
+            <Ref id="2024" />
+          </structure:Parent>
+        </structure:Code>
+        <structure:Code id="2534">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">135</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">25 - 34 years</common:Name>
+          <common:Description xml:lang="en">25 - 34 years</common:Description>
+          <structure:Parent>
+            <Ref id="1564" />
+          </structure:Parent>
+        </structure:Code>
+        <structure:Code id="2529">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">120</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">25 - 29 years</common:Name>
+          <common:Description xml:lang="en">25 - 29 years</common:Description>
+          <structure:Parent>
+            <Ref id="2534" />
+          </structure:Parent>
+        </structure:Code>
+        <structure:Code id="3034">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">130</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">30 - 34 years</common:Name>
+          <common:Description xml:lang="en">30 - 34 years</common:Description>
+          <structure:Parent>
+            <Ref id="2534" />
+          </structure:Parent>
+        </structure:Code>
+        <structure:Code id="3544">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">155</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">35 - 44 years</common:Name>
+          <common:Description xml:lang="en">35 - 44 years</common:Description>
+          <structure:Parent>
+            <Ref id="1564" />
+          </structure:Parent>
+        </structure:Code>
+        <structure:Code id="3539">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">140</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">35 - 39 years</common:Name>
+          <common:Description xml:lang="en">35 - 39 years</common:Description>
+          <structure:Parent>
+            <Ref id="3544" />
+          </structure:Parent>
+        </structure:Code>
+        <structure:Code id="4044">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">150</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">40 - 44 years</common:Name>
+          <common:Description xml:lang="en">40 - 44 years</common:Description>
+          <structure:Parent>
+            <Ref id="3544" />
+          </structure:Parent>
+        </structure:Code>
+        <structure:Code id="4554">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">175</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">45 - 54 years</common:Name>
+          <common:Description xml:lang="en">45 - 54 years</common:Description>
+          <structure:Parent>
+            <Ref id="1564" />
+          </structure:Parent>
+        </structure:Code>
+        <structure:Code id="4549">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">160</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">45 - 49 years</common:Name>
+          <common:Description xml:lang="en">45 - 49 years</common:Description>
+          <structure:Parent>
+            <Ref id="4554" />
+          </structure:Parent>
+        </structure:Code>
+        <structure:Code id="5054">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">170</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">50 - 54 years</common:Name>
+          <common:Description xml:lang="en">50 - 54 years</common:Description>
+          <structure:Parent>
+            <Ref id="4554" />
+          </structure:Parent>
+        </structure:Code>
+        <structure:Code id="5564">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">195</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">55 - 64 years</common:Name>
+          <common:Description xml:lang="en">55 - 64 years</common:Description>
+          <structure:Parent>
+            <Ref id="1564" />
+          </structure:Parent>
+        </structure:Code>
+        <structure:Code id="5559">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">180</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">55 - 59 years</common:Name>
+          <common:Description xml:lang="en">55 - 59 years</common:Description>
+          <structure:Parent>
+            <Ref id="5564" />
+          </structure:Parent>
+        </structure:Code>
+        <structure:Code id="6064">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">190</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">60 - 64 years</common:Name>
+          <common:Description xml:lang="en">60 - 64 years</common:Description>
+          <structure:Parent>
+            <Ref id="5564" />
+          </structure:Parent>
+        </structure:Code>
+        <structure:Code id="5599">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">230</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">55 years and over</common:Name>
+        </structure:Code>
+        <structure:Code id="6599">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">220</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">65 years and over</common:Name>
+          <common:Description xml:lang="en">65 years and over</common:Description>
+          <structure:Parent>
+            <Ref id="1599" />
+          </structure:Parent>
+        </structure:Code>
+        <structure:Code id="6569">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">200</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">65 - 69 years</common:Name>
+          <common:Description xml:lang="en">65 - 69 years</common:Description>
+          <structure:Parent>
+            <Ref id="6599" />
+          </structure:Parent>
+        </structure:Code>
+        <structure:Code id="7099">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">210</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">70 years and over</common:Name>
+          <common:Description xml:lang="en">70 years and over</common:Description>
+          <structure:Parent>
+            <Ref id="6599" />
+          </structure:Parent>
+        </structure:Code>
+      </structure:Codelist>
+      <structure:Codelist id="CL_LF_MEASURE" agencyID="ABS" version="1.0.0" isFinal="true">
+        <common:Name xml:lang="en">Labour Force Measures</common:Name>
+        <structure:Code id="M1">
+          <common:Name xml:lang="en">Employed - full-time</common:Name>
+        </structure:Code>
+        <structure:Code id="M2">
+          <common:Name xml:lang="en">Employed - part-time</common:Name>
+        </structure:Code>
+        <structure:Code id="M3">
+          <common:Name xml:lang="en">Employed persons</common:Name>
+        </structure:Code>
+        <structure:Code id="M4">
+          <common:Name xml:lang="en">Unemployed - looking for full-time work</common:Name>
+        </structure:Code>
+        <structure:Code id="M5">
+          <common:Name xml:lang="en">Unemployed - looking for part-time work</common:Name>
+        </structure:Code>
+        <structure:Code id="M6">
+          <common:Name xml:lang="en">Unemployed persons</common:Name>
+        </structure:Code>
+        <structure:Code id="M7">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>FURTHER_INFORMATION</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">Number of persons in the Labour Force as either employed full-time or unemployed and seeking full-time employment</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">Labour Force - Full-time</common:Name>
+        </structure:Code>
+        <structure:Code id="M8">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>FURTHER_INFORMATION</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">Persons in the Labour Force either employed part-time or unemployed and seeking part-time employment</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">Labour Force - Part-time</common:Name>
+        </structure:Code>
+        <structure:Code id="M9">
+          <common:Name xml:lang="en">Labour Force</common:Name>
+        </structure:Code>
+        <structure:Code id="M10">
+          <common:Name xml:lang="en">Not in the Labour Force</common:Name>
+        </structure:Code>
+        <structure:Code id="M11">
+          <common:Name xml:lang="en">Civilian population</common:Name>
+        </structure:Code>
+        <structure:Code id="M12">
+          <common:Name xml:lang="en">Participation rate</common:Name>
+        </structure:Code>
+        <structure:Code id="M13">
+          <common:Name xml:lang="en">Unemployment rate</common:Name>
+        </structure:Code>
+        <structure:Code id="M14">
+          <common:Name xml:lang="en">Unemployment rate - looking for full-time work</common:Name>
+        </structure:Code>
+        <structure:Code id="M15">
+          <common:Name xml:lang="en">Unemployment rate - looking for part-time work</common:Name>
+        </structure:Code>
+        <structure:Code id="M16">
+          <common:Name xml:lang="en">Employment to population ratio</common:Name>
+        </structure:Code>
+        <structure:Code id="M17">
+          <common:Name xml:lang="en">Unemployment to population ratio - looking for full time work</common:Name>
+        </structure:Code>
+        <structure:Code id="M18">
+          <common:Name xml:lang="en">Employed Persons - Monthly hours worked in all jobs</common:Name>
+        </structure:Code>
+        <structure:Code id="M19">
+          <common:Name xml:lang="en">Full-time Employed - Monthly hours worked in all jobs</common:Name>
+        </structure:Code>
+        <structure:Code id="M20">
+          <common:Name xml:lang="en">Part-time Employed - Monthly hours worked in all jobs</common:Name>
+        </structure:Code>
+        <structure:Code id="M21">
+          <common:Name xml:lang="en">Underemployed total</common:Name>
+        </structure:Code>
+        <structure:Code id="M22">
+          <common:Name xml:lang="en">Underemployment ratio (proportion of employed)</common:Name>
+        </structure:Code>
+        <structure:Code id="M23">
+          <common:Name xml:lang="en">Underemployment rate (proportion of labour force)</common:Name>
+        </structure:Code>
+        <structure:Code id="M24">
+          <common:Name xml:lang="en">Underutilisation rate</common:Name>
+        </structure:Code>
+        <structure:Code id="M25">
+          <common:Name xml:lang="en">Underemployed full-time (worked part-time for economic reasons)</common:Name>
+        </structure:Code>
+        <structure:Code id="M26">
+          <common:Name xml:lang="en">Underemployed part-time (prefer more hours)</common:Name>
+        </structure:Code>
+        <structure:Code id="M27">
+          <common:Name xml:lang="en">Underemployed full-time (expanded analytical series)</common:Name>
+        </structure:Code>
+        <structure:Code id="M28">
+          <common:Name xml:lang="en">Underemployed part-time (expanded analytical series)</common:Name>
+        </structure:Code>
+        <structure:Code id="M29">
+          <common:Name xml:lang="en">Underemployed total (expanded analytical series)</common:Name>
+        </structure:Code>
+        <structure:Code id="M30">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>FURTHER_INFORMATION</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">Includes usually works full-time, worked more than 35 hours but less than usual for economic reasons</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">Underemployed full-time (prefer more hours)</common:Name>
+        </structure:Code>
+        <structure:Code id="M31">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>FURTHER_INFORMATION</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">Did not prefer or was unavailable for more hours</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">Underemployed part-time (worked less than usual hours for economic reasons)</common:Name>
+        </structure:Code>
+      </structure:Codelist>
+      <structure:Codelist id="CL_OBS_STATUS" agencyID="ABS" version="1.0.0" isFinal="true">
+        <common:Name xml:lang="en">Observation Status</common:Name>
+        <structure:Code id="k">
+          <common:Name xml:lang="en">estimate</common:Name>
+        </structure:Code>
+        <structure:Code id="l">
+          <common:Name xml:lang="en">not elsewhere included</common:Name>
+        </structure:Code>
+        <structure:Code id="m">
+          <common:Name xml:lang="en">not recorded</common:Name>
+        </structure:Code>
+        <structure:Code id="n">
+          <common:Name xml:lang="en">not available for publication but included in totals where applicable, unless otherwise indicated</common:Name>
+        </structure:Code>
+        <structure:Code id="o">
+          <common:Name xml:lang="en">nil or rounded to zero, including null cells</common:Name>
+        </structure:Code>
+        <structure:Code id="p">
+          <common:Name xml:lang="en">preliminary figure or series subject to revision</common:Name>
+        </structure:Code>
+        <structure:Code id="q">
+          <common:Name xml:lang="en">not available</common:Name>
+        </structure:Code>
+        <structure:Code id="r">
+          <common:Name xml:lang="en">revised</common:Name>
+        </structure:Code>
+        <structure:Code id="s">
+          <common:Name xml:lang="en">not currently available due to break in time series</common:Name>
+        </structure:Code>
+        <structure:Code id="t">
+          <common:Name xml:lang="en">not yet available</common:Name>
+        </structure:Code>
+        <structure:Code id="u">
+          <common:Name xml:lang="en">not applicable</common:Name>
+        </structure:Code>
+        <structure:Code id="v">
+          <common:Name xml:lang="en">not available for publication but included in totals where applicable, unless otherwise indicated</common:Name>
+        </structure:Code>
+        <structure:Code id="w">
+          <common:Name xml:lang="en">estimate is subject to sampling variability too high for most practical purposes</common:Name>
+        </structure:Code>
+        <structure:Code id="x">
+          <common:Name xml:lang="en">estimate has a relative standard error of 10% to less than 25% and should be used with caution</common:Name>
+        </structure:Code>
+        <structure:Code id="y">
+          <common:Name xml:lang="en">estimate has a relative standard error between 25% and 50% and should be used with caution</common:Name>
+        </structure:Code>
+        <structure:Code id="z">
+          <common:Name xml:lang="en">estimate has a relative standard error greater than 50% and is considered too unreliable for general use</common:Name>
+        </structure:Code>
+      </structure:Codelist>
+      <structure:Codelist id="CL_SEX" agencyID="ABS" version="1.0.0" isFinal="true">
+        <common:Name xml:lang="en">Sex</common:Name>
+        <structure:Code id="3">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">3</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">Persons</common:Name>
+        </structure:Code>
+        <structure:Code id="1">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">1</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">Males</common:Name>
+          <structure:Parent>
+            <Ref id="3" />
+          </structure:Parent>
+        </structure:Code>
+        <structure:Code id="2">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">2</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">Females</common:Name>
+          <structure:Parent>
+            <Ref id="3" />
+          </structure:Parent>
+        </structure:Code>
+      </structure:Codelist>
+      <structure:Codelist id="CL_STATE" agencyID="ABS" version="1.0.0" isFinal="true">
+        <common:Name xml:lang="en">State</common:Name>
+        <structure:Code id="AUS">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">10</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">Australia</common:Name>
+        </structure:Code>
+        <structure:Code id="1">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">20</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">New South Wales</common:Name>
+          <structure:Parent>
+            <Ref id="AUS" />
+          </structure:Parent>
+        </structure:Code>
+        <structure:Code id="2">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">30</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">Victoria</common:Name>
+          <structure:Parent>
+            <Ref id="AUS" />
+          </structure:Parent>
+        </structure:Code>
+        <structure:Code id="3">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">40</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">Queensland</common:Name>
+          <structure:Parent>
+            <Ref id="AUS" />
+          </structure:Parent>
+        </structure:Code>
+        <structure:Code id="4">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">50</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">South Australia</common:Name>
+          <structure:Parent>
+            <Ref id="AUS" />
+          </structure:Parent>
+        </structure:Code>
+        <structure:Code id="5">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">60</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">Western Australia</common:Name>
+          <structure:Parent>
+            <Ref id="AUS" />
+          </structure:Parent>
+        </structure:Code>
+        <structure:Code id="6">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">70</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">Tasmania</common:Name>
+          <structure:Parent>
+            <Ref id="AUS" />
+          </structure:Parent>
+        </structure:Code>
+        <structure:Code id="7">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">80</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">Northern Territory</common:Name>
+          <structure:Parent>
+            <Ref id="AUS" />
+          </structure:Parent>
+        </structure:Code>
+        <structure:Code id="8">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">90</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">Australian Capital Territory</common:Name>
+          <structure:Parent>
+            <Ref id="AUS" />
+          </structure:Parent>
+        </structure:Code>
+        <structure:Code id="9">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">100</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">Other Territories</common:Name>
+          <structure:Parent>
+            <Ref id="AUS" />
+          </structure:Parent>
+        </structure:Code>
+      </structure:Codelist>
+      <structure:Codelist id="CL_TSEST" agencyID="ABS" version="1.0.0" isFinal="true">
+        <common:Name xml:lang="en">Time Series Estimates</common:Name>
+        <structure:Code id="10">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">1</common:AnnotationText>
+            </common:Annotation>
+            <common:Annotation>
+              <common:AnnotationType>FULL_NAME</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">Original</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">Original</common:Name>
+          <common:Description xml:lang="en">Original</common:Description>
+        </structure:Code>
+        <structure:Code id="20">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">2</common:AnnotationText>
+            </common:Annotation>
+            <common:Annotation>
+              <common:AnnotationType>FULL_NAME</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">Seasonally Adjusted</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">Seasonally Adjusted</common:Name>
+          <common:Description xml:lang="en">Seasonally Adjusted</common:Description>
+        </structure:Code>
+        <structure:Code id="30">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">3</common:AnnotationText>
+            </common:Annotation>
+            <common:Annotation>
+              <common:AnnotationType>FULL_NAME</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">Trend</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">Trend</common:Name>
+          <common:Description xml:lang="en">Trend</common:Description>
+        </structure:Code>
+        <structure:Code id="40">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">4</common:AnnotationText>
+            </common:Annotation>
+            <common:Annotation>
+              <common:AnnotationType>FULL_NAME</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">Sensitivity Upper</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">Sensitivity Upper</common:Name>
+          <common:Description xml:lang="en">Sensitivity Upper</common:Description>
+        </structure:Code>
+        <structure:Code id="50">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>ORDER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">5</common:AnnotationText>
+            </common:Annotation>
+            <common:Annotation>
+              <common:AnnotationType>FULL_NAME</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">Sensitivity Lower</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">Sensitivity Lower</common:Name>
+          <common:Description xml:lang="en">Sensitivity Lower</common:Description>
+        </structure:Code>
+      </structure:Codelist>
+      <structure:Codelist id="CL_UNIT_MEASURE" agencyID="ABS" version="1.0.0" isFinal="true">
+        <common:Name xml:lang="en">Unit of Measure</common:Name>
+        <structure:Code id="AUD">
+          <common:Name xml:lang="en">Australian Dollars</common:Name>
+        </structure:Code>
+        <structure:Code id="NUM">
+          <common:Name xml:lang="en">Number</common:Name>
+        </structure:Code>
+        <structure:Code id="PCT">
+          <common:Name xml:lang="en">Percent</common:Name>
+        </structure:Code>
+        <structure:Code id="PCT_PTS">
+          <common:Name xml:lang="en">Percentage Points</common:Name>
+        </structure:Code>
+        <structure:Code id="PROP">
+          <common:Name xml:lang="en">Proportion</common:Name>
+        </structure:Code>
+        <structure:Code id="IN">
+          <common:Name xml:lang="en">Index Numbers</common:Name>
+        </structure:Code>
+        <structure:Code id="IP">
+          <common:Name xml:lang="en">Index Points</common:Name>
+        </structure:Code>
+        <structure:Code id="VAR">
+          <common:Name xml:lang="en">Variance</common:Name>
+        </structure:Code>
+        <structure:Code id="NA">
+          <common:Name xml:lang="en">Not Applicable</common:Name>
+        </structure:Code>
+        <structure:Code id="PSNS">
+          <common:Name xml:lang="en">Persons</common:Name>
+        </structure:Code>
+        <structure:Code id="PSN_YR">
+          <common:Name xml:lang="en">Person Years</common:Name>
+        </structure:Code>
+        <structure:Code id="JOB">
+          <common:Name xml:lang="en">Jobs</common:Name>
+        </structure:Code>
+        <structure:Code id="M_G">
+          <common:Name xml:lang="en">Milligrams</common:Name>
+        </structure:Code>
+        <structure:Code id="G">
+          <common:Name xml:lang="en">Grams</common:Name>
+        </structure:Code>
+        <structure:Code id="KG">
+          <common:Name xml:lang="en">Kilograms</common:Name>
+        </structure:Code>
+        <structure:Code id="CT">
+          <common:Name xml:lang="en">Carat (metric)</common:Name>
+        </structure:Code>
+        <structure:Code id="MCT">
+          <common:Name xml:lang="en">Megacarat (metric)</common:Name>
+        </structure:Code>
+        <structure:Code id="T">
+          <common:Name xml:lang="en">Tonnes</common:Name>
+        </structure:Code>
+        <structure:Code id="MT">
+          <common:Name xml:lang="en">Megatonnes</common:Name>
+        </structure:Code>
+        <structure:Code id="GT">
+          <common:Name xml:lang="en">Gigatonnes</common:Name>
+        </structure:Code>
+        <structure:Code id="TKM">
+          <common:Name xml:lang="en">Tonnes-kilometres</common:Name>
+        </structure:Code>
+        <structure:Code id="M_M">
+          <common:Name xml:lang="en">Millimetres</common:Name>
+        </structure:Code>
+        <structure:Code id="M">
+          <common:Name xml:lang="en">Metres</common:Name>
+        </structure:Code>
+        <structure:Code id="KM">
+          <common:Name xml:lang="en">Kilometres</common:Name>
+        </structure:Code>
+        <structure:Code id="SQM">
+          <common:Name xml:lang="en">Square Metres</common:Name>
+        </structure:Code>
+        <structure:Code id="SQKM">
+          <common:Name xml:lang="en">Square Kilometres</common:Name>
+        </structure:Code>
+        <structure:Code id="HA">
+          <common:Name xml:lang="en">Hectares</common:Name>
+        </structure:Code>
+        <structure:Code id="CBM">
+          <common:Name xml:lang="en">Cubic Metres</common:Name>
+        </structure:Code>
+        <structure:Code id="L">
+          <common:Name xml:lang="en">Litres</common:Name>
+        </structure:Code>
+        <structure:Code id="KL">
+          <common:Name xml:lang="en">Kilolitres</common:Name>
+        </structure:Code>
+        <structure:Code id="ML">
+          <common:Name xml:lang="en">Megalitres</common:Name>
+        </structure:Code>
+        <structure:Code id="GL">
+          <common:Name xml:lang="en">Gigalitres</common:Name>
+        </structure:Code>
+        <structure:Code id="A">
+          <common:Name xml:lang="en">Ampere</common:Name>
+        </structure:Code>
+        <structure:Code id="KVA">
+          <common:Name xml:lang="en">Kilovolt Amperes</common:Name>
+        </structure:Code>
+        <structure:Code id="W">
+          <common:Name xml:lang="en">Watts</common:Name>
+        </structure:Code>
+        <structure:Code id="KW">
+          <common:Name xml:lang="en">Kilowatts</common:Name>
+        </structure:Code>
+        <structure:Code id="KWH">
+          <common:Name xml:lang="en">Kilowatt Hours</common:Name>
+        </structure:Code>
+        <structure:Code id="GWH">
+          <common:Name xml:lang="en">Gigawatt Hours</common:Name>
+        </structure:Code>
+        <structure:Code id="J">
+          <common:Name xml:lang="en">Joules</common:Name>
+        </structure:Code>
+        <structure:Code id="KJ">
+          <common:Name xml:lang="en">Kilojoules</common:Name>
+        </structure:Code>
+        <structure:Code id="MJ">
+          <common:Name xml:lang="en">Megajoules</common:Name>
+        </structure:Code>
+        <structure:Code id="GJ">
+          <common:Name xml:lang="en">Gigajoules</common:Name>
+        </structure:Code>
+        <structure:Code id="TJ">
+          <common:Name xml:lang="en">Terajoules</common:Name>
+        </structure:Code>
+        <structure:Code id="PJ">
+          <common:Name xml:lang="en">Petajoules</common:Name>
+        </structure:Code>
+        <structure:Code id="C">
+          <common:Name xml:lang="en">Coulumb</common:Name>
+        </structure:Code>
+        <structure:Code id="CD">
+          <common:Name xml:lang="en">Candela</common:Name>
+        </structure:Code>
+        <structure:Code id="K">
+          <common:Name xml:lang="en">Kelvin</common:Name>
+        </structure:Code>
+        <structure:Code id="DEG_CEL">
+          <common:Name xml:lang="en">Degrees Celsius</common:Name>
+        </structure:Code>
+        <structure:Code id="S">
+          <common:Name xml:lang="en">Seconds</common:Name>
+        </structure:Code>
+        <structure:Code id="MIN">
+          <common:Name xml:lang="en">Minutes</common:Name>
+        </structure:Code>
+        <structure:Code id="HR">
+          <common:Name xml:lang="en">Hours</common:Name>
+        </structure:Code>
+        <structure:Code id="DAY">
+          <common:Name xml:lang="en">Days</common:Name>
+        </structure:Code>
+        <structure:Code id="WK">
+          <common:Name xml:lang="en">Weeks</common:Name>
+        </structure:Code>
+        <structure:Code id="MTH">
+          <common:Name xml:lang="en">Months</common:Name>
+        </structure:Code>
+        <structure:Code id="YR">
+          <common:Name xml:lang="en">Years</common:Name>
+        </structure:Code>
+        <structure:Code id="B">
+          <common:Name xml:lang="en">Bytes</common:Name>
+        </structure:Code>
+        <structure:Code id="KB">
+          <common:Name xml:lang="en">Kilobytes</common:Name>
+        </structure:Code>
+        <structure:Code id="MB">
+          <common:Name xml:lang="en">Megabytes</common:Name>
+        </structure:Code>
+        <structure:Code id="GB">
+          <common:Name xml:lang="en">Gigabytes</common:Name>
+        </structure:Code>
+        <structure:Code id="TB">
+          <common:Name xml:lang="en">Terabytes</common:Name>
+        </structure:Code>
+        <structure:Code id="DEG">
+          <common:Name xml:lang="en">Degrees</common:Name>
+        </structure:Code>
+        <structure:Code id="RAD">
+          <common:Name xml:lang="en">Radians</common:Name>
+        </structure:Code>
+        <structure:Code id="DOZ">
+          <common:Name xml:lang="en">Dozen</common:Name>
+        </structure:Code>
+        <structure:Code id="PR">
+          <common:Name xml:lang="en">Pairs</common:Name>
+        </structure:Code>
+        <structure:Code id="ROOM">
+          <common:Name xml:lang="en">Rooms</common:Name>
+        </structure:Code>
+        <structure:Code id="SITE">
+          <common:Name xml:lang="en">Sites</common:Name>
+        </structure:Code>
+        <structure:Code id="BUNDLE">
+          <common:Name xml:lang="en">Bundles</common:Name>
+        </structure:Code>
+        <structure:Code id="CARTON">
+          <common:Name xml:lang="en">Cartons</common:Name>
+        </structure:Code>
+        <structure:Code id="UNK">
+          <common:Name xml:lang="en">Unknown</common:Name>
+        </structure:Code>
+        <structure:Code id="GBP">
+          <common:Name xml:lang="en">Pound Sterling</common:Name>
+        </structure:Code>
+        <structure:Code id="CENT">
+          <common:Name xml:lang="en">Cents</common:Name>
+        </structure:Code>
+        <structure:Code id="FAM">
+          <common:Name xml:lang="en">Families</common:Name>
+        </structure:Code>
+        <structure:Code id="HH">
+          <common:Name xml:lang="en">Households</common:Name>
+        </structure:Code>
+        <structure:Code id="RATE">
+          <common:Name xml:lang="en">Rate</common:Name>
+        </structure:Code>
+        <structure:Code id="AUD_PER_EMP">
+          <common:Name xml:lang="en">Australian Dollars per Employee</common:Name>
+        </structure:Code>
+        <structure:Code id="AUD_PER_PSN">
+          <common:Name xml:lang="en">Australian Dollars per Person</common:Name>
+        </structure:Code>
+        <structure:Code id="AUD_PER_KL">
+          <common:Name xml:lang="en">Australian Dollars per Kilolitre</common:Name>
+        </structure:Code>
+        <structure:Code id="AUD_PER_KG">
+          <common:Name xml:lang="en">Australian Dollars per Kilogram</common:Name>
+        </structure:Code>
+        <structure:Code id="AUD_PER_T">
+          <common:Name xml:lang="en">Australian Dollars per Tonne</common:Name>
+        </structure:Code>
+        <structure:Code id="AUD_PER_CT">
+          <common:Name xml:lang="en">Australian Dollars per Carat</common:Name>
+        </structure:Code>
+        <structure:Code id="AUD_PER_SQM">
+          <common:Name xml:lang="en">Australian Dollars per Square Metre</common:Name>
+        </structure:Code>
+        <structure:Code id="AUD_PER_1000CBM">
+          <common:Name xml:lang="en">Australian Dollars per thousand cubic metres</common:Name>
+        </structure:Code>
+        <structure:Code id="L_PER_100KM">
+          <common:Name xml:lang="en">Litres per 100 Kilometres</common:Name>
+        </structure:Code>
+        <structure:Code id="L_PER_KM">
+          <common:Name xml:lang="en">Litres per Kilometre</common:Name>
+        </structure:Code>
+        <structure:Code id="ML_PER_HA">
+          <common:Name xml:lang="en">Megalitres per Hectare</common:Name>
+        </structure:Code>
+        <structure:Code id="T_PER_HA">
+          <common:Name xml:lang="en">Tonnes per Hectare</common:Name>
+        </structure:Code>
+        <structure:Code id="PSNS_PER_SQKM">
+          <common:Name xml:lang="en">Persons per Square Kilometre</common:Name>
+        </structure:Code>
+        <structure:Code id="KG_PER_TREE">
+          <common:Name xml:lang="en">Kilograms per Tree</common:Name>
+        </structure:Code>
+      </structure:Codelist>
+      <structure:Codelist id="CL_UNIT_MULT" agencyID="ABS" version="1.0.0" isFinal="true">
+        <common:Name xml:lang="en">Unit Multiplier</common:Name>
+        <structure:Code id="0">
+          <common:Name xml:lang="en">Units</common:Name>
+        </structure:Code>
+        <structure:Code id="1">
+          <common:Name xml:lang="en">Tens</common:Name>
+        </structure:Code>
+        <structure:Code id="2">
+          <common:Name xml:lang="en">Hundreds</common:Name>
+        </structure:Code>
+        <structure:Code id="3">
+          <common:Name xml:lang="en">Thousands</common:Name>
+        </structure:Code>
+        <structure:Code id="4">
+          <common:Name xml:lang="en">Tens of thousands</common:Name>
+        </structure:Code>
+        <structure:Code id="5">
+          <common:Name xml:lang="en">Hundreds of thousands</common:Name>
+        </structure:Code>
+        <structure:Code id="6">
+          <common:Name xml:lang="en">Millions</common:Name>
+        </structure:Code>
+        <structure:Code id="7">
+          <common:Name xml:lang="en">Tens of millions</common:Name>
+        </structure:Code>
+        <structure:Code id="8">
+          <common:Name xml:lang="en">Hundreds of millions</common:Name>
+        </structure:Code>
+        <structure:Code id="9">
+          <common:Name xml:lang="en">Billions</common:Name>
+        </structure:Code>
+        <structure:Code id="10">
+          <common:Name xml:lang="en">Tens of billions</common:Name>
+        </structure:Code>
+        <structure:Code id="11">
+          <common:Name xml:lang="en">Hundreds of billions</common:Name>
+        </structure:Code>
+        <structure:Code id="12">
+          <common:Name xml:lang="en">Trillions</common:Name>
+        </structure:Code>
+        <structure:Code id="13">
+          <common:Name xml:lang="en">Tens of trillions</common:Name>
+        </structure:Code>
+        <structure:Code id="14">
+          <common:Name xml:lang="en">Hundred of trillions</common:Name>
+        </structure:Code>
+        <structure:Code id="15">
+          <common:Name xml:lang="en">Quadrillions</common:Name>
+        </structure:Code>
+        <structure:Code id="-1">
+          <common:Name xml:lang="en">Tenths</common:Name>
+        </structure:Code>
+        <structure:Code id="-2">
+          <common:Name xml:lang="en">Hundredths</common:Name>
+        </structure:Code>
+        <structure:Code id="-3">
+          <common:Name xml:lang="en">Thousandths</common:Name>
+        </structure:Code>
+        <structure:Code id="-4">
+          <common:Name xml:lang="en">Ten-thousandths</common:Name>
+        </structure:Code>
+        <structure:Code id="-5">
+          <common:Name xml:lang="en">Hundred-thousandths</common:Name>
+        </structure:Code>
+        <structure:Code id="-6">
+          <common:Name xml:lang="en">Millionths</common:Name>
+        </structure:Code>
+        <structure:Code id="-7">
+          <common:Name xml:lang="en">Ten-millionths</common:Name>
+        </structure:Code>
+        <structure:Code id="-8">
+          <common:Name xml:lang="en">Hundred-millionths</common:Name>
+        </structure:Code>
+        <structure:Code id="-9">
+          <common:Name xml:lang="en">Billionths</common:Name>
+        </structure:Code>
+        <structure:Code id="-10">
+          <common:Name xml:lang="en">Ten-billionths</common:Name>
+        </structure:Code>
+        <structure:Code id="-11">
+          <common:Name xml:lang="en">Hundred-billionths</common:Name>
+        </structure:Code>
+        <structure:Code id="-12">
+          <common:Name xml:lang="en">Trillionths</common:Name>
+        </structure:Code>
+        <structure:Code id="-13">
+          <common:Name xml:lang="en">Ten-trillionths</common:Name>
+        </structure:Code>
+        <structure:Code id="-14">
+          <common:Name xml:lang="en">Hundred-trillionths</common:Name>
+        </structure:Code>
+        <structure:Code id="-15">
+          <common:Name xml:lang="en">Quadrillionths</common:Name>
+        </structure:Code>
+      </structure:Codelist>
+    </structure:Codelists>
+    <structure:Concepts>
+      <structure:ConceptScheme id="CS_ATTRIBUTE" agencyID="ABS" version="1.0.0" isFinal="true">
+        <common:Name xml:lang="en">Attribute Concepts</common:Name>
+        <structure:Concept id="UNIT_MEASURE">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>CONTEXT</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">If a unit multiplier exists the data is recorded according to the combination of the unit multiplier and the unit of measure.</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">Unit of Measure</common:Name>
+          <common:Description xml:lang="en">Base unit in which the observation value is expressed.</common:Description>
+        </structure:Concept>
+        <structure:Concept id="UNIT_MULT">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>CONTEXT</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">Codes for unit of multiplier are the exponent in base 10 so that multiplying the observation by 10^UNIT_MULT gives a value expressed in the unit of measure.</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">Unit of Multiplier</common:Name>
+          <common:Description xml:lang="en">The multiple of the unit of measure for which the data is expressed.</common:Description>
+        </structure:Concept>
+        <structure:Concept id="OBS_STATUS">
+          <common:Name xml:lang="en">Observation Status</common:Name>
+        </structure:Concept>
+        <structure:Concept id="OBS_COMMENT">
+          <common:Name xml:lang="en">Observation Comment</common:Name>
+        </structure:Concept>
+        <structure:Concept id="REPYEAREND">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>CONTEXT</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">The use of reporting year end day also specifies that the reporting period of YYYY-A1 references an earlier period (e.g. 2018-A1 will be equivalent to 2017/18 and not 2018/19).</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">Reporting Year End Day</common:Name>
+          <common:Description xml:lang="en">A month day that specifies the ending day of the reporting periods (e.g. YYYY-A1) within the datastucture.</common:Description>
+        </structure:Concept>
+        <structure:Concept id="BASE_PERIOD">
+          <common:Name xml:lang="en">Reference Base Period</common:Name>
+          <common:Description xml:lang="en">Reference Period that the value has been based against.</common:Description>
+        </structure:Concept>
+      </structure:ConceptScheme>
+      <structure:ConceptScheme id="CS_COMMON" agencyID="ABS" version="1.0.0" isFinal="true">
+        <common:Name xml:lang="en">Common Concepts</common:Name>
+        <structure:Concept id="OBS_VALUE">
+          <common:Name xml:lang="en">Observation Value</common:Name>
+          <common:Description xml:lang="en">The observed value of the variable identified by the series dimension values.</common:Description>
+        </structure:Concept>
+        <structure:Concept id="TIME_PERIOD">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>CONTEXT</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">The measurement represented by each observation corresponds to either a specific point in time (e.g. a single day) or a period (e.g. a month, quarter, financial or calendar year).</common:AnnotationText>
+            </common:Annotation>
+            <common:Annotation>
+              <common:AnnotationType>QUARTER</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">Quarterly data is reported against the calander year. e.g. "YYYY-Q1" represents the quarter ending March.</common:AnnotationText>
+            </common:Annotation>
+            <common:Annotation>
+              <common:AnnotationType>FINANCIAL_YEAR</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">Time periods matching the "YYYY-MM-DD/P1Y" format represent financial years as the start date of the period followed by the duration of 1 year.</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">Time Period</common:Name>
+          <common:Description xml:lang="en">Timespan or point in time for which the observation refers.</common:Description>
+        </structure:Concept>
+        <structure:Concept id="FREQ">
+          <common:Name xml:lang="en">Frequency</common:Name>
+          <common:Description xml:lang="en">Rate at which data is collated.</common:Description>
+        </structure:Concept>
+        <structure:Concept id="MEASURE">
+          <common:Name xml:lang="en">Measure</common:Name>
+        </structure:Concept>
+        <structure:Concept id="TSEST">
+          <common:Annotations>
+            <common:Annotation>
+              <common:AnnotationType>OTHER_LINKS</common:AnnotationType>
+              <common:AnnotationText xml:lang="en">https://www.abs.gov.au/websitedbs/D3310114.nsf/home/Time+Series+Analysis:+The+Basics</common:AnnotationText>
+            </common:Annotation>
+          </common:Annotations>
+          <common:Name xml:lang="en">Adjustment Type</common:Name>
+          <common:Description xml:lang="en">An original time series can be decomposed into three components: the trend (the general direction of the series), the seasonal component (systematic, calendar related movements) and the irregular component (unsystematic, short term fluctuations). Seasonally adjusted series are produced by estimating the seasonal component and removing this from the original series. In most economic data the seasonal component is a combination of seasonal influences (e.g. the effect of the weather or social traditions) plus other kinds of calendar related variations such as Chinese New Year and Christmas. The seasonal adjustment methodology takes into account both seasonal and other calendar related factors that evolve over time to reflect changes in activity patterns.</common:Description>
+        </structure:Concept>
+      </structure:ConceptScheme>
+      <structure:ConceptScheme id="CS_DECIMALS" agencyID="ABS" version="1.0.0" isFinal="true">
+        <common:Name xml:lang="en">Decimals Concepts</common:Name>
+        <structure:Concept id="DECIMALS">
+          <common:Name xml:lang="en">Decimals</common:Name>
+          <common:Description xml:lang="en">Number of digits of an observation to the right of a decimal point</common:Description>
+        </structure:Concept>
+      </structure:ConceptScheme>
+      <structure:ConceptScheme id="CS_DEMOG" agencyID="ABS" version="1.0.0" isFinal="true">
+        <common:Name xml:lang="en">Demographic Concepts</common:Name>
+        <structure:Concept id="AGE">
+          <common:Name xml:lang="en">Age</common:Name>
+        </structure:Concept>
+        <structure:Concept id="AGE_GROUP">
+          <common:Name xml:lang="en">Age Group</common:Name>
+        </structure:Concept>
+        <structure:Concept id="SEX">
+          <common:Name xml:lang="en">Sex</common:Name>
+        </structure:Concept>
+        <structure:Concept id="OCCUPATION">
+          <common:Name xml:lang="en">Occupation</common:Name>
+        </structure:Concept>
+        <structure:Concept id="FAMILY_TYPE">
+          <common:Name xml:lang="en">Family Type</common:Name>
+        </structure:Concept>
+        <structure:Concept id="FERTILITY">
+          <common:Name xml:lang="en">Fertility Assumption</common:Name>
+        </structure:Concept>
+        <structure:Concept id="HH_TYPE">
+          <common:Name xml:lang="en">Household Type</common:Name>
+        </structure:Concept>
+        <structure:Concept id="IND_STATUS">
+          <common:Name xml:lang="en">Indigenous status</common:Name>
+        </structure:Concept>
+        <structure:Concept id="INF_AGE">
+          <common:Name xml:lang="en">Infant Age</common:Name>
+        </structure:Concept>
+        <structure:Concept id="INTERSTATE_MIGRATION">
+          <common:Name xml:lang="en">Interstate Migration</common:Name>
+        </structure:Concept>
+        <structure:Concept id="MARITAL_STATUS">
+          <common:Name xml:lang="en">Marital status</common:Name>
+        </structure:Concept>
+        <structure:Concept id="MIGR_TYPE">
+          <common:Name xml:lang="en">Migration Type</common:Name>
+        </structure:Concept>
+        <structure:Concept id="MONTH_OCCUR">
+          <common:Name xml:lang="en">Month of occurence</common:Name>
+        </structure:Concept>
+        <structure:Concept id="MORT_ASSUMP">
+          <common:Name xml:lang="en">Mortality Assumption</common:Name>
+        </structure:Concept>
+        <structure:Concept id="NIM">
+          <common:Name xml:lang="en">Net interstate migration</common:Name>
+        </structure:Concept>
+        <structure:Concept id="NOM">
+          <common:Name xml:lang="en">Net Overseas Migration</common:Name>
+        </structure:Concept>
+        <structure:Concept id="NUPT">
+          <common:Name xml:lang="en">Nuptiality</common:Name>
+        </structure:Concept>
+        <structure:Concept id="NUPT_STATUS">
+          <common:Name xml:lang="en">Nuptial status</common:Name>
+        </structure:Concept>
+        <structure:Concept id="PERS_LIV_ARR">
+          <common:Name xml:lang="en">Person Living Arrangement</common:Name>
+        </structure:Concept>
+        <structure:Concept id="PLURALITY">
+          <common:Name xml:lang="en">Plurality</common:Name>
+        </structure:Concept>
+        <structure:Concept id="POP_COMP">
+          <common:Name xml:lang="en">Population Component</common:Name>
+        </structure:Concept>
+        <structure:Concept id="PROJ_ASSUM">
+          <common:Name xml:lang="en">Projection Assumption</common:Name>
+        </structure:Concept>
+        <structure:Concept id="PROJ_POP_COMP">
+          <common:Name xml:lang="en">Projected population components</common:Name>
+        </structure:Concept>
+        <structure:Concept id="PROJ_SER">
+          <common:Name xml:lang="en">Projection series</common:Name>
+        </structure:Concept>
+        <structure:Concept id="VISA">
+          <common:Name xml:lang="en">Visa and Citizenship Groups</common:Name>
+        </structure:Concept>
+      </structure:ConceptScheme>
+      <structure:ConceptScheme id="CS_GEOGRAPHY" agencyID="ABS" version="1.0.0" isFinal="true">
+        <common:Name xml:lang="en">Geography Concepts</common:Name>
+        <structure:Concept id="REGION">
+          <common:Name xml:lang="en">Region</common:Name>
+        </structure:Concept>
+        <structure:Concept id="REGION_ARR">
+          <common:Name xml:lang="en">Region of Arrival</common:Name>
+          <structure:Parent>
+            <Ref id="REGION" />
+          </structure:Parent>
+        </structure:Concept>
+        <structure:Concept id="REGION_DEP">
+          <common:Name xml:lang="en">Region of Departure</common:Name>
+          <structure:Parent>
+            <Ref id="REGION" />
+          </structure:Parent>
+        </structure:Concept>
+        <structure:Concept id="REGION_TYPE">
+          <common:Name xml:lang="en">Region Type</common:Name>
+        </structure:Concept>
+        <structure:Concept id="GEO_LEVEL">
+          <common:Name xml:lang="en">Geography Level</common:Name>
+        </structure:Concept>
+        <structure:Concept id="STATE">
+          <common:Name xml:lang="en">State</common:Name>
+        </structure:Concept>
+        <structure:Concept id="STATE_ORIGIN">
+          <common:Name xml:lang="en">State of Origin</common:Name>
+          <structure:Parent>
+            <Ref id="STATE" />
+          </structure:Parent>
+        </structure:Concept>
+        <structure:Concept id="STATE_DEST">
+          <common:Name xml:lang="en">State of Destination</common:Name>
+          <structure:Parent>
+            <Ref id="STATE" />
+          </structure:Parent>
+        </structure:Concept>
+        <structure:Concept id="STATE_ARR">
+          <common:Name xml:lang="en">State of Arrival</common:Name>
+          <structure:Parent>
+            <Ref id="STATE" />
+          </structure:Parent>
+        </structure:Concept>
+        <structure:Concept id="STATE_DEP">
+          <common:Name xml:lang="en">State of Departure</common:Name>
+          <structure:Parent>
+            <Ref id="STATE" />
+          </structure:Parent>
+        </structure:Concept>
+        <structure:Concept id="STATE_TERR">
+          <common:Name xml:lang="en">States and Territories</common:Name>
+        </structure:Concept>
+        <structure:Concept id="COUNTRY">
+          <common:Name xml:lang="en">Country</common:Name>
+        </structure:Concept>
+        <structure:Concept id="COUNTRY_ORIGIN">
+          <common:Name xml:lang="en">Country of Origin</common:Name>
+          <structure:Parent>
+            <Ref id="COUNTRY" />
+          </structure:Parent>
+        </structure:Concept>
+        <structure:Concept id="COUNTRY_DEST">
+          <common:Name xml:lang="en">Country of Destination</common:Name>
+          <structure:Parent>
+            <Ref id="COUNTRY" />
+          </structure:Parent>
+        </structure:Concept>
+        <structure:Concept id="COUNTRY_BIRTH">
+          <common:Name xml:lang="en">Country of Birth</common:Name>
+          <structure:Parent>
+            <Ref id="COUNTRY" />
+          </structure:Parent>
+        </structure:Concept>
+        <structure:Concept id="COUNTRY_RESID">
+          <common:Name xml:lang="en">Country of Stay/Residence</common:Name>
+          <structure:Parent>
+            <Ref id="COUNTRY" />
+          </structure:Parent>
+        </structure:Concept>
+        <structure:Concept id="FED">
+          <common:Name xml:lang="en">Federal Electoral Division</common:Name>
+        </structure:Concept>
+        <structure:Concept id="IND_REGION">
+          <common:Name xml:lang="en">Indigenous Region</common:Name>
+        </structure:Concept>
+        <structure:Concept id="LGA">
+          <common:Name xml:lang="en">Local Government Area</common:Name>
+        </structure:Concept>
+        <structure:Concept id="LGA_2011">
+          <common:Name xml:lang="en">Local Government Areas - 2011</common:Name>
+          <structure:Parent>
+            <Ref id="LGA" />
+          </structure:Parent>
+        </structure:Concept>
+        <structure:Concept id="LGA_2016">
+          <common:Name xml:lang="en">Local Government Areas - 2016</common:Name>
+          <structure:Parent>
+            <Ref id="LGA" />
+          </structure:Parent>
+        </structure:Concept>
+        <structure:Concept id="POA">
+          <common:Name xml:lang="en">Postal Area Code</common:Name>
+        </structure:Concept>
+        <structure:Concept id="REMOTE">
+          <common:Name xml:lang="en">Remoteness Area</common:Name>
+        </structure:Concept>
+        <structure:Concept id="SA2">
+          <common:Name xml:lang="en">Statistical Area Level 2 (SA2)</common:Name>
+        </structure:Concept>
+        <structure:Concept id="SSC">
+          <common:Name xml:lang="en">State Suburb</common:Name>
+        </structure:Concept>
+      </structure:ConceptScheme>
+    </structure:Concepts>
+    <structure:DataStructures>
+      <structure:DataStructure id="LF" agencyID="ABS" version="1.0.0" isFinal="true">
+        <common:Annotations>
+          <common:Annotation>
+            <common:AnnotationTitle>200</common:AnnotationTitle>
+            <common:AnnotationType>MAXTEXTATTRIBUTELENGTH</common:AnnotationType>
+          </common:Annotation>
+        </common:Annotations>
+        <common:Name xml:lang="en">Labour Force Datastructure</common:Name>
+        <structure:DataStructureComponents>
+          <structure:DimensionList id="DimensionDescriptor">
+            <structure:Dimension id="MEASURE" position="1">
+              <structure:ConceptIdentity>
+                <Ref id="MEASURE" maintainableParentID="CS_COMMON" maintainableParentVersion="1.0.0" agencyID="ABS" package="conceptscheme" class="Concept" />
+              </structure:ConceptIdentity>
+              <structure:LocalRepresentation>
+                <structure:Enumeration>
+                  <Ref id="CL_LF_MEASURE" version="1.0.0" agencyID="ABS" package="codelist" class="Codelist" />
+                </structure:Enumeration>
+              </structure:LocalRepresentation>
+            </structure:Dimension>
+            <structure:Dimension id="SEX" position="2">
+              <structure:ConceptIdentity>
+                <Ref id="SEX" maintainableParentID="CS_DEMOG" maintainableParentVersion="1.0.0" agencyID="ABS" package="conceptscheme" class="Concept" />
+              </structure:ConceptIdentity>
+              <structure:LocalRepresentation>
+                <structure:Enumeration>
+                  <Ref id="CL_SEX" version="1.0.0" agencyID="ABS" package="codelist" class="Codelist" />
+                </structure:Enumeration>
+              </structure:LocalRepresentation>
+            </structure:Dimension>
+            <structure:Dimension id="AGE" position="3">
+              <structure:ConceptIdentity>
+                <Ref id="AGE" maintainableParentID="CS_DEMOG" maintainableParentVersion="1.0.0" agencyID="ABS" package="conceptscheme" class="Concept" />
+              </structure:ConceptIdentity>
+              <structure:LocalRepresentation>
+                <structure:Enumeration>
+                  <Ref id="CL_LF_AGE" version="1.0.0" agencyID="ABS" package="codelist" class="Codelist" />
+                </structure:Enumeration>
+              </structure:LocalRepresentation>
+            </structure:Dimension>
+            <structure:Dimension id="TSEST" position="4">
+              <structure:ConceptIdentity>
+                <Ref id="TSEST" maintainableParentID="CS_COMMON" maintainableParentVersion="1.0.0" agencyID="ABS" package="conceptscheme" class="Concept" />
+              </structure:ConceptIdentity>
+              <structure:LocalRepresentation>
+                <structure:Enumeration>
+                  <Ref id="CL_TSEST" version="1.0.0" agencyID="ABS" package="codelist" class="Codelist" />
+                </structure:Enumeration>
+              </structure:LocalRepresentation>
+            </structure:Dimension>
+            <structure:Dimension id="REGION" position="5">
+              <structure:ConceptIdentity>
+                <Ref id="REGION" maintainableParentID="CS_GEOGRAPHY" maintainableParentVersion="1.0.0" agencyID="ABS" package="conceptscheme" class="Concept" />
+              </structure:ConceptIdentity>
+              <structure:LocalRepresentation>
+                <structure:Enumeration>
+                  <Ref id="CL_STATE" version="1.0.0" agencyID="ABS" package="codelist" class="Codelist" />
+                </structure:Enumeration>
+              </structure:LocalRepresentation>
+            </structure:Dimension>
+            <structure:Dimension id="FREQ" position="6">
+              <structure:ConceptIdentity>
+                <Ref id="FREQ" maintainableParentID="CS_COMMON" maintainableParentVersion="1.0.0" agencyID="ABS" package="conceptscheme" class="Concept" />
+              </structure:ConceptIdentity>
+              <structure:LocalRepresentation>
+                <structure:Enumeration>
+                  <Ref id="CL_FREQ" version="1.0.0" agencyID="ABS" package="codelist" class="Codelist" />
+                </structure:Enumeration>
+              </structure:LocalRepresentation>
+            </structure:Dimension>
+            <structure:TimeDimension id="TIME_PERIOD" position="7">
+              <structure:ConceptIdentity>
+                <Ref id="TIME_PERIOD" maintainableParentID="CS_COMMON" maintainableParentVersion="1.0.0" agencyID="ABS" package="conceptscheme" class="Concept" />
+              </structure:ConceptIdentity>
+              <structure:LocalRepresentation>
+                <structure:TextFormat textType="ObservationalTimePeriod" />
+              </structure:LocalRepresentation>
+            </structure:TimeDimension>
+          </structure:DimensionList>
+          <structure:AttributeList id="AttributeDescriptor">
+            <structure:Attribute id="UNIT_MEASURE" assignmentStatus="Mandatory">
+              <structure:ConceptIdentity>
+                <Ref id="UNIT_MEASURE" maintainableParentID="CS_ATTRIBUTE" maintainableParentVersion="1.0.0" agencyID="ABS" package="conceptscheme" class="Concept" />
+              </structure:ConceptIdentity>
+              <structure:LocalRepresentation>
+                <structure:Enumeration>
+                  <Ref id="CL_UNIT_MEASURE" version="1.0.0" agencyID="ABS" package="codelist" class="Codelist" />
+                </structure:Enumeration>
+              </structure:LocalRepresentation>
+              <structure:AttributeRelationship>
+                <structure:Dimension>
+                  <Ref id="MEASURE" />
+                </structure:Dimension>
+              </structure:AttributeRelationship>
+            </structure:Attribute>
+            <structure:Attribute id="UNIT_MULT" assignmentStatus="Conditional">
+              <structure:ConceptIdentity>
+                <Ref id="UNIT_MULT" maintainableParentID="CS_ATTRIBUTE" maintainableParentVersion="1.0.0" agencyID="ABS" package="conceptscheme" class="Concept" />
+              </structure:ConceptIdentity>
+              <structure:LocalRepresentation>
+                <structure:Enumeration>
+                  <Ref id="CL_UNIT_MULT" version="1.0.0" agencyID="ABS" package="codelist" class="Codelist" />
+                </structure:Enumeration>
+              </structure:LocalRepresentation>
+              <structure:AttributeRelationship>
+                <structure:Dimension>
+                  <Ref id="MEASURE" />
+                </structure:Dimension>
+              </structure:AttributeRelationship>
+            </structure:Attribute>
+            <structure:Attribute id="OBS_STATUS" assignmentStatus="Conditional">
+              <structure:ConceptIdentity>
+                <Ref id="OBS_STATUS" maintainableParentID="CS_ATTRIBUTE" maintainableParentVersion="1.0.0" agencyID="ABS" package="conceptscheme" class="Concept" />
+              </structure:ConceptIdentity>
+              <structure:LocalRepresentation>
+                <structure:Enumeration>
+                  <Ref id="CL_OBS_STATUS" version="1.0.0" agencyID="ABS" package="codelist" class="Codelist" />
+                </structure:Enumeration>
+              </structure:LocalRepresentation>
+              <structure:AttributeRelationship>
+                <structure:PrimaryMeasure>
+                  <Ref id="OBS_VALUE" />
+                </structure:PrimaryMeasure>
+              </structure:AttributeRelationship>
+            </structure:Attribute>
+            <structure:Attribute id="OBS_COMMENT" assignmentStatus="Conditional">
+              <structure:ConceptIdentity>
+                <Ref id="OBS_COMMENT" maintainableParentID="CS_ATTRIBUTE" maintainableParentVersion="1.0.0" agencyID="ABS" package="conceptscheme" class="Concept" />
+              </structure:ConceptIdentity>
+              <structure:AttributeRelationship>
+                <structure:PrimaryMeasure>
+                  <Ref id="OBS_VALUE" />
+                </structure:PrimaryMeasure>
+              </structure:AttributeRelationship>
+            </structure:Attribute>
+            <structure:Attribute id="DECIMALS" assignmentStatus="Conditional">
+              <structure:ConceptIdentity>
+                <Ref id="DECIMALS" maintainableParentID="CS_DECIMALS" maintainableParentVersion="1.0.0" agencyID="ABS" package="conceptscheme" class="Concept" />
+              </structure:ConceptIdentity>
+              <structure:LocalRepresentation>
+                <structure:Enumeration>
+                  <Ref id="CL_DECIMALS" version="1.0.0" agencyID="ABS" package="codelist" class="Codelist" />
+                </structure:Enumeration>
+              </structure:LocalRepresentation>
+              <structure:AttributeRelationship>
+                <structure:PrimaryMeasure>
+                  <Ref id="OBS_VALUE" />
+                </structure:PrimaryMeasure>
+              </structure:AttributeRelationship>
+            </structure:Attribute>
+          </structure:AttributeList>
+          <structure:MeasureList id="MeasureDescriptor">
+            <structure:PrimaryMeasure id="OBS_VALUE">
+              <structure:ConceptIdentity>
+                <Ref id="OBS_VALUE" maintainableParentID="CS_COMMON" maintainableParentVersion="1.0.0" agencyID="ABS" package="conceptscheme" class="Concept" />
+              </structure:ConceptIdentity>
+              <structure:LocalRepresentation>
+                <structure:TextFormat textType="Double" />
+              </structure:LocalRepresentation>
+            </structure:PrimaryMeasure>
+          </structure:MeasureList>
+        </structure:DataStructureComponents>
+      </structure:DataStructure>
+    </structure:DataStructures>
+  </message:Structures>
+</message:Structure>

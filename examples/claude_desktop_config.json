@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "abs": {
+      "command": "uvx",
+      "args": ["abs-mcp"]
+    }
+  }
+}

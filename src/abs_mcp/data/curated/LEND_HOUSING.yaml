@@ -1,0 +1,70 @@
+id: LEND_HOUSING
+name: Lending Indicators - Housing Finance
+description: |
+  Monthly housing loan commitments by purpose, lender type, and state.
+  Covers new loan commitments to households for owner-occupier and investor housing.
+  Source: ABS Catalogue 5601.0.
+update_frequency: monthly
+source_url: https://www.abs.gov.au/statistics/economy/finance/lending-indicators
+dimensions:
+  measure:
+    sdmx_id: MEASURE
+    description: What is being measured
+    values:
+      value: { sdmx_code: "FIN_VAL", description: "Value of new loans ($)" }
+      number: { sdmx_code: "FIN_NUM", description: "Number of new loans" }
+      average: { sdmx_code: "FIN_AVG", description: "Average new loan size" }
+  housing_purpose:
+    sdmx_id: HOUSING_PURPOSE
+    description: Borrower category (defaults to total)
+    values:
+      total: { sdmx_code: "TOT" }
+      owner_occupier: { sdmx_code: "DV5167" }
+      investor: { sdmx_code: "DV5168" }
+      first_home_buyers: { sdmx_code: "TOT_FHB", description: "Total first home buyers" }
+      owner_occupier_fhb: { sdmx_code: "DV5167_FHB" }
+  lender_type:
+    sdmx_id: LENDER_TYPE
+    description: Type of lender (defaults to all)
+    values:
+      all: { sdmx_code: "TOT" }
+      major_banks: { sdmx_code: "MAJ_B" }
+      other_adi: { sdmx_code: "OTH_ADI", description: "Other Authorised Deposit-taking Institutions" }
+      non_adi: { sdmx_code: "NON_ADI" }
+  region:
+    sdmx_id: REGION
+    description: State or territory
+    values:
+      australia: { sdmx_code: "AUS" }
+      nsw: { sdmx_code: "1" }
+      vic: { sdmx_code: "2" }
+      qld: { sdmx_code: "3" }
+      sa:  { sdmx_code: "4" }
+      wa:  { sdmx_code: "5" }
+      tas: { sdmx_code: "6" }
+      nt:  { sdmx_code: "7" }
+      act: { sdmx_code: "8" }
+  data_item:
+    sdmx_id: DATA_ITEM
+    description: Defaults to new applications received
+    hidden: true
+    default: "NEWAPPLS"
+  loan_type:
+    sdmx_id: LOAN_TYPE
+    description: Defaults to fixed-term loans
+    hidden: true
+    default: "DV8270"
+  loan_purpose:
+    sdmx_id: LOAN_PURPOSE
+    description: Defaults to total purposes including refinancing
+    hidden: true
+    default: "TOTLOANPURP"
+  adjustment:
+    sdmx_id: TSEST
+    description: Defaults to seasonally adjusted
+    hidden: true
+    default: "20"
+  frequency:
+    sdmx_id: FREQ
+    hidden: true
+    default: "M"

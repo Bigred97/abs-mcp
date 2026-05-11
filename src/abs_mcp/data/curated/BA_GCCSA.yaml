@@ -1,0 +1,69 @@
+id: BA_GCCSA
+name: Building Approvals
+description: |
+  Monthly building approvals by state and capital-city regions, with breakdowns
+  by sector, work type, and building type.
+  Source: ABS Catalogue 8731.0.
+update_frequency: monthly
+source_url: https://www.abs.gov.au/statistics/industry/building-and-construction/building-approvals-australia
+dimensions:
+  measure:
+    sdmx_id: MEASURE
+    description: What is being measured
+    values:
+      dwelling_units: { sdmx_code: "1", description: "Number of dwelling units approved" }
+      value_of_jobs: { sdmx_code: "2", description: "Value of building jobs ($)" }
+      jobs_50k_plus: { sdmx_code: "3", description: "Number of building jobs valued $50k+" }
+  building_type:
+    sdmx_id: BUILDING_TYPE
+    description: Type of building (defaults to total residential)
+    values:
+      total_residential: { sdmx_code: "100" }
+      houses: { sdmx_code: "110" }
+      townhouses: { sdmx_code: "120", description: "Semi-detached, row, terrace, townhouses (total)" }
+      apartments: { sdmx_code: "130", description: "Apartments (total)" }
+      other_residential: { sdmx_code: "150" }
+  sector:
+    sdmx_id: SECTOR
+    description: Owning sector (defaults to all sectors)
+    values:
+      all_sectors: { sdmx_code: "9" }
+      private: { sdmx_code: "1" }
+      public: { sdmx_code: "5" }
+  region:
+    sdmx_id: REGION
+    description: State or Greater Capital City Statistical Area
+    values:
+      australia: { sdmx_code: "AUS" }
+      nsw: { sdmx_code: "1" }
+      vic: { sdmx_code: "2" }
+      qld: { sdmx_code: "3" }
+      sa:  { sdmx_code: "4" }
+      wa:  { sdmx_code: "5" }
+      tas: { sdmx_code: "6" }
+      nt:  { sdmx_code: "7" }
+      act: { sdmx_code: "8" }
+      greater_sydney: { sdmx_code: "1GSYD" }
+      rest_of_nsw: { sdmx_code: "1RNSW" }
+      greater_melbourne: { sdmx_code: "2GMEL" }
+      rest_of_vic: { sdmx_code: "2RVIC" }
+      greater_brisbane: { sdmx_code: "3GBRI" }
+      rest_of_qld: { sdmx_code: "3RQLD" }
+      greater_adelaide: { sdmx_code: "4GADE" }
+  value_band:
+    sdmx_id: VALUE
+    hidden: true
+    default: "1"
+  work_type:
+    sdmx_id: WORK_TYPE
+    hidden: true
+    default: "TOT"
+  adjustment:
+    sdmx_id: TSEST
+    description: Defaults to seasonally adjusted
+    hidden: true
+    default: "20"
+  frequency:
+    sdmx_id: FREQ
+    hidden: true
+    default: "M"

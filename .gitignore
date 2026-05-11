@@ -1,0 +1,24 @@
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+*.swp
+.DS_Store
+.env
+
+# Inspection-only DSDs (regenerate with: curl -H "Accept: application/vnd.sdmx.structure+xml;version=2.1" https://data.api.abs.gov.au/rest/datastructure/ABS/<ID>?references=all)
+tests/fixtures/ABS_ANNUAL_ERP_ASGS2021_dsd.xml
+tests/fixtures/BA_GCCSA_dsd.xml
+tests/fixtures/CPI_dsd.xml
+tests/fixtures/JV_dsd.xml
+tests/fixtures/LEND_HOUSING_dsd.xml
+tests/fixtures/WPI_dsd.xml

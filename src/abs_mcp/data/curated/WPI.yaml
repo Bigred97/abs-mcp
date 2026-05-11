@@ -1,0 +1,79 @@
+id: WPI
+name: Wage Price Index
+description: |
+  Quarterly Wage Price Index — the headline measure of wage inflation.
+  Pairs naturally with CPI for real-wage analysis. Source: ABS Catalogue 6345.0.
+update_frequency: quarterly
+source_url: https://www.abs.gov.au/statistics/economy/price-indexes-and-inflation/wage-price-index-australia
+dimensions:
+  measure:
+    sdmx_id: MEASURE
+    description: What is being measured (defaults to annual % change)
+    values:
+      index: { sdmx_code: "1", description: "Quarterly index" }
+      change_quarter: { sdmx_code: "2", description: "% change from previous quarter" }
+      change_year: { sdmx_code: "3", description: "% change from previous year (annual wage growth)" }
+      financial_year_index: { sdmx_code: "4" }
+  sector:
+    sdmx_id: SECTOR
+    description: Public / private / both (defaults to combined)
+    default: "7"
+    values:
+      all: { sdmx_code: "7", description: "Private and Public" }
+      private: { sdmx_code: "1" }
+      public: { sdmx_code: "2" }
+  industry:
+    sdmx_id: INDUSTRY
+    description: |
+      ANZSIC industry division. Defaults to all industries.
+      Pass a sub-code (e.g. "0111" for Nursery Production) to drill into
+      specific industry sub-classes.
+    default: "TOT"
+    values:
+      all: { sdmx_code: "TOT" }
+      agriculture: { sdmx_code: "A", description: "Agriculture, Forestry and Fishing" }
+      mining: { sdmx_code: "B" }
+      manufacturing: { sdmx_code: "C" }
+      utilities: { sdmx_code: "D", description: "Electricity, Gas, Water and Waste Services" }
+      construction: { sdmx_code: "E" }
+      wholesale_trade: { sdmx_code: "F" }
+      retail_trade: { sdmx_code: "G" }
+      accommodation_food: { sdmx_code: "H", description: "Accommodation and Food Services" }
+      transport: { sdmx_code: "I", description: "Transport, Postal and Warehousing" }
+      information_media: { sdmx_code: "J" }
+      financial_insurance: { sdmx_code: "K" }
+      real_estate: { sdmx_code: "L" }
+      professional_services: { sdmx_code: "M", description: "Professional, Scientific and Technical Services" }
+      admin_support: { sdmx_code: "N" }
+      public_admin: { sdmx_code: "O", description: "Public Administration and Safety" }
+      education: { sdmx_code: "P" }
+      health_care: { sdmx_code: "Q", description: "Health Care and Social Assistance" }
+      arts_recreation: { sdmx_code: "R" }
+      other_services: { sdmx_code: "S" }
+  region:
+    sdmx_id: REGION
+    description: State or territory
+    values:
+      australia: { sdmx_code: "AUS" }
+      nsw: { sdmx_code: "1" }
+      vic: { sdmx_code: "2" }
+      qld: { sdmx_code: "3" }
+      sa:  { sdmx_code: "4" }
+      wa:  { sdmx_code: "5" }
+      tas: { sdmx_code: "6" }
+      nt:  { sdmx_code: "7" }
+      act: { sdmx_code: "8" }
+  index_type:
+    sdmx_id: INDEX
+    description: Which wage component to measure (defaults to total hourly excluding bonuses — the published WPI)
+    hidden: true
+    default: "THRPEB"
+  adjustment:
+    sdmx_id: TSEST
+    description: Defaults to seasonally adjusted
+    hidden: true
+    default: "20"
+  frequency:
+    sdmx_id: FREQ
+    hidden: true
+    default: "Q"

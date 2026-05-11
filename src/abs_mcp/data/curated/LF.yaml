@@ -1,0 +1,54 @@
+id: LF
+name: Labour Force
+description: |
+  Monthly employment, unemployment, and labour force participation by state.
+  Source: ABS Catalogue 6202.0.
+update_frequency: monthly
+source_url: https://www.abs.gov.au/statistics/labour/employment-and-unemployment/labour-force-australia
+dimensions:
+  measure:
+    sdmx_id: MEASURE
+    description: What is being measured
+    values:
+      employed_persons: { sdmx_code: "M3", description: "Employed persons" }
+      employed_full_time: { sdmx_code: "M1", description: "Employed - full-time" }
+      employed_part_time: { sdmx_code: "M2", description: "Employed - part-time" }
+      unemployed_persons: { sdmx_code: "M6", description: "Unemployed persons" }
+      labour_force: { sdmx_code: "M9", description: "Total labour force" }
+      not_in_labour_force: { sdmx_code: "M10", description: "Persons not in the labour force" }
+      participation_rate: { sdmx_code: "M12", description: "Labour force participation rate (%)" }
+      unemployment_rate: { sdmx_code: "M13", description: "Unemployment rate (%)" }
+  sex:
+    sdmx_id: SEX
+    description: Sex
+    values:
+      persons: { sdmx_code: "3" }
+      male: { sdmx_code: "1" }
+      female: { sdmx_code: "2" }
+  region:
+    sdmx_id: REGION
+    description: Australian state or territory
+    values:
+      australia: { sdmx_code: "AUS" }
+      nsw: { sdmx_code: "1" }
+      vic: { sdmx_code: "2" }
+      qld: { sdmx_code: "3" }
+      sa:  { sdmx_code: "4" }
+      wa:  { sdmx_code: "5" }
+      tas: { sdmx_code: "6" }
+      nt:  { sdmx_code: "7" }
+      act: { sdmx_code: "8" }
+  age:
+    sdmx_id: AGE
+    description: Age range (defaults to total persons aged 15+)
+    hidden: true
+    default: "1599"
+  adjustment:
+    sdmx_id: TSEST
+    description: Time-series treatment (defaults to seasonally adjusted)
+    hidden: true
+    default: "20"
+  frequency:
+    sdmx_id: FREQ
+    hidden: true
+    default: "M"
