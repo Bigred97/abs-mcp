@@ -1,8 +1,13 @@
 # abs-mcp
 
+[![tests](https://github.com/Bigred97/abs-mcp/actions/workflows/test.yml/badge.svg)](https://github.com/Bigred97/abs-mcp/actions/workflows/test.yml)
+[![PyPI](https://img.shields.io/pypi/v/abs-mcp.svg)](https://pypi.org/project/abs-mcp/)
+[![Python](https://img.shields.io/pypi/pyversions/abs-mcp.svg)](https://pypi.org/project/abs-mcp/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 An MCP server that wraps the [Australian Bureau of Statistics Data API](https://data.api.abs.gov.au/) and hides SDMX behind plain-English tools. Ask Claude "What's the unemployment rate in NSW?" and get a real answer with a source link, instead of a wall of SDMX codes.
 
-Five tools, hand-curated mappings for Labour Force, CPI, Estimated Resident Population, Building Approvals, and Lending Indicators.
+Five tools, ten curated dataflows: Labour Force, CPI, Wage Price Index, Job Vacancies, Average Weekly Earnings, GDP / National Accounts, quarterly + annual Estimated Resident Population, Building Approvals, and Lending Indicators.
 
 ## Install
 
