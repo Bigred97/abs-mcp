@@ -12,7 +12,7 @@
 
 Behind the scenes it wraps SDMX 2.1, but you never see SDMX codes — just plain-English filters like `region: "nsw"` and `measure: "unemployment_rate"`. Five tools, ten curated dataflows (Labour Force, CPI, Wage Price Index, Job Vacancies, Average Weekly Earnings, GDP / National Accounts, quarterly + annual Estimated Resident Population, Building Approvals, Lending Indicators), and 1,200+ other ABS dataflows accessible via raw codes.
 
-Companion to [rba-mcp](https://github.com/Bigred97/rba-mcp) (Reserve Bank of Australia — cash rate, FX, lending rates) and [ato-mcp](https://github.com/Bigred97/ato-mcp) (Australian Taxation Office — postcode-level personal tax, company tax by industry, corporate tax transparency, ACNC charity register). Install all three for the full AU macro / regulator / tax stack.
+Companion to [rba-mcp](https://github.com/Bigred97/rba-mcp) (Reserve Bank of Australia — cash rate, FX, lending rates), [ato-mcp](https://github.com/Bigred97/ato-mcp) (Australian Taxation Office — postcode-level personal tax, company tax by industry, corporate tax transparency, ACNC charity register), and [au-weather-mcp](https://github.com/Bigred97/au-weather-mcp) (Australian weather — 21 curated locations + postcode/place-name lookup, current observations, 16-day forecasts, 80yr historical archive). Install all four for the full AU macro / regulator / tax / climate stack.
 
 ## What you can ask
 
