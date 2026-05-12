@@ -45,6 +45,11 @@ class DatasetDetail(BaseModel):
     description: str
     is_curated: bool
     dimensions: list[CuratedFilter]
+    # Hidden dimensions whose SDMX codes are auto-applied when the user does
+    # not pass them — surfaced here so the LLM knows what's being assumed
+    # (e.g. for LF: AGE=15+, TSEST=seasonally adjusted, FREQ=monthly).
+    # Each entry has the curated dim shape with a single value: the default.
+    hidden_defaults: list[CuratedFilter] = Field(default_factory=list)
     abs_url: str
 
 

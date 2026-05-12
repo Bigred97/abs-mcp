@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.2.12 (2026-05-13)
+
+Loop-audit value pass — two cross-portfolio polish items found by a
+focused review of the customer surface.
+
+- **New: `DatasetDetail.hidden_defaults`** — `describe_dataset` now
+  surfaces hidden curated dimensions with their auto-applied default
+  SDMX code in a dedicated `hidden_defaults` field. The LLM can see
+  what's being assumed (e.g. for LF: `AGE=15+`, `TSEST=seasonally
+  adjusted`, `FREQ=monthly`) and explain those assumptions to end users
+  rather than silently injecting them. Pre-0.2.12 hidden dims were
+  filtered out of the response entirely.
+- **`start_period` / `end_period` accept int years (parity with
+  rba-mcp 0.1.8).** MCP / LLM clients often send a year as a JSON
+  number rather than a string (`start_period=2024` instead of
+  `"2024"`). Pre-0.2.12 this errored at the Pydantic boundary. Now:
+  the Annotated type is `str | int | None` and `_get_data_impl`
+  coerces `int → str` transparently. Bool is explicitly excluded
+  from coercion (`isinstance(True, int)` is `True` in Python) so
+  True/False still raise a clean type error rather than becoming
+  "1"/"0" periods.
+- **Tests**: +3 regressions (hidden_defaults populated, int year
+  accepted end-to-end, bool still rejected), plus renamed the prior
+  "rejects non-string start_period" test to reflect the new behaviour.
+
 ## 0.2.11 (2026-05-12)
 
 Glama Tool Definition Quality pass — every parameter on every tool now

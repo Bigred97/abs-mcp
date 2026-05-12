@@ -175,15 +175,24 @@ async def test_get_data_rejects_non_string_format():
             await server.get_data("LF", format=bad)  # type: ignore[arg-type]
 
 
-async def test_get_data_rejects_non_string_start_period():
-    """start_period=2024 (int) used to crash on `start > end` comparison."""
+async def test_get_data_rejects_list_start_period():
+    """A list is still a non-period — must error cleanly."""
     with pytest.raises(ValueError, match="start_period must be a string"):
-        await server.get_data("LF", start_period=2024)  # type: ignore[arg-type]
+        await server.get_data("LF", start_period=["2024"])  # type: ignore[arg-type]
 
 
 async def test_get_data_rejects_non_string_end_period():
     with pytest.raises(ValueError, match="end_period must be a string"):
         await server.get_data("LF", end_period=["2024"])  # type: ignore[arg-type]
+
+
+async def test_get_data_rejects_bool_for_periods():
+    """isinstance(True, int) is True in Python — the 0.2.12 int-coerce
+    explicitly excludes bools so True/False still raise a type error
+    rather than becoming '1'/'0' periods."""
+    for bad in (True, False):
+        with pytest.raises(ValueError, match="must be a string"):
+            await server.get_data("LF", start_period=bad)  # type: ignore[arg-type]
 
 
 # ---------- _resolve_filters: non-curated list coercion ----------

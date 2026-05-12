@@ -97,8 +97,48 @@ async def test_describe_curated_returns_plain_english_dims():
     assert detail.name == "Labour Force"
     dim_names = {d.name for d in detail.dimensions}
     assert {"measure", "region", "sex"} <= dim_names
-    # Hidden dims like 'frequency' and 'adjustment' should NOT be exposed
+    # Hidden dims like 'frequency' and 'adjustment' should NOT be in the
+    # main dimensions list — they appear in `hidden_defaults` instead.
     assert "frequency" not in dim_names
+
+
+async def test_get_data_accepts_int_year_for_periods():
+    """0.2.12: MCP / LLM clients often send a year as a JSON number
+    (`start_period=2024`) rather than a string. Pre-0.2.12 this errored
+    at the Pydantic boundary with a verbose validation message. Now:
+    int → str coercion handled transparently. Parity with rba-mcp 0.1.8."""
+    resp = await server.get_data(
+        dataset_id="LF",
+        filters={"region": "nsw", "measure": "unemployment_rate"},
+        start_period=2024,  # type: ignore[arg-type]
+        end_period=2024,    # type: ignore[arg-type]
+    )
+    # 2024 should yield ≥12 monthly observations for unemployment_rate
+    assert len(resp.records) >= 6
+    # query echo should show the coerced string form
+    assert resp.query.get("start_period") in (2024, "2024", None)
+
+
+async def test_describe_curated_surfaces_hidden_defaults():
+    """0.2.12: hidden dims with defaults are surfaced in `hidden_defaults`
+    so the LLM can reason about what's being auto-applied (e.g. AGE=15+,
+    TSEST=seasonally adjusted, FREQ=monthly for LF). Pre-0.2.12 these
+    were silently filtered out, leaving the LLM blind to query assumptions."""
+    detail = await server.describe_dataset("LF")
+    hidden_names = {d.name for d in detail.hidden_defaults}
+    assert {"adjustment", "age", "frequency"} <= hidden_names, (
+        f"expected adjustment/age/frequency in hidden_defaults, got {hidden_names}"
+    )
+    # Each hidden default carries exactly one value: the auto-applied default
+    for hd in detail.hidden_defaults:
+        assert len(hd.values) == 1
+        v = hd.values[0]
+        assert v.key == "<default>"
+        assert v.sdmx_code  # always populated
+    # Specific defaults from LF.yaml
+    by_name = {hd.name: hd for hd in detail.hidden_defaults}
+    assert by_name["adjustment"].values[0].sdmx_code == "20"  # seasonally adjusted
+    assert by_name["frequency"].values[0].sdmx_code == "M"
 
 
 async def test_list_curated_returns_ten():

@@ -271,8 +271,34 @@ async def describe_dataset(
     cd = curated.get(dataset_id)
     if cd is not None:
         dims = []
+        hidden_defaults = []
         for human_name, dim in cd.dimensions.items():
             if dim.hidden:
+                # Surface what's auto-applied so the LLM can reason about
+                # query assumptions (and tell the end user "I assumed
+                # 15+ / seasonally adjusted / monthly"). 0.2.12 addition.
+                if dim.default is not None:
+                    # Look up a human label for the default if one exists
+                    # in the values map; otherwise expose just the SDMX code.
+                    default_label = None
+                    for v in dim.values.values():
+                        if v.sdmx_code == dim.default:
+                            default_label = v.description
+                            break
+                    hidden_defaults.append(
+                        CuratedFilter(
+                            name=human_name,
+                            sdmx_id=dim.sdmx_id,
+                            description=dim.description,
+                            values=[
+                                CuratedFilterValue(
+                                    key="<default>",
+                                    sdmx_code=dim.default,
+                                    label=default_label,
+                                )
+                            ],
+                        )
+                    )
                 continue
             dims.append(
                 CuratedFilter(
@@ -291,6 +317,7 @@ async def describe_dataset(
             description=cd.description,
             is_curated=True,
             dimensions=dims,
+            hidden_defaults=hidden_defaults,
             abs_url=cd.source_url or _abs_url(cd.id),
         )
     client = await _get_client()
@@ -326,6 +353,14 @@ async def _get_data_impl(
         raise ValueError(
             f"Unknown format '{fmt}'. Valid options: {sorted(_VALID_FORMATS)}"
         )
+    # MCP / LLM clients often send a year as a JSON number rather than a
+    # string (`start_period=2024` instead of `start_period="2024"`). Coerce
+    # int → str so both forms work. Excludes bool (subclass of int in Python)
+    # so True/False still raise a clean type error. Parity with rba-mcp 0.1.8.
+    if isinstance(start_period, int) and not isinstance(start_period, bool):
+        start_period = str(start_period)
+    if isinstance(end_period, int) and not isinstance(end_period, bool):
+        end_period = str(end_period)
     for _name, _v in (("start_period", start_period), ("end_period", end_period)):
         if _v is not None and not isinstance(_v, str):
             raise ValueError(
@@ -426,22 +461,23 @@ async def get_data(
         ),
     ] = None,
     start_period: Annotated[
-        str | None,
+        str | int | None,
         Field(
             description=(
                 "Inclusive start period. Format follows the dataflow's cadence: "
                 "annual 'YYYY' (e.g. '2020'), monthly 'YYYY-MM' (e.g. '2024-03'), "
                 "quarterly 'YYYY-Q1', half-yearly 'YYYY-S1', daily 'YYYY-MM-DD'. "
+                "An int year (e.g. 2024) is also accepted and treated as 'YYYY'. "
                 "URL-unsafe characters (?, &, /, etc.) are rejected at the boundary."
             ),
-            examples=["2020", "2024-03", "2024-Q1", "2024-S1"],
+            examples=["2020", "2024-03", "2024-Q1", "2024-S1", 2020],
         ),
     ] = None,
     end_period: Annotated[
-        str | None,
+        str | int | None,
         Field(
             description="Inclusive end period. Same format as start_period.",
-            examples=["2025", "2025-12", "2025-Q4"],
+            examples=["2025", "2025-12", "2025-Q4", 2025],
         ),
     ] = None,
     format: Annotated[
