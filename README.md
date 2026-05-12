@@ -171,6 +171,23 @@ ABS uses different period formats per dataflow. Pass `start_period` / `end_perio
 | AWE | Half-yearly | `YYYY-S*` | `"2025-S2"` |
 | ABS_ANNUAL_ERP_ASGS2021 | Annual | `YYYY` | `"2025"` |
 
+## Verifying your install
+
+The running MCP server reports its version on every `DataResponse`:
+
+```json
+{ ..., "server_version": "0.2.11", ... }
+```
+
+If you see a value below the [latest on PyPI](https://pypi.org/project/abs-mcp/), your `uvx` cache is stale. Either switch to `["--upgrade", "abs-mcp"]` in your config (recommended), or refresh manually:
+
+```bash
+uvx --refresh abs-mcp --help
+# Then fully quit and relaunch Claude Desktop (Cmd+Q — window-close is not enough).
+```
+
+Claude Desktop's MCP child processes are long-lived; refreshing the wheel cache does **not** restart an already-running server. Cold app launch is required.
+
 ## Development
 
 ```bash
