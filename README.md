@@ -12,7 +12,7 @@
 
 Behind the scenes it wraps SDMX 2.1, but you never see SDMX codes — just plain-English filters like `region: "nsw"` and `measure: "unemployment_rate"`. Five tools, ten curated dataflows (Labour Force, CPI, Wage Price Index, Job Vacancies, Average Weekly Earnings, GDP / National Accounts, quarterly + annual Estimated Resident Population, Building Approvals, Lending Indicators), and 1,200+ other ABS dataflows accessible via raw codes.
 
-Companion to [rba-mcp](https://github.com/Bigred97/rba-mcp) (Reserve Bank of Australia — cash rate, FX, lending rates). Install both for the AU macro stack.
+Companion to [rba-mcp](https://github.com/Bigred97/rba-mcp) (Reserve Bank of Australia — cash rate, FX, lending rates) and [ato-mcp](https://github.com/Bigred97/ato-mcp) (Australian Taxation Office — postcode-level personal tax, company tax by industry, corporate tax transparency, ACNC charity register). Install all three for the full AU macro / regulator / tax stack.
 
 ## What you can ask
 
@@ -37,7 +37,7 @@ Every answer comes with the period, units, and a link back to the ABS source pag
 
 ```bash
 # After publish:
-uvx abs-mcp
+uvx --upgrade abs-mcp
 
 # Local dev install:
 uv pip install -e .
@@ -52,11 +52,13 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
   "mcpServers": {
     "abs": {
       "command": "uvx",
-      "args": ["abs-mcp"]
+      "args": ["--upgrade", "abs-mcp"]
     }
   }
 }
 ```
+
+> **Why `--upgrade`?** `uvx abs-mcp` (without the flag) uses whatever wheel is cached and never adopts new PyPI releases on its own — Claude Desktop's MCP child process keeps running the same wheel until you fully quit the app and refresh the cache by hand. `--upgrade` makes uvx check PyPI on each launch and pull a newer release if one exists. To verify which version is currently serving you, look at the `server_version` field on any `DataResponse` (added in 0.2.10).
 
 For a local checkout (before PyPI publish):
 
@@ -82,7 +84,7 @@ Add to `~/.cursor/mcp.json` (or workspace `.cursor/mcp.json`):
   "mcpServers": {
     "abs": {
       "command": "uvx",
-      "args": ["abs-mcp"]
+      "args": ["--upgrade", "abs-mcp"]
     }
   }
 }

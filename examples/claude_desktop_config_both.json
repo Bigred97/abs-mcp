@@ -1,13 +1,13 @@
 {
-  "_comment": "Combined config when you want both abs-mcp and its companion rba-mcp running side by side. Drop into ~/Library/Application Support/Claude/claude_desktop_config.json.",
+  "_comment": "Combined config when you want both abs-mcp and its companion rba-mcp running side by side. Drop into ~/Library/Application Support/Claude/claude_desktop_config.json. The --upgrade flag makes uvx check PyPI on each Claude Desktop launch and adopt newer wheels — without it, the long-lived MCP child process stays pinned to whatever was first cached.",
   "mcpServers": {
     "abs": {
       "command": "uvx",
-      "args": ["abs-mcp"]
+      "args": ["--upgrade", "abs-mcp"]
     },
     "rba": {
       "command": "uvx",
-      "args": ["rba-mcp"]
+      "args": ["--upgrade", "rba-mcp"]
     }
   }
 }

@@ -2,7 +2,7 @@
   "mcpServers": {
     "abs": {
       "command": "uvx",
-      "args": ["abs-mcp"]
+      "args": ["--upgrade", "abs-mcp"]
     }
   }
 }
