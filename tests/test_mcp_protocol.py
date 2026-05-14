@@ -9,7 +9,6 @@ Marked `live` because the tools call the real ABS API.
 """
 from __future__ import annotations
 
-import json
 
 import pytest
 from fastmcp import Client

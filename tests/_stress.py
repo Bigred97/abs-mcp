@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import asyncio
 import time
-import traceback
 from typing import Any
 
 from abs_mcp import server
@@ -196,7 +195,7 @@ async def main():
     n_real_bugs = sum(1 for l in all_lines if l.startswith("REAL BUG"))
     n_pass = sum(1 for l in all_lines if l.startswith("PASS"))
     n_expected = sum(1 for l in all_lines if l.startswith("EXPECTED-FAIL"))
-    print(f"\n========== SUMMARY ==========")
+    print("\n========== SUMMARY ==========")
     print(f"  PASS:           {n_pass}")
     print(f"  EXPECTED-FAIL:  {n_expected} (clean ValueErrors — these are good)")
     print(f"  REAL BUG:       {n_real_bugs}")

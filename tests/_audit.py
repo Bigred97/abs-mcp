@@ -35,9 +35,9 @@ async def audit_tool_schemas():
             desc_len = len(t.description or "")
             print(f"\n[{t.name}]  desc_len={desc_len}")
             if desc_len < 50:
-                print(f"  WARN: description is short — LLM may not know when to call this")
+                print("  WARN: description is short — LLM may not know when to call this")
             if not props and t.name not in ("list_curated",):
-                print(f"  WARN: no input properties documented")
+                print("  WARN: no input properties documented")
             for pname, pspec in props.items():
                 ptype = pspec.get("type") or pspec.get("anyOf", "?")
                 pdesc = pspec.get("description", "")

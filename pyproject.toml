@@ -66,3 +66,9 @@ markers = ["live: hits the real ABS API"]
 addopts = "-m 'not live'"
 testpaths = ["tests"]
 pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E741", "F841", "F401"]

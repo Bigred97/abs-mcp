@@ -13,7 +13,7 @@ from typing import Annotated, Any, Literal
 from fastmcp import FastMCP
 from pydantic import Field
 
-from . import catalog, curated
+from . import curated
 from .catalog import describe_from_dsd, list_dataflows, search_in_memory
 from .client import ABSAPIError, ABSClient, get_stale_signal, reset_stale_signal
 from .models import (
