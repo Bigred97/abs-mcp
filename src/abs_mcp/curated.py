@@ -13,6 +13,18 @@ from importlib import resources
 from pathlib import Path
 
 import yaml
+from aus_identity import (
+    is_valid_postcode,
+    normalize_state,
+    postcode_to_state,
+)
+
+
+# Dim names whose values are state/region references. When `translate_filters`
+# encounters a value on one of these dims it tries `aus_identity` first so
+# "NSW", "nsw", "New South Wales", "AU-VIC", "Tassie", and 4-digit postcodes
+# all resolve to the lowercase curated key (`nsw`, `vic`, …).
+_STATE_LIKE_DIM_NAMES = frozenset({"region", "state", "state_territory"})
 
 
 def _did_you_mean(needle: str, haystack: list[str]) -> str:
@@ -159,6 +171,40 @@ def reset_registry() -> None:
     _REGISTRY = None
 
 
+def _normalise_state_like(user_dim: str, value: str, valid_keys: list[str]) -> str | None:
+    """Try `aus_identity` normalisation when the user value is state-shaped.
+
+    Returns the normalised key (matching one of `valid_keys`) if successful,
+    else `None` (caller falls back to existing lookup + suggestion logic).
+
+    Routes:
+    - "NSW" / "nsw" / "New South Wales" / "AU-NSW" / "Tassie" → canonical code
+    - 4-digit postcode → state code via `postcode_to_state`
+
+    Both routes finally map the canonical 3-letter code to the curated key
+    by case-insensitive match against `valid_keys`.
+    """
+    if user_dim not in _STATE_LIKE_DIM_NAMES:
+        return None
+    # Postcode route first (digits only). is_valid_postcode is non-raising.
+    if value.isdigit() and is_valid_postcode(value):
+        try:
+            code = postcode_to_state(value)
+        except ValueError:
+            return None
+    else:
+        try:
+            code = normalize_state(value)
+        except ValueError:
+            return None
+    # Map canonical code (NSW/VIC/...) back to a curated key. Try uppercase
+    # first (asic/ato/aihw), then lowercase (abs).
+    for key in valid_keys:
+        if key.upper() == code:
+            return key
+    return None
+
+
 def translate_filters(
     curated: CuratedDataflow, filters: dict[str, str | list[str]]
 ) -> dict[str, list[str]]:
@@ -213,6 +259,15 @@ def translate_filters(
             if v_str in dim.values:
                 codes.append(dim.values[v_str].sdmx_code)
             else:
+                # Cross-source normalisation: try aus_identity for state-shaped
+                # dims so "NSW", "New South Wales", "AU-NSW", and 4-digit
+                # postcodes all resolve to the curated key.
+                normalised = _normalise_state_like(
+                    user_dim, v_str, sorted(dim.values.keys())
+                )
+                if normalised is not None:
+                    codes.append(dim.values[normalised].sdmx_code)
+                    continue
                 # Allow raw SDMX codes to pass through (escape hatch).
                 known_codes = {cv.sdmx_code for cv in dim.values.values()}
                 if v_str in known_codes:

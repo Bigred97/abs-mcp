@@ -59,8 +59,61 @@ def test_translate_filters_unknown_dim_raises_with_suggestion():
 
 def test_translate_filters_unknown_value_raises_with_suggestion():
     lf = curated.get("LF")
-    with pytest.raises(ValueError, match="Unknown value 'queensland'"):
-        curated.translate_filters(lf, {"region": "queensland"})
+    # 'sydney' is a city, not a state — should fall through to suggestion logic.
+    with pytest.raises(ValueError, match="Unknown value 'sydney'"):
+        curated.translate_filters(lf, {"region": "sydney"})
+
+
+# ---- aus-identity cross-source normalisation on `region` ----
+
+
+def test_region_accepts_full_state_name():
+    """`region='Queensland'` should resolve to QLD → curated key 'qld'."""
+    lf = curated.get("LF")
+    sdmx = curated.translate_filters(lf, {"region": "Queensland"})
+    assert sdmx == {"REGION": ["3"]}  # QLD's SDMX code
+
+
+def test_region_accepts_uppercase_short_code():
+    """`region='NSW'` (canonical) maps to lowercase curated key 'nsw'."""
+    lf = curated.get("LF")
+    sdmx = curated.translate_filters(lf, {"region": "NSW"})
+    assert sdmx == {"REGION": ["1"]}
+
+
+def test_region_accepts_full_name_with_spaces():
+    """`region='New South Wales'` resolves to NSW → 'nsw' → SDMX '1'."""
+    lf = curated.get("LF")
+    sdmx = curated.translate_filters(lf, {"region": "New South Wales"})
+    assert sdmx == {"REGION": ["1"]}
+
+
+def test_region_accepts_iso_3166_form():
+    """`region='AU-VIC'` resolves to VIC → SDMX '2'."""
+    lf = curated.get("LF")
+    sdmx = curated.translate_filters(lf, {"region": "AU-VIC"})
+    assert sdmx == {"REGION": ["2"]}
+
+
+def test_region_accepts_postcode_string():
+    """`region='2000'` (Sydney CBD postcode) routes to NSW → SDMX '1'."""
+    lf = curated.get("LF")
+    sdmx = curated.translate_filters(lf, {"region": "2000"})
+    assert sdmx == {"REGION": ["1"]}
+
+
+def test_region_postcode_in_act_routes_correctly():
+    """`region='2600'` (Parliament House) resolves to ACT, not NSW."""
+    lf = curated.get("LF")
+    sdmx = curated.translate_filters(lf, {"region": "2600"})
+    assert sdmx == {"REGION": ["8"]}  # ACT SDMX
+
+
+def test_region_unknown_state_still_raises():
+    """Inputs that aren't a state, postcode, or curated key still fail."""
+    lf = curated.get("LF")
+    with pytest.raises(ValueError, match="Unknown value 'narnia'"):
+        curated.translate_filters(lf, {"region": "narnia"})
 
 
 def test_translate_filters_accepts_raw_sdmx_code_as_escape_hatch():
@@ -198,19 +251,26 @@ def test_translate_filters_permissive_accepts_sa4_short_numeric():
     assert sdmx["ASGS_2021"] == ["117"]
 
 
-def test_translate_filters_permissive_rejects_uppercase_typo():
-    """'NSW' (uppercase) is not in the curated map and has no digits — should
-    fall through to the curated 'Try one of:' hint, not be sent to ABS."""
+def test_translate_filters_permissive_normalises_uppercase_state_code():
+    """'NSW' (uppercase) is now normalised via aus_identity to the curated
+    key 'nsw'. Permissive ASGS dim still gets the canonical SDMX '1'."""
     cd = curated.get("ABS_ANNUAL_ERP_ASGS2021")
-    with pytest.raises(ValueError, match="Try one of"):
-        curated.translate_filters(cd, {"region": "NSW"})
+    sdmx = curated.translate_filters(cd, {"region": "NSW"})
+    assert sdmx["ASGS_2021"] == ["1"]
 
 
-def test_translate_filters_permissive_rejects_lowercase_typo():
-    """'queensland' is a typo of 'qld' — must get curated hint."""
+def test_translate_filters_permissive_normalises_full_state_name():
+    """'Queensland' (full name) is now normalised via aus_identity to 'qld'."""
+    cd = curated.get("ABS_ANNUAL_ERP_ASGS2021")
+    sdmx = curated.translate_filters(cd, {"region": "Queensland"})
+    assert sdmx["ASGS_2021"] == ["3"]
+
+
+def test_translate_filters_permissive_rejects_real_typo():
+    """Non-state non-postcode non-curated values still raise with curated hint."""
     cd = curated.get("ABS_ANNUAL_ERP_ASGS2021")
     with pytest.raises(ValueError, match="Try one of"):
-        curated.translate_filters(cd, {"region": "queensland"})
+        curated.translate_filters(cd, {"region": "narnia"})
 
 
 def test_translate_filters_permissive_rejects_injection_chars():
@@ -269,7 +329,8 @@ def test_unknown_value_message_points_to_describe_dataset():
     """Regression: every Unknown-value raise must point at describe_dataset(id)."""
     lf = curated.get("LF")
     with pytest.raises(ValueError, match=r"describe_dataset\('LF'\)"):
-        curated.translate_filters(lf, {"region": "queensland"})
+        # 'narnia' is not a state, not a postcode, not a curated key.
+        curated.translate_filters(lf, {"region": "narnia"})
 
 
 def test_unknown_value_message_includes_did_you_mean_for_typo():

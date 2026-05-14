@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "abs-mcp"
-version = "0.2.14"
+version = "0.3.0"
 description = "MCP server for the Australian Bureau of Statistics Data API. Hides SDMX behind plain-English tools, with curated mappings for Labour Force, CPI, ERP, Building Approvals, and Lending Indicators."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -34,6 +34,7 @@ dependencies = [
     "sdmx1>=2.20",
     "aiosqlite>=0.20",
     "PyYAML>=6.0",
+    "aus-identity>=0.1.0",
 ]
 
 [project.optional-dependencies]

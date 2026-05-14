@@ -120,6 +120,13 @@ Any other ABS dataflow still works — pass raw SDMX dimension IDs and codes.
 
 ## Worked examples
 
+> **Cross-source compatibility.** All location filters accept canonical state
+> codes (`"NSW"`), full names (`"New South Wales"`), case-insensitive
+> variants (`"nsw"`), ISO 3166-2 (`"AU-NSW"`), and 4-digit postcodes
+> (`"2000"` → NSW). Powered by [`aus-identity`](https://pypi.org/project/aus-identity/) —
+> the same input format works across abs-mcp, ato-mcp, apra-mcp, aihw-mcp,
+> and asic-mcp.
+
 **"What's the current unemployment rate in NSW?"**
 
 Claude calls:

@@ -1,5 +1,52 @@
 # Changelog
 
+## 0.3.0 (2026-05-15): aus-identity integration — uniform state / postcode normalisation across the portfolio
+
+The cross-source compatibility moat for the AU public-data MCP stack. Every
+location-aware filter (currently `region`) now accepts ANY of:
+
+- Canonical short codes (`NSW`, `VIC`, `QLD`, `SA`, `WA`, `TAS`, `NT`, `ACT`)
+- Case-insensitive (`nsw`, `Nsw`)
+- Full names (`New South Wales`, `Queensland`, `Tasmania`)
+- ISO 3166-2 (`AU-NSW`, `AU-VIC`)
+- Common aliases (`Tassie`)
+- 4-digit postcodes (`2000` → NSW, `2600` → ACT, `3000` → VIC, `0800` → NT)
+
+Powered by the [`aus-identity`](https://pypi.org/project/aus-identity/) library.
+This means an LLM agent that's already fetched a postcode from another sister
+MCP (ato-mcp, asic-mcp) can pass it directly to abs-mcp without manual
+conversion.
+
+### Added
+
+- **`aus-identity>=0.1.0`** dependency. New top-level dep — adds zero
+  transitive deps (pure-Python).
+- **Cross-source state/region normalisation** in `curated.translate_filters`:
+  before falling through to the existing `Try one of:` hint, a state-shaped
+  filter value is run through `aus_identity.normalize_state` (state codes,
+  full names, aliases) and `aus_identity.postcode_to_state` (numeric
+  postcodes). Mappings preserve existing curated keys — `'nsw'` still
+  resolves to SDMX `'1'`, and the canonical SDMX-code escape hatch
+  (`region='1'`) still works.
+- **7 new unit tests** under `tests/test_curated.py` covering full-name,
+  uppercase short-code, ISO 3166-2, postcode, ACT-postcode (which is
+  geographically inside NSW), and unknown-state edge cases.
+
+### Changed
+
+- The existing curated-suggestion tests that asserted `'queensland'` /
+  `'NSW'` raise `ValueError` now expect those values to RESOLVE (they're
+  valid AU state references). The "Did you mean?" rejection path is still
+  exercised via `'narnia'` and other genuinely-invalid inputs.
+
+### Notes
+
+- This is the first cross-source moat shipped — abs-mcp + ato-mcp + apra-mcp
+  + aihw-mcp + asic-mcp now all accept the same location-input shapes,
+  enabling the planned `ausdata-mcp` bundle to route a single user input
+  through any sister.
+- No breaking changes: any input that worked in 0.2.14 still works.
+
 ## 0.2.14 (2026-05-15): error-message sweep — rejection messages now suggest the correction
 
 Quality-dimension #5 (Deterministic Error Handling) pass. Every `ValueError`
