@@ -209,7 +209,8 @@ async def search_datasets(
     # bool is a subclass of int — reject explicitly so True/False don't silently coerce.
     if isinstance(limit, bool) or not isinstance(limit, int):
         raise ValueError(
-            f"limit must be a positive integer, got {limit!r} ({type(limit).__name__})."
+            f"limit must be a positive integer, got {limit!r} ({type(limit).__name__}). "
+            "Use a value between 1 and 100, e.g. limit=10."
         )
     if limit < 1:
         raise ValueError(
@@ -219,7 +220,13 @@ async def search_datasets(
     try:
         summaries = await list_dataflows(client, curated_ids=set(curated.list_ids()))
     except ABSAPIError as e:
-        raise ValueError(f"Could not fetch ABS dataflow catalogue: {e}") from e
+        raise ValueError(
+            f"Could not fetch ABS dataflow catalogue: {e}. "
+            "The ABS Data API may be temporarily unreachable — retry in a moment. "
+            "Meanwhile, list_curated() returns the 10 curated dataflow IDs "
+            "(LF, CPI, WPI, JV, AWE, ANA_AGG, BA_GCCSA, LEND_HOUSING, ERP_Q, "
+            "ABS_ANNUAL_ERP_ASGS2021) which you can query directly."
+        ) from e
     return search_in_memory(summaries, query, limit=limit)
 
 
@@ -393,7 +400,12 @@ async def _get_data_impl(
         ) from e
 
     if dataset_id not in dsd_msg.structure:
-        raise ValueError(f"DSD for '{dataset_id}' missing in API response")
+        raise ValueError(
+            f"DSD for '{dataset_id}' missing in API response. "
+            "This usually means the dataflow ID exists but its data-structure "
+            f"definition is unpublished or moved. Try search_datasets to find the "
+            f"current ID, or list_curated() for the 10 always-supported dataflows."
+        )
     dim_order = [d.id for d in dsd_msg.structure[dataset_id].dimensions.components]
     # For non-curated dataflows, validate user keys against the DSD here —
     # build_sdmx_key silently drops keys not in dim_order, which previously

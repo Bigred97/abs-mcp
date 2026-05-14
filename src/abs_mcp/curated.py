@@ -6,12 +6,24 @@ defaults so users don't have to reason about SDMX boilerplate (FREQ, TSEST).
 """
 from __future__ import annotations
 
+import difflib
 import re
 from dataclasses import dataclass, field
 from importlib import resources
 from pathlib import Path
 
 import yaml
+
+
+def _did_you_mean(needle: str, haystack: list[str]) -> str:
+    """Return a ' Did you mean 'X'?' suffix for a single close match, else ''.
+
+    Uses difflib (stdlib — no extra deps) with a moderate cutoff so a typo
+    like 'queensland' → 'qld' is not surfaced (too distant) but 'unemploymnt'
+    → 'unemployment_rate' is.
+    """
+    close = difflib.get_close_matches(needle, haystack, n=1, cutoff=0.6)
+    return f" Did you mean '{close[0]}'?" if close else ""
 
 # Real ABS sub-state SDMX codes contain at least one digit (SA2/SA3/SA4 are
 # pure digits, GCCSA codes are like '1GSYD'). Requiring a digit rules out
@@ -86,7 +98,12 @@ def _parse_dimension(name: str, raw: dict) -> CuratedDimension:
                 description=v.get("description"),
             )
         else:
-            raise ValueError(f"Bad value for {name}.{key}: {v!r}")
+            raise ValueError(
+                f"Bad value for {name}.{key}: {v!r}. "
+                "Each entry under `values:` must be either a string (the SDMX code) "
+                "or a dict with `sdmx_code:` (and optional `description:`). "
+                f"Example: `{key}: \"TOT\"` or `{key}: {{sdmx_code: TOT, description: Total}}`."
+            )
     return CuratedDimension(
         sdmx_id=raw["sdmx_id"],
         description=raw.get("description"),
@@ -161,11 +178,15 @@ def translate_filters(
                 raise ValueError(
                     f"Filter '{user_dim}' is auto-managed for dataset '{curated.id}' "
                     "and cannot be set by users. "
-                    f"User-facing filters: {', '.join(valid)}."
+                    f"User-facing filters: {', '.join(valid)}. "
+                    f"Try describe_dataset('{curated.id}') to see the full schema."
                 )
+            suggestion = _did_you_mean(user_dim, valid)
             raise ValueError(
-                f"Unknown filter '{user_dim}' for dataset '{curated.id}'. "
-                f"Try one of: {', '.join(valid)}"
+                f"Unknown filter '{user_dim}' for dataset '{curated.id}'."
+                f"{suggestion} "
+                f"Valid filters: {', '.join(valid)}. "
+                f"Try describe_dataset('{curated.id}') to see the full schema."
             )
         dim = visible_dims[user_dim]
         if isinstance(user_val, list):
@@ -187,6 +208,7 @@ def translate_filters(
                     f"Filter '{user_dim}' has an empty value. "
                     f"Try one of: {', '.join(valid_keys[:15])}"
                     + ("..." if len(valid_keys) > 15 else "")
+                    + f". See describe_dataset('{curated.id}') for the full schema."
                 )
             if v_str in dim.values:
                 codes.append(dim.values[v_str].sdmx_code)
@@ -203,10 +225,13 @@ def translate_filters(
                     codes.append(v_str)
                 else:
                     valid_keys = sorted(dim.values.keys())
+                    suggestion = _did_you_mean(v_str, valid_keys)
                     raise ValueError(
-                        f"Unknown value '{v}' for filter '{user_dim}' on '{curated.id}'. "
+                        f"Unknown value '{v}' for filter '{user_dim}' on '{curated.id}'."
+                        f"{suggestion} "
                         f"Try one of: {', '.join(valid_keys[:15])}"
                         + ("..." if len(valid_keys) > 15 else "")
+                        + f". See describe_dataset('{curated.id}') for the full schema."
                     )
         out[dim.sdmx_id] = codes
     return out

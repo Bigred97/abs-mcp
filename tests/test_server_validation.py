@@ -308,3 +308,12 @@ async def test_get_data_accepts_valid_period_formats():
             assert "invalid characters" not in str(e), (
                 f"period {p!r} should have passed the URL-safety guard: {e}"
             )
+
+
+# ---------- 0.2.14: actionable hints in server-level ValueErrors ----------
+
+async def test_search_datasets_limit_type_error_suggests_valid_range():
+    """Regression (0.2.14): the 'limit must be a positive integer' message
+    must include a concrete worked example so the LLM can self-correct."""
+    with pytest.raises(ValueError, match=r"limit=10"):
+        await server.search_datasets("cpi", limit="ten")  # type: ignore[arg-type]

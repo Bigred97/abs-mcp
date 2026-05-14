@@ -1,5 +1,47 @@
 # Changelog
 
+## 0.2.14 (2026-05-15): error-message sweep — rejection messages now suggest the correction
+
+Quality-dimension #5 (Deterministic Error Handling) pass. Every `ValueError`
+raised by the server, client, and curated layers now carries a "Try X" /
+"Did you mean X?" / "Valid options: ..." hint that gives the LLM a
+self-correction path, not just a rejection notice. Audited all 30 raise
+sites; rewrote the 6 that didn't already meet the bar.
+
+- **`curated.translate_filters` — unknown filter key**: now appends `Did
+  you mean 'X'?` (via `difflib.get_close_matches`, no new deps) for obvious
+  typos like `measur` → `measure`, plus a `Try describe_dataset('LF')`
+  pointer to the full schema. Same change for unknown filter values
+  (`unemploymnt_rate` → `unemployment_rate`).
+- **`curated.translate_filters` — empty value**: appends the
+  `describe_dataset('<id>')` pointer alongside the existing `Try one of:`
+  sample of valid keys.
+- **`curated.translate_filters` — auto-managed (hidden) dim passed as a
+  user filter**: appends `Try describe_dataset('<id>') to see the full
+  schema.` so the LLM can discover the visible filter surface.
+- **`curated._parse_dimension` — bad YAML value**: now shows the expected
+  shape (`string SDMX code OR dict with sdmx_code:`) plus a worked example.
+  Internal but matters when authoring a new curated YAML.
+- **`server.search_datasets` — limit type error**: now includes a worked
+  example (`e.g. limit=10`).
+- **`server.search_datasets` — catalogue fetch failed**: now suggests
+  retrying and lists the 10 curated dataflow IDs the user can query
+  without the catalogue endpoint.
+- **`server._get_data_impl` — DSD missing in API response**: now points
+  at `search_datasets` and `list_curated()` for recovery.
+- **+6 regression tests** in `test_curated.py` and `test_server_validation.py`
+  that lock in the new suggestion-style messages so a future regression
+  can't quietly revert them: `describe_dataset` pointer present on every
+  unknown-filter / unknown-value raise, `Did you mean X?` triggered for
+  typos in both filter keys and filter values, hidden-dim path also
+  carries the pointer, and the worked example survives in the limit-type
+  error.
+- 128 unit tests now (was 122 in 0.2.13). 10 consecutive zero-flake runs.
+
+No public API changes; this is a message-quality pass. Existing tests that
+match on substrings of the old messages continue to pass because the
+actionable hint was appended, not substituted.
+
 ## 0.2.13 (2026-05-15)
 
 Graceful degradation — quality dimension #4 in CLAUDE.md.

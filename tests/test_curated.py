@@ -245,3 +245,44 @@ def test_translate_filters_known_sdmx_code_still_resolves_on_permissive_dim():
     cd = curated.get("ABS_ANNUAL_ERP_ASGS2021")
     sdmx = curated.translate_filters(cd, {"region": "1GSYD"})
     assert sdmx["ASGS_2021"] == ["1GSYD"]
+
+
+# ---------- 0.2.14: suggestion-style ValueError messages (CLAUDE.md dim #5) ----------
+
+def test_unknown_filter_message_points_to_describe_dataset():
+    """Regression: every Unknown-filter raise must point at describe_dataset(id)
+    so the LLM has a self-correction path, not just a rejection notice."""
+    lf = curated.get("LF")
+    with pytest.raises(ValueError, match=r"describe_dataset\('LF'\)"):
+        curated.translate_filters(lf, {"state": "nsw"})
+
+
+def test_unknown_filter_message_includes_did_you_mean_for_typo():
+    """Regression: an obvious typo ('measur' → 'measure') must trigger a
+    'Did you mean X?' hint via difflib."""
+    lf = curated.get("LF")
+    with pytest.raises(ValueError, match=r"Did you mean 'measure'\?"):
+        curated.translate_filters(lf, {"measur": "unemployment_rate"})
+
+
+def test_unknown_value_message_points_to_describe_dataset():
+    """Regression: every Unknown-value raise must point at describe_dataset(id)."""
+    lf = curated.get("LF")
+    with pytest.raises(ValueError, match=r"describe_dataset\('LF'\)"):
+        curated.translate_filters(lf, {"region": "queensland"})
+
+
+def test_unknown_value_message_includes_did_you_mean_for_typo():
+    """Regression: 'unemploymnt_rate' (typo of 'unemployment_rate') must
+    surface a 'Did you mean X?' hint."""
+    lf = curated.get("LF")
+    with pytest.raises(ValueError, match=r"Did you mean 'unemployment_rate'\?"):
+        curated.translate_filters(lf, {"measure": "unemploymnt_rate"})
+
+
+def test_hidden_dim_filter_message_points_to_describe_dataset():
+    """The auto-managed-dim path also gets the describe_dataset pointer so
+    LLMs can discover the visible filter surface."""
+    lf = curated.get("LF")
+    with pytest.raises(ValueError, match=r"describe_dataset\('LF'\)"):
+        curated.translate_filters(lf, {"age": "15-19"})
