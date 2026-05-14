@@ -10,7 +10,12 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "Harry Vass" }]
-keywords = ["mcp", "abs", "statistics", "australia", "sdmx", "claude"]
+keywords = [
+    "mcp", "model-context-protocol", "claude", "fastmcp",
+    "abs", "australian-bureau-of-statistics", "statistics", "sdmx",
+    "australia", "australian", "public-data", "government-data",
+    "economy", "economic-data", "data-api",
+]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -43,7 +48,11 @@ abs-mcp = "abs_mcp.server:main"
 
 [project.urls]
 Homepage = "https://github.com/Bigred97/abs-mcp"
+Documentation = "https://github.com/Bigred97/abs-mcp#readme"
+Repository = "https://github.com/Bigred97/abs-mcp"
 Issues = "https://github.com/Bigred97/abs-mcp/issues"
+Changelog = "https://github.com/Bigred97/abs-mcp/blob/main/CHANGELOG.md"
+PyPI = "https://pypi.org/project/abs-mcp/"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/abs_mcp"]

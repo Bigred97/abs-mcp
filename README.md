@@ -1,9 +1,10 @@
 # abs-mcp
 
-[![tests](https://github.com/Bigred97/abs-mcp/actions/workflows/test.yml/badge.svg)](https://github.com/Bigred97/abs-mcp/actions/workflows/test.yml)
 [![PyPI](https://img.shields.io/pypi/v/abs-mcp.svg)](https://pypi.org/project/abs-mcp/)
 [![Python](https://img.shields.io/pypi/pyversions/abs-mcp.svg)](https://pypi.org/project/abs-mcp/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License](https://img.shields.io/pypi/l/abs-mcp.svg)](https://github.com/Bigred97/abs-mcp/blob/main/LICENSE)
+[![Tests](https://github.com/Bigred97/abs-mcp/actions/workflows/test.yml/badge.svg)](https://github.com/Bigred97/abs-mcp/actions/workflows/test.yml)
+[![CodeQL](https://github.com/Bigred97/abs-mcp/actions/workflows/codeql.yml/badge.svg)](https://github.com/Bigred97/abs-mcp/actions/workflows/codeql.yml)
 [![Glama MCP server quality](https://glama.ai/mcp/servers/Bigred97/abs-mcp/badges/score.svg)](https://glama.ai/mcp/servers/Bigred97/abs-mcp)
 
 **Ask Claude about the Australian economy and get real, current numbers** — not "I don't have access to that data." This MCP server gives Claude (and other MCP clients like Cursor) live access to the [ABS Data API](https://data.api.abs.gov.au/), with curated mappings for the 10 most-asked Australian economic indicators.
@@ -216,6 +217,19 @@ Claude does the picking; this server does the SDMX translation, unit attribution
 ## How it differs from existing ABS MCP servers
 
 The one existing community option (`seansoreilly/abs`) exposes a single `query_dataset` tool that passes raw SDMX through. This package offers semantic tools and curated mappings for the highest-value dataflows so an LLM can answer real questions without you needing to know what `M13.3.1599.20.1.M` means.
+
+## Sister MCPs (Australian Public Data portfolio)
+
+- **abs-mcp** — this one. Australian Bureau of Statistics (CPI, unemployment, ERP, building approvals)
+- [rba-mcp](https://pypi.org/project/rba-mcp/) — Reserve Bank of Australia (cash rate, lending stats, exchange rates)
+- [ato-mcp](https://pypi.org/project/ato-mcp/) — Australian Taxation Office (tax stats, ACNC charities)
+- [apra-mcp](https://pypi.org/project/apra-mcp/) — Australian Prudential Regulation Authority (banking, insurance, super)
+- [aihw-mcp](https://pypi.org/project/aihw-mcp/) — Australian Institute of Health and Welfare
+- [asic-mcp](https://pypi.org/project/asic-mcp/) — Australian Securities and Investments Commission (company registers)
+- [aemo-mcp](https://pypi.org/project/aemo-mcp/) — Australian Energy Market Operator (NEM dispatch, spot prices, generation)
+- [au-weather-mcp](https://pypi.org/project/au-weather-mcp/) — Open-Meteo (Bureau of Meteorology aggregator)
+- [wgea-mcp](https://pypi.org/project/wgea-mcp/) — Workplace Gender Equality Agency
+- [aus-identity](https://pypi.org/project/aus-identity/) — Postcode / state / ABN normalisation helper used by all sisters
 
 ## Changelog
 
