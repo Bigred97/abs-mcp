@@ -99,3 +99,110 @@ async def test_get_data_rejects_non_positive_last_n(db_path: Path) -> None:
             await client.get_data("LF", last_n=0)
         with pytest.raises(ValueError, match="last_n must be a positive integer"):
             await client.get_data("LF", last_n=-5)
+
+
+# ─── stale-fallback graceful degradation (CLAUDE.md quality dim #4) ──────
+
+async def _prime_stale_cache(db_path: Path, url: str, payload: bytes, age_hours: float) -> None:
+    """Put `payload` into the cache as if it was fetched `age_hours` ago.
+    Used to test the stale-fallback path: a regular cache.get() with a normal
+    TTL will miss this row (because cached_at is older than the TTL window),
+    but cache.get_stale() will still return it.
+    """
+    import time
+    import aiosqlite
+    from abs_mcp.cache import Cache
+    cache = Cache(db_path)
+    await cache._ensure_init()
+    async with aiosqlite.connect(db_path) as conn:
+        await conn.execute(
+            "INSERT INTO http_cache (cache_key, payload, cached_at, kind) "
+            "VALUES (?, ?, ?, ?) ON CONFLICT(cache_key) DO UPDATE SET "
+            "payload=excluded.payload, cached_at=excluded.cached_at",
+            (url, payload, time.time() - age_hours * 3600, "catalogue"),
+        )
+        await conn.commit()
+
+
+async def test_stale_fallback_serves_cached_payload_on_5xx(db_path: Path) -> None:
+    """When upstream ABS returns 5xx and we have a cached payload past its
+    TTL, serve the cached payload and mark the response as stale. Agents
+    continue reasoning rather than crashing."""
+    from abs_mcp.client import get_stale_signal, reset_stale_signal
+
+    fixture = (Path(__file__).parent / "fixtures" / "dataflows_min.xml").read_bytes()
+    url = "https://data.api.abs.gov.au/rest/dataflow/ABS/all/latest"
+
+    # Prime a 48h-old cache entry — past the 24h catalogue TTL, so cache.get()
+    # misses but cache.get_stale() will still return it.
+    await _prime_stale_cache(db_path, url, fixture, age_hours=48)
+
+    reset_stale_signal()
+    cache = Cache(db_path)
+    async with ABSClient(
+        cache=cache,
+        transport=httpx.MockTransport(lambda req: httpx.Response(503, text="Service Unavailable")),
+    ) as client:
+        msg = await client.get_dataflows()
+        assert hasattr(msg, "dataflow"), "fallback payload must still parse"
+        stale, reason = get_stale_signal()
+        assert stale is True, "stale flag must be set after 5xx fallback"
+        assert reason and "503" in reason, f"stale_reason should mention the 5xx: {reason}"
+        assert "minute" in reason.lower(), f"stale_reason should report age: {reason}"
+
+
+async def test_stale_fallback_serves_cached_on_request_error(db_path: Path) -> None:
+    """Same as 5xx test but for httpx.RequestError (DNS / connection refused / etc.)."""
+    from abs_mcp.client import get_stale_signal, reset_stale_signal
+
+    fixture = (Path(__file__).parent / "fixtures" / "dataflows_min.xml").read_bytes()
+    url = "https://data.api.abs.gov.au/rest/dataflow/ABS/all/latest"
+    await _prime_stale_cache(db_path, url, fixture, age_hours=48)
+
+    reset_stale_signal()
+    def raise_request_error(req: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectError("simulated DNS failure")
+
+    cache = Cache(db_path)
+    async with ABSClient(cache=cache, transport=httpx.MockTransport(raise_request_error)) as client:
+        msg = await client.get_dataflows()
+        assert hasattr(msg, "dataflow")
+        stale, reason = get_stale_signal()
+        assert stale is True
+        assert reason and "ConnectError" in reason
+
+
+async def test_raises_when_no_stale_cache_to_fall_back_to(db_path: Path) -> None:
+    """Empty cache + upstream 5xx → still raises ABSAPIError (original behaviour
+    when there's nothing to gracefully degrade to)."""
+    from abs_mcp.client import reset_stale_signal
+
+    reset_stale_signal()
+    cache = Cache(db_path)
+    async with ABSClient(
+        cache=cache,
+        transport=httpx.MockTransport(lambda req: httpx.Response(503, text="Service Unavailable")),
+    ) as client:
+        with pytest.raises(ABSAPIError, match="503"):
+            await client.get_dataflows()
+
+
+async def test_cache_get_stale_returns_payload_and_timestamp(db_path: Path) -> None:
+    """Cache.get_stale() returns (payload, cached_at) regardless of TTL —
+    the building block for client's stale-fallback path."""
+    from datetime import timedelta
+
+    cache = Cache(db_path)
+    await cache.set("https://example.org/x", b"hello", kind="data")
+    # Normal `get` with a tiny TTL should miss
+    fresh = await cache.get("https://example.org/x", ttl=timedelta(seconds=0))
+    assert fresh is None
+    # `get_stale` should return regardless of TTL
+    stale = await cache.get_stale("https://example.org/x")
+    assert stale is not None
+    payload, cached_at = stale
+    assert payload == b"hello"
+    assert cached_at > 0
+    # Non-existent key → None
+    miss = await cache.get_stale("https://example.org/missing")
+    assert miss is None

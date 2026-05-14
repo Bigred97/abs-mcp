@@ -6,6 +6,8 @@ sdmx1 object model without depending on its synchronous Client.
 """
 from __future__ import annotations
 
+import time
+from contextvars import ContextVar
 from io import BytesIO
 from typing import Any, TypeVar
 
@@ -23,6 +25,38 @@ DEFAULT_TIMEOUT = httpx.Timeout(60.0, connect=10.0)
 # We use the XML formats throughout — sdmx1's XML reader handles them cleanly.
 ACCEPT_STRUCTURE = "application/vnd.sdmx.structure+xml;version=2.1"
 ACCEPT_DATA = "application/vnd.sdmx.genericdata+xml;version=2.1"
+
+
+# ─── stale signal (graceful-degradation reporting per CLAUDE.md dim #4) ─
+# When the upstream ABS API is unreachable, _fetch_bytes falls back to
+# the cached payload regardless of TTL and records the staleness in this
+# ContextVar. Server-side tool wrappers read it after the request chain
+# and set DataResponse.stale / .stale_reason. ContextVar (not instance
+# attr) so concurrent MCP tool calls each see their own state.
+_stale_signal: ContextVar[tuple[bool, str | None]] = ContextVar(
+    "abs_mcp_stale_signal", default=(False, None)
+)
+
+
+def reset_stale_signal() -> None:
+    """Clear the stale state. Call once at the start of each tool call."""
+    _stale_signal.set((False, None))
+
+
+def get_stale_signal() -> tuple[bool, str | None]:
+    """Return (stale, reason) for the most recent fetch chain in this context."""
+    return _stale_signal.get()
+
+
+def _mark_stale(reason: str) -> None:
+    """Record that a stale-cache fallback was served this context.
+
+    If multiple fetches in one chain are stale, we keep the FIRST reason
+    (it's usually the most informative — the originating upstream failure).
+    """
+    cur_stale, _ = _stale_signal.get()
+    if not cur_stale:
+        _stale_signal.set((True, reason))
 
 
 class ABSAPIError(Exception):
@@ -60,11 +94,30 @@ class ABSClient:
         try:
             resp = await self._http.get(url, headers={"Accept": accept})
             resp.raise_for_status()
-        except httpx.HTTPStatusError as e:
-            raise ABSAPIError(
-                f"ABS API returned {e.response.status_code} for {url}"
-            ) from e
-        except httpx.RequestError as e:
+        except (httpx.HTTPStatusError, httpx.RequestError) as e:
+            # Graceful degradation: when upstream is unreachable, fall back
+            # to the most-recent cached payload (regardless of TTL) rather
+            # than raising and breaking the agent's chain of reasoning.
+            # The staleness is surfaced via the _stale_signal ContextVar
+            # and ends up in DataResponse.stale / stale_reason.
+            fallback = await self.cache.get_stale(url)
+            if fallback is not None:
+                payload, cached_at = fallback
+                age_min = max(0, int((time.time() - cached_at) / 60))
+                if isinstance(e, httpx.HTTPStatusError):
+                    upstream = f"ABS API returned {e.response.status_code}"
+                else:
+                    upstream = f"ABS API unreachable ({type(e).__name__})"
+                _mark_stale(
+                    f"{upstream} for {url}; serving cached payload from "
+                    f"~{age_min} minute(s) ago"
+                )
+                return payload
+            # Genuinely no cache to fall back to — preserve original behaviour
+            if isinstance(e, httpx.HTTPStatusError):
+                raise ABSAPIError(
+                    f"ABS API returned {e.response.status_code} for {url}"
+                ) from e
             raise ABSAPIError(f"ABS API request failed: {e}") from e
         await self.cache.set(url, resp.content, kind=kind)
         return resp.content

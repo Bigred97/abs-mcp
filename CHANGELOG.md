@@ -1,5 +1,40 @@
 # Changelog
 
+## 0.2.13 (2026-05-15)
+
+Graceful degradation — quality dimension #4 in CLAUDE.md.
+
+When the upstream ABS Data API is unreachable (5xx, timeout, DNS failure,
+connection refused), the client now falls back to the most-recent cached
+payload regardless of TTL and surfaces the staleness in the response.
+Agents see `DataResponse.stale=True` with a `stale_reason` like *"ABS API
+returned 503; serving cached payload from ~17 minute(s) ago"* and can
+continue reasoning, rather than the tool raising and breaking the chat.
+
+Genuine no-cache-to-fall-back-to case still raises `ABSAPIError` — only
+degrade gracefully when there's something to degrade to.
+
+- **New: `Cache.get_stale(key) -> (payload, cached_at)`** — TTL-bypassing
+  read, the building block for the fallback path.
+- **New: `_stale_signal` ContextVar in `client.py`** — `reset_stale_signal()`
+  + `get_stale_signal()` are the public API. The server resets at the
+  start of each tool call and reads at the end to propagate `stale=True`
+  into the response.
+- **New: `DataResponse.stale: bool` and `DataResponse.stale_reason: str | None`** —
+  echoed in every response when serving a stale cache.
+- **New: `DataResponse.truncated_at: int | None`** — placeholder field
+  matching the sister-MCP envelope (used by register-style MCPs like
+  asic-mcp; remains `None` for time-series-shaped abs-mcp data).
+- **+4 regression tests** in `test_client.py`:
+  1. 503 + stale cache → fallback + stale flag set
+  2. ConnectError + stale cache → same
+  3. 503 + empty cache → raises `ABSAPIError` (unchanged behaviour)
+  4. `Cache.get_stale()` round-trip + TTL bypass verification
+- 122 unit tests now (was 118 in 0.2.12).
+
+This is the reference implementation; the same pattern is being
+propagated to the 6 sister MCPs.
+
 ## 0.2.12 (2026-05-13)
 
 Loop-audit value pass — two cross-portfolio polish items found by a

@@ -15,7 +15,7 @@ from pydantic import Field
 
 from . import catalog, curated
 from .catalog import describe_from_dsd, list_dataflows, search_in_memory
-from .client import ABSAPIError, ABSClient
+from .client import ABSAPIError, ABSClient, get_stale_signal, reset_stale_signal
 from .models import (
     CuratedFilter,
     CuratedFilterValue,
@@ -341,6 +341,9 @@ async def _get_data_impl(
     fmt: str,
     last_n: int | None = None,
 ) -> DataResponse:
+    # Reset the graceful-degradation flag at the start of each tool call so
+    # we only report staleness introduced by THIS call's fetches.
+    reset_stale_signal()
     dataset_id = _normalize_dataset_id(dataset_id)
     filters = _validate_filters(filters)
     if fmt is not None and not isinstance(fmt, str):
@@ -421,7 +424,7 @@ async def _get_data_impl(
             f"Try describe_dataset('{dataset_id}') to see valid filter values. ({e})"
         ) from e
 
-    return build_response(
+    resp = build_response(
         dataset_id=dataset_id,
         msg=data_msg,
         dsd_msg=dsd_msg,
@@ -432,6 +435,13 @@ async def _get_data_impl(
         start_period=start_period,
         end_period=end_period,
     )
+    # If any fetch in the chain (DSD or data) served a stale-cache fallback
+    # because the upstream API was unreachable, propagate it to the response.
+    stale, reason = get_stale_signal()
+    if stale:
+        resp.stale = True
+        resp.stale_reason = reason
+    return resp
 
 
 @mcp.tool
