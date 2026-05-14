@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.0] - 2026-05-15
+
+### Added
+
+- **DataResponse.source_url**: canonical click-through URL field, populated
+  alongside the legacy `abs_url` alias. Cross-sister consumers can now read
+  `.source_url` uniformly across the portfolio. `abs_url` remains populated
+  with the same value for backward compatibility.
+- **DataResponse.row_count**: number of observation rows in `records`
+  (`int`, defaults to `0`). Brings abs-mcp in line with the canonical
+  `DataResponse` envelope used by the rest of the portfolio.
+
 ## 0.3.0 (2026-05-15): aus-identity integration — uniform state / postcode normalisation across the portfolio
 
 The cross-source compatibility moat for the AU public-data MCP stack. Every

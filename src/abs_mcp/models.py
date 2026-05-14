@@ -66,6 +66,7 @@ class DataResponse(BaseModel):
     query: dict[str, Any] = Field(default_factory=dict)
     period: dict[str, str | None] = Field(default_factory=lambda: {"start": None, "end": None})
     unit: str | None = None
+    row_count: int = Field(default=0, description="Number of observation rows in records.")
     records: list[Observation] | list[dict[str, Any]] = Field(default_factory=list)
     csv: str | None = None
     source: str = "Australian Bureau of Statistics"
@@ -73,7 +74,19 @@ class DataResponse(BaseModel):
     # reachable via a link. Mirrors rba-mcp's DataResponse.attribution shape.
     attribution: str = _ABS_ATTRIBUTION
     retrieved_at: datetime
-    abs_url: str
+    source_url: str = Field(
+        description=(
+            "Canonical click-through URL. Same value as abs_url; both populated "
+            "for backward compat."
+        )
+    )
+    abs_url: str = Field(
+        description=(
+            "Click-through URL for this dataset's source page. abs-mcp legacy "
+            "name — prefer source_url (canonical) for new code. Both fields are "
+            "populated identically."
+        )
+    )
     # Echoed in every response so testers can verify which wheel served the
     # call — uvx caches per-version and stale caches have caused real "is
     # this fixed?" confusion. `pip install -U` / `uvx --refresh` to update.

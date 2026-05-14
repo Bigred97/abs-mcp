@@ -252,8 +252,10 @@ def build_response(
         query=user_query,
         period={"start": start_period, "end": end_period},
         unit=response_unit,
+        row_count=len(records),
         records=records,
         csv=csv_text,
         retrieved_at=datetime.now(timezone.utc),
+        source_url=abs_url,
         abs_url=abs_url,
     )

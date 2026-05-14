@@ -163,3 +163,56 @@ def test_response_unit_populated_when_homogeneous():
     if resp.unit is not None:
         units_in_records = {o.unit for o in resp.records if hasattr(o, "unit") and o.unit}
         assert {resp.unit} == units_in_records
+
+
+def test_data_response_has_source_url_canonical_field():
+    """Wave-2 interop: both source_url and abs_url are populated and equal."""
+    data_msg, dsd_msg = _load_lf_msgs()
+    lf = curated_mod.get("LF")
+    resp = build_response(
+        dataset_id="LF",
+        msg=data_msg,
+        dsd_msg=dsd_msg,
+        user_query={},
+        fmt="records",
+        abs_url="https://abs.gov.au/some-dataset",
+        curated=lf,
+    )
+    assert resp.source_url is not None
+    assert resp.source_url == resp.abs_url
+    assert resp.source_url == "https://abs.gov.au/some-dataset"
+
+
+def test_data_response_row_count_matches_records():
+    """Wave-2 interop: row_count tracks len(records) for records format."""
+    data_msg, dsd_msg = _load_lf_msgs()
+    lf = curated_mod.get("LF")
+    resp = build_response(
+        dataset_id="LF",
+        msg=data_msg,
+        dsd_msg=dsd_msg,
+        user_query={},
+        fmt="records",
+        abs_url="https://abs.gov.au/...",
+        curated=lf,
+    )
+    assert resp.row_count == len(resp.records)
+    assert resp.row_count > 0
+
+
+def test_data_response_row_count_csv_format_is_zero():
+    """For csv format, records is empty so row_count must be 0 (csv content separate)."""
+    data_msg, dsd_msg = _load_lf_msgs()
+    lf = curated_mod.get("LF")
+    resp = build_response(
+        dataset_id="LF",
+        msg=data_msg,
+        dsd_msg=dsd_msg,
+        user_query={},
+        fmt="csv",
+        abs_url="https://abs.gov.au/...",
+        curated=lf,
+    )
+    assert resp.row_count == 0
+    assert resp.records == []
+    assert resp.csv is not None
