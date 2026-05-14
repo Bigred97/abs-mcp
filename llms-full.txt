@@ -1,0 +1,313 @@
+# abs-mcp — full reference
+
+> MCP server exposing the Australian Bureau of Statistics Data API (SDMX-XML) through 5 plain-English tools — unemployment, CPI, wages, GDP, population, building approvals, lending.
+
+abs-mcp is the Australian Bureau of Statistics (ABS) member of the Australian Public Data MCP portfolio. It wraps the SDMX-XML 2.1 endpoint at data.api.abs.gov.au, translating ABS dataflow codes into curated plain-English filter keys so an LLM can answer real economic questions without knowing SDMX. 10 curated dataflows cover the most-asked indicators; the other ~1,200 ABS dataflows are still accessible via raw SDMX dimension IDs.
+
+This document is a single-file reference: a self-contained integration prompt. If you fetch just this file you should be able to wire up an MCP client and call every tool correctly without ever cloning the repo.
+
+---
+
+## Install
+
+```bash
+# uvx (recommended — refreshes from PyPI each launch)
+uvx --upgrade abs-mcp
+
+# Or pin via pip
+pip install abs-mcp
+```
+
+### Claude Desktop
+
+`~/Library/Application Support/Claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "abs": {
+      "command": "uvx",
+      "args": ["--upgrade", "abs-mcp"]
+    }
+  }
+}
+```
+
+### Cursor
+
+`~/.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "abs": {
+      "command": "uvx",
+      "args": ["--upgrade", "abs-mcp"]
+    }
+  }
+}
+```
+
+---
+
+## Trust contract
+
+Every `DataResponse` from abs-mcp carries:
+
+```
+source             "Australian Bureau of Statistics (ABS)"
+source_url         https://data.api.abs.gov.au/
+attribution        full CC-BY 4.0 International attribution string with licence URL
+retrieved_at       UTC timestamp
+server_version     importlib.metadata.version("abs-mcp")
+stale              True when serving cached fallback after upstream error
+stale_reason       human-readable when stale=True (e.g. "ABS API 503 at 14:22 UTC")
+truncated_at       int | None — set when latest() caps a large response
+```
+
+Cache TTLs: 15 min for `latest`, 1 h for `get_data`, 24 h for the dataflow catalogue, 7 d for codelists / DSDs. Graceful degradation: when data.api.abs.gov.au is unreachable, abs-mcp falls back to the last cached payload and sets `stale=True` rather than raising. Errors carry "Try X" hints with the suggested correction.
+
+---
+
+## Tools
+
+### search_datasets(query, limit=10)
+
+Fuzzy-search ABS dataflow names, descriptions, and search_keywords. Curated entries get a +25 relevance boost so common queries like "unemployment" or "gdp" return LF / ANA_AGG at rank #1 rather than a tangential census table.
+
+Returns a list of `DatasetSummary` (id, name, description, is_curated).
+
+```python
+await search_datasets("unemployment")
+# → [{id: 'LF', name: 'Labour Force', is_curated: True}, ...]
+```
+
+### describe_dataset(dataset_id)
+
+For curated dataflows: plain-English dimension names, curated value keys, source URL, and the set of hidden default dimensions (e.g. age 15+, seasonally adjusted). For non-curated dataflows: raw SDMX dimensions and codelists shaped into the same response.
+
+Returns `DatasetDetail` (id, name, description, is_curated, dimensions, hidden_defaults, abs_url).
+
+```python
+await describe_dataset("LF")
+# detail.dimensions = [
+#   {name: 'region', sdmx_id: 'REGION', values: [{key: 'nsw', sdmx_code: '1'}, ...]},
+#   {name: 'measure', sdmx_id: 'MEASURE', values: [{key: 'unemployment_rate', sdmx_code: 'M13'}, ...]},
+#   {name: 'sex', sdmx_id: 'SEX', values: [{key: 'persons', sdmx_code: '3'}, ...]},
+# ]
+```
+
+### get_data(dataset_id, filters=None, start_period=None, end_period=None, format="records")
+
+Query a dataflow. For curated dataflows: plain-English filter keys/values get translated to SDMX codes; hidden-dim defaults auto-applied. For raw dataflows: pass SDMX dim IDs and codes.
+
+`filters` accepts a string or list per key (list → multi-value SDMX key). `format` is `"records"` (flat), `"series"` (grouped), or `"csv"`. Period formats follow the dataflow's cadence (see below).
+
+Returns `DataResponse`.
+
+```python
+# NSW unemployment monthly for 2024
+await get_data("LF",
+               filters={"region": "nsw", "measure": "unemployment_rate"},
+               start_period="2024", end_period="2024-12")
+# → resp.records[0]: period='2024-01', value=4.8, unit='Percent'
+
+# Multi-state CSV
+await get_data("LF",
+               filters={"region": ["nsw","vic","qld"], "measure": "unemployment_rate"},
+               start_period="2024", format="csv")
+# → resp.csv contains 36 rows (3 states × 12 months)
+```
+
+### latest(dataset_id, filters=None)
+
+Wraps `get_data` with `lastNObservations=1` and a 15-minute cache TTL. Use for "what's the current X?" questions.
+
+```python
+await latest("LF", {"region": "nsw", "measure": "unemployment_rate"})
+# → resp.records[0]: period='2026-03', value=4.27, unit='Percent'
+
+await latest("CPI", {"region": "australia", "measure": "change_year"})
+# → resp.records[0]: period='2026-Q1', value=4.6, unit='Percent'
+```
+
+### list_curated()
+
+Returns the sorted list of the 10 curated dataflow IDs.
+
+```python
+list_curated()
+# → ['ABS_ANNUAL_ERP_ASGS2021', 'ANA_AGG', 'AWE', 'BA_GCCSA', 'CPI',
+#    'ERP_Q', 'JV', 'LEND_HOUSING', 'LF', 'WPI']
+```
+
+---
+
+## Period formats
+
+| Dataflows | Frequency | Format | Example |
+|---|---|---|---|
+| LF, BA_GCCSA | Monthly | `YYYY-MM` | `"2026-03"` |
+| CPI, WPI, JV, ANA_AGG, LEND_HOUSING, ERP_Q | Quarterly | `YYYY-Q*` or `YYYY-MM` | `"2025-Q4"` |
+| AWE | Half-yearly | `YYYY-S*` | `"2025-S2"` |
+| ABS_ANNUAL_ERP_ASGS2021 | Annual | `YYYY` | `"2025"` |
+
+Int years (`start_period=2024`) are accepted and treated as `"YYYY"`.
+
+---
+
+## Curated dataflows (10)
+
+### LF — Labour Force
+
+Monthly employment, unemployment, and labour force participation by state. ABS Catalogue 6202.0.
+
+- source_url: https://www.abs.gov.au/statistics/labour/employment-and-unemployment/labour-force-australia
+- update_frequency: monthly
+- filters: measure (employed_persons, unemployed_persons, participation_rate, unemployment_rate, employed_full_time, employed_part_time, labour_force, not_in_labour_force), sex (persons/male/female), region (australia/nsw/vic/qld/sa/wa/tas/nt/act)
+- hidden defaults: age=15+, adjustment=seasonally adjusted, frequency=monthly
+
+### CPI — Consumer Price Index
+
+Quarterly Consumer Price Index by capital city. ABS Catalogue 6401.0.
+
+- source_url: https://www.abs.gov.au/statistics/economy/price-indexes-and-inflation/consumer-price-index-australia
+- update_frequency: quarterly
+- key measures: change_year (annual inflation), change_quarter, index_numbers
+- regions: australia, all 8 capital cities
+
+### WPI — Wage Price Index
+
+Quarterly wage growth — headline measure of wage inflation. ABS Catalogue 6345.0.
+
+- source_url: https://www.abs.gov.au/statistics/economy/price-indexes-and-inflation/wage-price-index-australia
+- update_frequency: quarterly
+
+### JV — Job Vacancies
+
+Quarterly labour demand by industry, sector, state. Pairs with LF for labour-market-tightness analysis. ABS Catalogue 6354.0.
+
+- source_url: https://www.abs.gov.au/statistics/labour/jobs/job-vacancies-australia
+- update_frequency: quarterly
+
+### AWE — Average Weekly Earnings
+
+Half-yearly take-home pay by industry, sector, state. ABS Catalogue 6302.0.
+
+- source_url: https://www.abs.gov.au/statistics/labour/earnings-and-working-conditions/average-weekly-earnings-australia
+- update_frequency: semi-annual
+- period_format: `YYYY-S1` / `YYYY-S2`
+
+### ANA_AGG — National Accounts Key Aggregates (GDP)
+
+Quarterly Australian National Accounts headline aggregates: GDP, GDP per capita, real income, hours worked, terms of trade, gross national income. National-level only (not state-level). ABS Catalogue 5206.0.
+
+- source_url: https://www.abs.gov.au/statistics/economy/national-accounts/australian-national-accounts-national-income-expenditure-and-product
+- update_frequency: quarterly
+
+### BA_GCCSA — Building Approvals
+
+Monthly building approvals by state and capital-city Greater Capital City Statistical Area regions. Breakdowns by sector, work type, building type. ABS Catalogue 8731.0.
+
+- source_url: https://www.abs.gov.au/statistics/industry/building-and-construction/building-approvals-australia
+- update_frequency: monthly
+
+### LEND_HOUSING — Lending Indicators (Housing Finance)
+
+Quarterly new housing loan commitments by purpose, lender type, state. Covers owner-occupier and investor housing, with first-home-buyer cuts. ABS Catalogue 5601.0.
+
+- source_url: https://www.abs.gov.au/statistics/economy/finance/lending-indicators
+- update_frequency: quarterly
+
+### ERP_Q — Estimated Resident Population (quarterly)
+
+Quarterly ERP by state/territory, sex, and age. More current than the annual ERP. ABS Catalogue 3101.0.
+
+- source_url: https://www.abs.gov.au/statistics/people/population/national-state-and-territory-population
+- update_frequency: quarterly
+
+### ABS_ANNUAL_ERP_ASGS2021 — Estimated Resident Population (annual, ASGS 2021)
+
+Annual ERP by state/territory and sub-state geographic regions (SA2/SA3/SA4/GCCSA). ABS Catalogue 3218.0. ASGS Edition 3 (2021).
+
+- source_url: https://www.abs.gov.au/statistics/people/population/national-state-and-territory-population
+- update_frequency: annual
+- region filter has `permissive: true` — accepts any ASGS sub-state code without enumeration
+
+---
+
+## Worked examples (input → response shape)
+
+### Latest NSW unemployment
+
+```python
+await latest("LF", {"region": "nsw", "measure": "unemployment_rate"})
+```
+
+```json
+{
+  "dataset_id": "LF",
+  "dataset_name": "Labour Force",
+  "query": {"region": "nsw", "measure": "unemployment_rate"},
+  "period": {"start": "2026-03", "end": "2026-03"},
+  "unit": "Percent",
+  "row_count": 1,
+  "records": [
+    {
+      "period": "2026-03",
+      "value": 4.27,
+      "dimensions": {"measure": "Unemployment rate", "region": "New South Wales", "sex": "Persons"},
+      "unit": "Percent"
+    }
+  ],
+  "source": "Australian Bureau of Statistics",
+  "source_url": "https://www.abs.gov.au/statistics/labour/employment-and-unemployment/labour-force-australia",
+  "attribution": "Source: Australian Bureau of Statistics. Licensed under CC-BY 4.0 International (https://creativecommons.org/licenses/by/4.0/).",
+  "retrieved_at": "2026-05-15T01:14:22Z",
+  "server_version": "0.2.12",
+  "stale": false,
+  "stale_reason": null
+}
+```
+
+### Multi-region multi-year CSV
+
+```python
+await get_data("BA_GCCSA",
+               filters={"region": ["nsw","vic","qld"], "measure": "dwelling_units"},
+               start_period="2024", format="csv")
+```
+
+→ `resp.csv` contains a CSV string with `period,region,measure,value,unit` columns.
+
+### Series format for charting
+
+```python
+await get_data("F11.1" if False else "LF",  # ABS not RBA — example only
+               filters={"region": "nsw", "measure": "unemployment_rate"},
+               start_period="2020", format="series")
+```
+
+→ `resp.records` grouped by series key, suitable for plotting.
+
+---
+
+## How it differs from existing ABS MCP servers
+
+The one existing community option (`seansoreilly/abs`) exposes a single `query_dataset` tool that passes raw SDMX through. abs-mcp offers semantic 5-tool surface and curated plain-English mappings for the highest-value dataflows so an LLM can answer real questions without you needing to know what `M13.3.1599.20.1.M` means.
+
+---
+
+## Cross-source pairings
+
+- [rba-mcp](https://pypi.org/project/rba-mcp/) for cash rate / FX / mortgage rates paired with ABS macro stats
+- [ato-mcp](https://pypi.org/project/ato-mcp/) for per-postcode tax data joined with ABS regional population
+- [apra-mcp](https://pypi.org/project/apra-mcp/) for bank capital + super fund context against ABS labour stats
+- [au-weather-mcp](https://pypi.org/project/au-weather-mcp/) for population × climate analysis
+- [aus-identity](https://pypi.org/project/aus-identity/) for cross-source region filter compatibility (NSW / New South Wales / AU-NSW / "2000" all resolve)
+
+---
+
+## License
+
+The abs-mcp server code is MIT-licensed. ABS data carries CC-BY 4.0 International; the attribution string is echoed on every response.

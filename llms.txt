@@ -1,33 +1,36 @@
 # abs-mcp
 
-> Live MCP (Model Context Protocol) server giving Claude and other LLM agents access to Australian Bureau of Statistics data — labour force, CPI, GDP, wages, housing, population — via plain-English tools. Hides SDMX behind 10 curated dataflows; 1,200+ other ABS dataflows accessible via raw codes. Python, MIT, on PyPI.
+> MCP server exposing the Australian Bureau of Statistics Data API (SDMX-XML) through 5 plain-English tools — unemployment, CPI, wages, GDP, population, building approvals, lending.
 
-abs-mcp is a Python package installable via `uvx abs-mcp`. When configured in an MCP client like Claude Desktop or Cursor, it exposes five tools to the LLM: `search_datasets(query, limit)` for fuzzy discovery, `describe_dataset(dataset_id)` for plain-English dimension listings, `get_data(dataset_id, filters, start_period, end_period, format)` for queries, `latest(dataset_id, filters)` for the most-recent observation, and `list_curated()` for the curated dataflow IDs.
+abs-mcp is the Australian Bureau of Statistics (ABS) member of the Australian Public Data MCP portfolio. It wraps the SDMX-XML 2.1 endpoint at data.api.abs.gov.au, translating ABS dataflow codes into curated plain-English filter keys ("region: nsw", "measure: unemployment_rate") so an LLM can answer real economic questions without knowing what `M13.3.1599.20.1.M` means.
 
-For curated dataflows (LF, CPI, WPI, JV, AWE, ANA_AGG, ABS_ANNUAL_ERP_ASGS2021, ERP_Q, BA_GCCSA, LEND_HOUSING) the LLM passes plain-English filter values like `region: "nsw"`, `measure: "unemployment_rate"`. For non-curated dataflows the LLM passes raw SDMX codes. Every response includes the period, unit, and a link to the ABS source page; numerical values are scaled by `UNIT_MULT` so an LLM doesn't need to interpret SDMX magnitude attributes.
-
-The server is companion to `rba-mcp` (Reserve Bank of Australia data). Together they cover the most-asked Australian economic data; users typically install both side-by-side.
+10 curated dataflows cover the most-asked indicators. The other ~1,200 ABS dataflows are still accessible via raw SDMX dimension IDs. Every response carries the CC-BY 4.0 International attribution and the canonical ABS source URL. SQLite cache TTLs are tuned for the ABS publication cadence (15min latest / 1h data / 24h catalogue / 7d structure) and the server falls back to cached payloads with `stale=True` when the upstream API is unreachable.
 
 ## Documentation
-- [README](https://github.com/Bigred97/abs-mcp/blob/main/README.md): install instructions, Claude Desktop / Cursor config, worked examples table with verified real values
-- [CHANGELOG](https://github.com/Bigred97/abs-mcp/blob/main/CHANGELOG.md): full release history showing how the curated mappings, response shapes, and validation guards evolved
-- [Curated YAMLs](https://github.com/Bigred97/abs-mcp/tree/main/src/abs_mcp/data/curated): one YAML per curated dataflow, defining plain-English keys → SDMX codes
-- [PyPI](https://pypi.org/project/abs-mcp/): latest published version, install command
 
-## Use cases for an LLM agent
-- "What's the unemployment rate in NSW?" → `latest("LF", {"region": "nsw", "measure": "unemployment_rate"})`
-- "What's the AU annual inflation rate?" → `latest("CPI", {"region": "australia", "measure": "change_year"})`
-- "What's AU GDP growth this quarter?" → `latest("ANA_AGG", {"series": "gdp", "measure": "change"})`
-- "Compare unemployment across NSW, VIC, QLD" → `get_data("LF", {"region": ["nsw", "vic", "qld"], "measure": "unemployment_rate"}, start_period="2020")`
-- "How many dwellings were approved in NSW last month?" → `latest("BA_GCCSA", {"region": "nsw", "measure": "dwelling_units"})`
-- Discovery: when the dataflow ID is unknown, call `search_datasets("housing finance")` then `describe_dataset(top_result.id)`
+- [README](https://github.com/Bigred97/abs-mcp/blob/main/README.md): Full setup + 5-tool usage + worked examples
+- [CHANGELOG](https://github.com/Bigred97/abs-mcp/blob/main/CHANGELOG.md): Release history
+- [PyPI](https://pypi.org/project/abs-mcp/): `uvx --upgrade abs-mcp`
 
-## Source
-- [src/abs_mcp/server.py](https://github.com/Bigred97/abs-mcp/blob/main/src/abs_mcp/server.py): FastMCP entrypoint, the 5 tool definitions
-- [src/abs_mcp/curated.py](https://github.com/Bigred97/abs-mcp/blob/main/src/abs_mcp/curated.py): YAML loader + plain-English filter translation
-- [src/abs_mcp/shaping.py](https://github.com/Bigred97/abs-mcp/blob/main/src/abs_mcp/shaping.py): SDMX → records / series / csv response shaping
-- [src/abs_mcp/client.py](https://github.com/Bigred97/abs-mcp/blob/main/src/abs_mcp/client.py): async ABS API client (httpx + sdmx1)
+## Tools
+
+- search_datasets(query, limit=10): Fuzzy search across the 10 curated dataflows plus ~1,200 raw ABS dataflows; curated entries get a relevance boost
+- describe_dataset(dataset_id): Plain-English dimensions, filter values, source URL; surfaces hidden defaults (age 15+, seasonally adjusted, etc.)
+- get_data(dataset_id, filters, start_period, end_period, format): Filtered historical query; supports list filters for multi-state / multi-measure comparisons; format='records'|'series'|'csv'
+- latest(dataset_id, filters): Most recent observation, wraps get_data with lastNObservations=1; 15-minute cache TTL
+- list_curated(): Enumerate the 10 curated dataflow IDs (LF, CPI, WPI, JV, AWE, ANA_AGG, BA_GCCSA, LEND_HOUSING, ERP_Q, ABS_ANNUAL_ERP_ASGS2021)
+
+## Example queries
+
+- "What's the unemployment rate for NSW?"
+- "Show CPI quarterly inflation for the last 5 years"
+- "Compare wage growth across states in 2024"
+- "AU GDP quarterly growth and per capita over the last decade"
+- "Dwelling approvals in NSW by month"
+- "Quarterly population of Australia"
+- "New NSW housing loan commitments to first home buyers"
 
 ## Optional
-- [Companion server: rba-mcp](https://github.com/Bigred97/rba-mcp): Reserve Bank of Australia data (cash rate, FX, mortgage rates) using the same plain-English pattern
-- [Tests](https://github.com/Bigred97/abs-mcp/tree/main/tests): 161 tests covering every curated dataflow + URL-injection guards + search relevance
+
+- [Sister MCPs](https://github.com/Bigred97?tab=repositories&q=mcp): The other AU public-data MCPs in the portfolio (RBA, ATO, APRA, AIHW, ASIC, AEMO, weather, WGEA)
+- [aus-identity](https://pypi.org/project/aus-identity/): Postcode/state/ABN normalisation used by all sisters — the `region` filter on every ABS curated dataflow accepts canonical codes, full names, ISO 3166-2, and postcodes
