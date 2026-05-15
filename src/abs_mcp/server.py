@@ -624,6 +624,191 @@ async def latest(
 
 
 @mcp.tool
+async def top_n(
+    dataset_id: Annotated[
+        str,
+        Field(
+            description=(
+                "ABS dataflow ID. Must be a curated dataflow with a 'measure' "
+                "dimension. Use list_curated() to enumerate."
+            ),
+            examples=["LF", "CPI", "ERP_Q", "BA_GCCSA", "WPI", "LEND_HOUSING"],
+        ),
+    ],
+    measure: Annotated[
+        str,
+        Field(
+            description=(
+                "Plain-English measure key to rank by — one of the curated "
+                "measure values for this dataflow. Use describe_dataset() to "
+                "see available measures."
+            ),
+            examples=[
+                "unemployment_rate",
+                "employed_persons",
+                "change_year",
+                "dwelling_units",
+                "wage_price_index",
+            ],
+        ),
+    ],
+    n: Annotated[
+        int,
+        Field(
+            description="How many top (or bottom) rows to return.",
+            ge=1,
+            le=100,
+            examples=[5, 10, 20, 50],
+        ),
+    ] = 10,
+    filters: Annotated[
+        dict[str, Any] | None,
+        Field(
+            description=(
+                "Optional additional dimension filters, same shape as get_data. "
+                "Do NOT include the 'measure' key here — that is supplied via "
+                "the `measure` parameter."
+            ),
+            examples=[
+                {"sex": "persons"},
+                {"region_type": "gccsa"},
+                {"sector": "private"},
+            ],
+        ),
+    ] = None,
+    direction: Annotated[
+        Literal["top", "bottom"],
+        Field(
+            description=(
+                "'top' returns the N rows with the LARGEST measure values "
+                "(highest unemployment_rate, biggest population, etc.). "
+                "'bottom' returns the SMALLEST."
+            ),
+            examples=["top", "bottom"],
+        ),
+    ] = "top",
+) -> DataResponse:
+    """Return the N rows with the largest (or smallest) value of a measure.
+
+    Ranks across the most-recent available period only (uses
+    lastNObservations=1 under the hood) so the result is a clean
+    "top N entities at the latest period" view — not noisy historical highs.
+
+    This is the most common agent workflow: "show me the top 10 X by Y".
+    Without this tool, an agent would call get_data, receive the full time
+    series, and then sort/slice locally — wasting tokens and turns. top_n
+    does the rank server-side and returns only the requested rows.
+
+    Examples:
+        # 5 states with the highest current unemployment rate
+        top_n("LF", "unemployment_rate", n=5)
+
+        # 10 GCCSAs with the largest populations
+        top_n("ABS_ANNUAL_ERP_ASGS2021", "estimated_resident_population",
+              n=10, filters={"region_type": "gccsa"})
+
+        # 3 industries with the lowest wage growth
+        top_n("WPI", "wage_price_index", n=3, direction="bottom")
+
+    Returns:
+        DataResponse with at most `n` records, sorted by `measure` value
+        in the requested direction. Other fields (period, unit, attribution)
+        match a regular get_data call.
+    """
+    # Validate inputs that pydantic's runtime can't enforce strictly when the
+    # function is called directly (Literal/ge/le are type-checker-only in
+    # some FastMCP code paths).
+    if not isinstance(measure, str) or not measure.strip():
+        raise ValueError(
+            "measure is required and must be a non-empty string. "
+            "Example: top_n('LF', 'unemployment_rate', n=5). "
+            "Try describe_dataset(<id>) to see available measure keys."
+        )
+    if isinstance(n, bool) or not isinstance(n, int):
+        raise ValueError(
+            f"n must be a positive integer (1-100), got {n!r} ({type(n).__name__}). "
+            "Try n=10 (default) or n=5. Valid range: 1-100."
+        )
+    if n < 1:
+        raise ValueError(
+            f"n must be >= 1, got {n}. "
+            "Try n=10 (default) or n=5. Valid range: 1-100."
+        )
+    if n > 100:
+        raise ValueError(
+            f"n must be <= 100, got {n}. "
+            "Try n=10 (default) or n=50. Valid range: 1-100."
+        )
+    if direction not in ("top", "bottom"):
+        valid = ["top", "bottom"]
+        suggestion = curated._did_you_mean(str(direction).lower(), valid)
+        raise ValueError(
+            f"direction must be 'top' or 'bottom', got {direction!r}."
+            f"{suggestion} "
+            "Try direction='top' (default, largest values first) or "
+            "direction='bottom' (smallest values first)."
+        )
+
+    norm_id = _normalize_dataset_id(dataset_id)
+    cd = curated.get(norm_id)
+    if cd is None:
+        raise ValueError(
+            f"top_n requires a curated dataflow with a 'measure' dimension. "
+            f"Dataset {dataset_id!r} is not curated. "
+            "Try list_curated() to see the 10 dataflows that support top_n "
+            "(LF, CPI, ANA_AGG, AWE, BA_GCCSA, ERP_Q, JV, LEND_HOUSING, "
+            "WPI, ABS_ANNUAL_ERP_ASGS2021)."
+        )
+    if "measure" not in cd.dimensions or cd.dimensions["measure"].hidden:
+        raise ValueError(
+            f"Dataset {norm_id!r} does not expose a user-facing 'measure' "
+            "dimension. top_n is only meaningful when the dataset has a "
+            "measure dimension to filter on. Try describe_dataset() to "
+            "inspect the dataset's filter schema, or use get_data() directly."
+        )
+    measure_dim = cd.dimensions["measure"]
+    measure_keys = sorted(measure_dim.values.keys())
+    measure_key = measure.strip()
+    if measure_key not in measure_dim.values:
+        suggestion = curated._did_you_mean(measure_key, measure_keys)
+        shown = ", ".join(measure_keys[:15])
+        rest = "..." if len(measure_keys) > 15 else ""
+        raise ValueError(
+            f"Unknown measure {measure!r} for dataset {norm_id!r}."
+            f"{suggestion} "
+            f"Try one of: {shown}{rest}. "
+            f"See describe_dataset({norm_id!r}) for the full measure list."
+        )
+
+    # Merge `measure` into the user-supplied filters. Reject collision so the
+    # caller doesn't silently get a different measure than what they ranked by.
+    user_filters = _validate_filters(filters)
+    if "measure" in user_filters:
+        raise ValueError(
+            "Do not pass 'measure' inside filters — supply it via the "
+            "`measure` parameter instead. "
+            f"Example: top_n({norm_id!r}, {measure!r}, n=10, filters={{...}})."
+        )
+    merged_filters = dict(user_filters)
+    merged_filters["measure"] = measure_key
+
+    # Pull the most-recent observation per dimension combination so the rank
+    # is "top N entities at the latest period", not a historical-high view.
+    full = await _get_data_impl(norm_id, merged_filters, None, None, "records", last_n=1)
+    valid_records = [
+        r for r in full.records
+        if hasattr(r, "value") and r.value is not None
+    ]
+    valid_records.sort(
+        key=lambda r: r.value,  # type: ignore[union-attr,return-value]
+        reverse=(direction == "top"),
+    )
+    top = valid_records[:n]
+    # Preserve the response envelope; replace records and row_count.
+    return full.model_copy(update={"records": top, "row_count": len(top)})
+
+
+@mcp.tool
 def list_curated() -> list[str]:
     """List the 10 ABS dataflow IDs with hand-curated plain-English support.
 

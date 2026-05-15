@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.5.0] - 2026-05-15
+
+### Added
+
+- **`top_n` tool** — rank rows by a numeric measure and return the top
+  (or bottom) N. Wave 3 of the portfolio interoperability pass; signature
+  matches aihw-mcp / apra-mcp / ato-mcp exactly so an agent that learned
+  `top_n` on one sister uses it identically here:
+
+  ```python
+  top_n(dataset_id, measure, n=10, filters=None, direction="top")
+  ```
+
+  abs-mcp's `top_n` requires a curated dataflow with a `measure` dimension
+  (all 10 of LF / CPI / WPI / JV / AWE / ANA_AGG / BA_GCCSA / LEND_HOUSING /
+  ERP_Q / ABS_ANNUAL_ERP_ASGS2021 qualify). It runs over the most-recent
+  available period (lastNObservations=1) so the rank is a clean
+  "top N entities at the latest period" view rather than a noisy historical
+  mix. Common workflow: `top_n("LF", "unemployment_rate", n=5)` →
+  five states with the highest current unemployment.
+
 ## [0.4.0] - 2026-05-15
 
 ### Added

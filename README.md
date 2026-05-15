@@ -99,6 +99,7 @@ Add to `~/.cursor/mcp.json` (or workspace `.cursor/mcp.json`):
 | `describe_dataset(dataset_id)` | Plain-English description of a dataflow's dimensions and values. |
 | `get_data(dataset_id, filters, start_period, end_period, format)` | Query a dataflow with filters. Returns clean records (default), grouped series, or CSV. |
 | `latest(dataset_id, filters)` | Just the most recent observation(s) — wraps `get_data` with `lastNObservations=1`. |
+| `top_n(dataset_id, measure, n=10, filters=None, direction="top")` | Rank rows of a curated dataflow by a measure (e.g. `unemployment_rate`) at the most-recent period and return the top (or bottom) N. |
 | `list_curated()` | The ten dataflow IDs that have hand-curated plain-English support. |
 
 ## Curated dataflows
