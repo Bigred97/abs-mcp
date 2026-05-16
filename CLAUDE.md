@@ -17,9 +17,9 @@ plus the cross-sister discipline.
 | PyPI package | `abs-mcp` |
 | GitHub | https://github.com/Bigred97/abs-mcp |
 
-## Curated datasets (12)
+## Curated datasets (13)
 
-LF · CPI · WPI · JV · AWE · ANA_AGG · BA_GCCSA · LEND_HOUSING · ERP_Q · ABS_ANNUAL_ERP_ASGS2021 · C21_G02_SA2 · C21_G02_POA
+LF · CPI · WPI · JV · AWE · ANA_AGG · BA_GCCSA · LEND_HOUSING · ERP_Q · ABS_ANNUAL_ERP_ASGS2021 · C21_G02_SA2 · C21_G02_POA · RT (historical, ceased Jul 2025)
 
 ## Repo-specific module set
 

@@ -1,0 +1,73 @@
+id: RT
+name: Retail Trade (Historical Series, Apr 1982 → Jun 2025)
+description: |
+  ⚠️ HISTORICAL SERIES — ABS ceased the Retail Trade publication on
+  31 July 2025. Data ends June 2025 reference period. For current
+  retail/consumer spending, the replacement is the Monthly Household
+  Spending Indicator (MHSI, ABS dataflow `HSI_M`).
+
+  43+ years of monthly Australian retail sales by industry and state —
+  the longest continuous retail time series ABS has published. Useful
+  for trend analysis (post-COVID recovery, 1990s recession recovery,
+  GFC impact on department stores), regression backtests, and any
+  analyst comparing today's consumer-spending dynamics to historical
+  cycles. Series back to April 1982 for total Australia and most
+  state splits; some sub-industry breakdowns start later.
+
+  ABS dataflow `RT` (formerly catalogue 8501.0). Defaults to total
+  retail (all industries), seasonally adjusted, Australia-wide,
+  monthly cadence. Override `industry`, `region`, `adjustment`, or
+  `measure` for finer slices.
+update_frequency: ceased_jul_2025
+source_url: https://www.abs.gov.au/statistics/industry/retail-and-wholesale-trade/retail-trade-australia
+search_keywords: [retail trade, retail sales, retail spending, retail turnover, consumer spending, household spending, retail growth, supermarket sales, department stores, online retail, retail by state, "8501.0"]
+dimensions:
+  measure:
+    sdmx_id: MEASURE
+    description: What is being measured
+    values:
+      current_prices: { sdmx_code: "M1", description: "Current Prices ($m)" }
+      current_prices_pct_change: { sdmx_code: "M2", description: "Current Prices, % change from previous period" }
+      chain_volume: { sdmx_code: "M3", description: "Chain Volume Measures ($m, reference-year prices, excludes inflation)" }
+      chain_volume_pct_change: { sdmx_code: "M4", description: "Chain Volume Measures, % change from previous period" }
+  industry:
+    sdmx_id: INDUSTRY
+    description: Retail industry category (defaults to all retail combined)
+    values:
+      total:                                   { sdmx_code: "20" }
+      food:                                    { sdmx_code: "41", description: "Food retailing" }
+      supermarket_grocery:                     { sdmx_code: "01", description: "Supermarket and grocery stores" }
+      liquor:                                  { sdmx_code: "02", description: "Liquor retailing" }
+      other_specialised_food:                  { sdmx_code: "03", description: "Other specialised food retailing" }
+      household_goods:                         { sdmx_code: "42", description: "Household goods retailing" }
+      furniture_floor:                         { sdmx_code: "04", description: "Furniture, floor coverings, houseware and textile goods retailing" }
+      electrical_electronic:                   { sdmx_code: "05", description: "Electrical and electronic goods retailing" }
+      hardware_building:                       { sdmx_code: "06", description: "Hardware, building and garden supplies retailing" }
+      clothing_footwear_accessories:           { sdmx_code: "43", description: "Clothing, footwear and personal accessory retailing" }
+      clothing:                                { sdmx_code: "07", description: "Clothing retailing" }
+      footwear_accessories:                    { sdmx_code: "08", description: "Footwear and other personal accessory retailing" }
+      department_stores:                       { sdmx_code: "44", description: "Department stores" }
+      other_retailing:                         { sdmx_code: "45", description: "Other retailing" }
+      cafes_restaurants_takeaway:              { sdmx_code: "46", description: "Cafes, restaurants and takeaway food services" }
+  region:
+    sdmx_id: REGION
+    description: Australian state/territory (defaults to whole-of-Australia)
+    values:
+      australia: { sdmx_code: "AUS" }
+      nsw: { sdmx_code: "1" }
+      vic: { sdmx_code: "2" }
+      qld: { sdmx_code: "3" }
+      sa:  { sdmx_code: "4" }
+      wa:  { sdmx_code: "5" }
+      tas: { sdmx_code: "6" }
+      nt:  { sdmx_code: "7" }
+      act: { sdmx_code: "8" }
+  adjustment:
+    sdmx_id: TSEST
+    description: Time-series treatment (defaults to seasonally adjusted)
+    hidden: true
+    default: "20"
+  frequency:
+    sdmx_id: FREQ
+    hidden: true
+    default: "M"

@@ -1,5 +1,40 @@
 # Changelog
 
+## [0.7.0] - 2026-05-16
+
+### Added — Retail Trade (43-year historical series)
+
+- **`RT` — Retail Trade.** Monthly Australian retail sales by industry
+  and state from April 1982 to June 2025. 43+ years of continuous
+  history covering total retail, food (supermarket/liquor/specialised),
+  household goods (furniture, electrical, hardware), clothing/footwear,
+  department stores, cafes/restaurants/takeaway, plus per-state splits.
+- ⚠️ **Historical series only.** ABS ceased the Retail Trade publication
+  on 31 July 2025; data ends June 2025. The YAML description prominently
+  flags the cessation and points clients to the Monthly Household
+  Spending Indicator (HSI_M) as the current replacement (curating
+  HSI_M is the natural next iteration).
+- Uses existing SDMX infrastructure — no new parser code. 4 dimensions:
+  MEASURE (current prices / chain volume / % change), INDUSTRY (15
+  splits incl. 'cafes_restaurants_takeaway'), REGION (8 states + AUS),
+  hidden TSEST default to seasonally adjusted, hidden FREQ to monthly.
+
+### Customer-value validation (live ABS SDMX fetch, 2026-05-16)
+
+- Retail analyst: `latest('RT', filters={'measure':'current_prices','industry':'total','region':'australia'})` → $37.9B (Jun 2025).
+- State breakdown: NSW $11.67B, VIC $9.83B, QLD $7.85B, WA $4.35B.
+- Industry: supermarket/grocery $12.37B (largest), cafes/restaurants
+  $5.58B, department stores $1.99B, liquor $1.48B.
+- Search routing: "retail sales", "supermarket sales", "department
+  stores", "consumer spending" all surface `RT` at #1.
+
+### Tests
+
+- 153 unit tests passing (was 153 + 1 new curated id assertion). 10×
+  zero-flake gauntlet. Ruff clean.
+- New `test_list_ids_returns_curated_dataflows` asserts RT is in the
+  curated set (total now 13).
+
 ## [0.6.0] - 2026-05-16
 
 ### Added — Census 2021 G02 medians (Wave 1 portfolio expansion)
