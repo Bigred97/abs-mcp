@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.9.2] - 2026-05-16
+
+### Added — PPI_FD + C21_G01_POA (extends macro + property/retail/health workflows)
+
+- **`PPI_FD` — Producer Price Index Final Demand (Quarterly).** Completes
+  the inflation triad alongside `CPI` (consumer) and `WPI` (wages).
+  Defaults to YoY % change Total All Industries — the headline AFR/RBA
+  number. Latest Q1 2026: **PPI Final Demand YoY 3.0%**.
+- **`C21_G01_POA` — Census 2021 Selected Person Characteristics by
+  Postcode.** Pairs with already-curated `C21_G02_POA` (medians) on the
+  same POA join key. 23 person-characteristic counts: total population,
+  11 age groups (0-4 through 85+), Indigenous status, birthplace,
+  language at home, citizenship. Sydney CBD 2000: 14,223 persons.
+- Both YAML-only adds — existing SDMX infrastructure handles them.
+
+Note: supersedes the failed v0.9.0/v0.9.1 tags on GitHub (CI rejected
+tag-vs-pyproject mismatch on those; content was sound, version
+bookkeeping was the issue).
+
 ## [0.8.1] - 2026-05-16
 
 ### Fixed

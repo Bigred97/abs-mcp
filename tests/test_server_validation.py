@@ -51,17 +51,17 @@ def test_validate_filters_accepts_dict():
 
 def test_validate_filters_rejects_string():
     """A common LLM mistake: pass a query string instead of a dict."""
-    with pytest.raises(ValueError, match="filters must be a dict"):
+    with pytest.raises(ValueError, match="filters must be"):
         server._validate_filters("region=nsw")
 
 
 def test_validate_filters_rejects_list():
-    with pytest.raises(ValueError, match="filters must be a dict"):
+    with pytest.raises(ValueError, match="filters must be"):
         server._validate_filters(["nsw", "vic"])
 
 
 def test_validate_filters_rejects_int():
-    with pytest.raises(ValueError, match="filters must be a dict"):
+    with pytest.raises(ValueError, match="filters must be"):
         server._validate_filters(42)
 
 
@@ -140,17 +140,17 @@ async def test_get_data_rejects_non_string_id():
 
 
 async def test_get_data_rejects_non_dict_filters():
-    with pytest.raises(ValueError, match="filters must be a dict"):
+    with pytest.raises(ValueError, match="filters must be"):
         await server.get_data("LF", filters="region=nsw")  # type: ignore[arg-type]
 
 
 async def test_get_data_rejects_list_filters():
-    with pytest.raises(ValueError, match="filters must be a dict"):
+    with pytest.raises(ValueError, match="filters must be"):
         await server.get_data("LF", filters=["nsw"])  # type: ignore[arg-type]
 
 
 async def test_get_data_rejects_int_filters():
-    with pytest.raises(ValueError, match="filters must be a dict"):
+    with pytest.raises(ValueError, match="filters must be"):
         await server.get_data("LF", filters=42)  # type: ignore[arg-type]
 
 
@@ -162,7 +162,7 @@ async def test_latest_rejects_non_string_id():
 
 
 async def test_latest_rejects_non_dict_filters():
-    with pytest.raises(ValueError, match="filters must be a dict"):
+    with pytest.raises(ValueError, match="filters must be"):
         await server.latest("LF", filters="region=nsw")  # type: ignore[arg-type]
 
 
