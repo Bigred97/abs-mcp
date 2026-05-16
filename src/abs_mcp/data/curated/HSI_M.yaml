@@ -1,0 +1,84 @@
+id: HSI_M
+name: Monthly Household Spending Indicator (MHSI)
+description: |
+  Monthly Australian household spending by category and state. The ABS-blessed
+  successor to the discontinued Retail Trade publication (RT, ceased 31 July
+  2025). Built from comprehensive transactions data (banks, point-of-sale,
+  payment processors) — more representative than the legacy retail survey.
+
+  Use this for: real-time consumer spending sentiment, retail inventory
+  planning, sector demand forecasting, post-COVID consumer behaviour
+  research, comparing spending between states, journalists tracking
+  cost-of-living impacts. The most-cited monthly consumer indicator
+  going forward.
+
+  Defaults to total household spending (all categories), seasonally
+  adjusted, Australia-wide, current prices, monthly. Override `category`,
+  `region`, or `price_adjustment` for finer slices. Use `measure` to
+  switch between dollar values, index, monthly % change, and through-the-
+  year % change.
+
+  Reference period: typically released ~6 weeks after month-end.
+update_frequency: monthly
+source_url: https://www.abs.gov.au/statistics/economy/finance/monthly-household-spending-indicator
+search_keywords: [household spending, monthly spending, hsi, mhsi, consumer spending, retail spending replacement, consumer sentiment, hospitality spending, recreation spending, transport spending, post retail trade, cost of living, household consumption]
+dimensions:
+  measure:
+    sdmx_id: MEASURE
+    description: What is being measured (defaults to dollar value of household spending)
+    values:
+      household_spending: { sdmx_code: "7", description: "Household spending in $m" }
+      household_spending_pct_change: { sdmx_code: "8", description: "Household spending — % change from previous period" }
+      household_spending_yoy: { sdmx_code: "9", description: "Household spending — through-the-year % change" }
+      calendar_adjusted_spending: { sdmx_code: "10", description: "Calendar-adjusted household spending in $m (removes day-of-week and trading-day effects)" }
+      calendar_adjusted_pct_change: { sdmx_code: "11", description: "Calendar-adjusted spending — % change from previous period" }
+      calendar_adjusted_yoy: { sdmx_code: "12", description: "Calendar-adjusted spending — through-the-year % change" }
+      household_spending_index: { sdmx_code: "4", description: "Household spending — index (reference period = 100)" }
+      household_spending_index_yoy: { sdmx_code: "5", description: "Household spending index — through-the-year % change" }
+      household_spending_index_mom: { sdmx_code: "6", description: "Household spending index — monthly % change" }
+  category:
+    sdmx_id: CATEGORY
+    description: COICOP household spending category (defaults to total — all categories combined)
+    values:
+      total:              { sdmx_code: "TOT", description: "Total household spending (all categories)" }
+      food:               { sdmx_code: "10", description: "Food and non-alcoholic beverages" }
+      alcohol_tobacco:    { sdmx_code: "15", description: "Alcoholic beverages and tobacco" }
+      clothing_footwear:  { sdmx_code: "20", description: "Clothing and footwear" }
+      housing:            { sdmx_code: "25", description: "Housing, water, electricity, gas and other fuels" }
+      furnishings:        { sdmx_code: "30", description: "Furnishings, household equipment and routine maintenance" }
+      health:             { sdmx_code: "35", description: "Health" }
+      transport:          { sdmx_code: "40", description: "Transport" }
+      communications:     { sdmx_code: "45", description: "Communications" }
+      recreation:         { sdmx_code: "50", description: "Recreation and culture" }
+      education:          { sdmx_code: "55", description: "Education" }
+      hotels_cafes:       { sdmx_code: "60", description: "Hotels, cafes and restaurants" }
+      misc:               { sdmx_code: "65", description: "Miscellaneous goods and services" }
+  region:
+    sdmx_id: STATE
+    description: Australian state/territory (defaults to whole-of-Australia)
+    values:
+      australia: { sdmx_code: "AUS" }
+      nsw: { sdmx_code: "1" }
+      vic: { sdmx_code: "2" }
+      qld: { sdmx_code: "3" }
+      sa:  { sdmx_code: "4" }
+      wa:  { sdmx_code: "5" }
+      tas: { sdmx_code: "6" }
+      nt:  { sdmx_code: "7" }
+      act: { sdmx_code: "8" }
+  price_adjustment:
+    sdmx_id: PRICE_ADJUSTMENT
+    description: Price treatment (defaults to current prices — nominal $)
+    values:
+      current_prices: { sdmx_code: "CUR", description: "Current prices (nominal)" }
+      chain_volume:   { sdmx_code: "CVM", description: "Chain volume measures (real, excludes inflation)" }
+      implicit_price_deflator: { sdmx_code: "IPD", description: "Implicit price deflator" }
+  adjustment:
+    sdmx_id: TSEST
+    description: Time-series treatment (defaults to seasonally adjusted)
+    hidden: true
+    default: "20"
+  frequency:
+    sdmx_id: FREQ
+    hidden: true
+    default: "M"

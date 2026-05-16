@@ -1,5 +1,41 @@
 # Changelog
 
+## [0.8.0] - 2026-05-16
+
+### Added — HSI_M (Monthly Household Spending Indicator, current cadence)
+
+- **`HSI_M` curated dataset.** The ABS-blessed live replacement for
+  Retail Trade (RT, discontinued 31 July 2025). Built from comprehensive
+  banking + POS + payment-processor transactions data — more
+  representative than the legacy retail survey.
+- Closes the RT-historical gap from 0.7.0: RT now provides 43 years of
+  historical retail trend (Apr 1982 → Jun 2025); HSI_M provides current
+  monthly household spending Jul 2025 onward.
+- 12 measures (dollar value, index, MoM %, YoY %, with calendar-adjusted
+  variants), 12 spending categories (food, hotels/cafes, transport,
+  housing, recreation, etc.), 8 states + AUS, current/chain-volume/IPD
+  price treatments. Defaults to seasonally adjusted total spending.
+- Uses existing SDMX infrastructure — no new parser code.
+
+### Customer-value validation (live ABS SDMX fetch, 2026-05-16)
+
+- Retail analyst: `latest('HSI_M', filters={'measure':'household_spending',
+  'category':'total','region':'australia'})` → $80.4B (Mar 2026).
+- State splits: NSW $25.3B, VIC $19.4B, QLD $16.8B, WA $9.4B.
+- Top categories: Transport $14.0B, Recreation $13.4B, Food $12.6B,
+  Hotels/cafes $10.8B, Health $9.4B, Clothing $4.5B.
+- YoY growth: 6.3% (March 2026).
+- Search routing: "household spending", "consumer spending", "mhsi",
+  "retail spending" all hit HSI_M at #1 (HSI_M outranks RT for retail
+  spending queries — the active dataset correctly takes precedence over
+  the historical one).
+
+### Tests
+
+- 153 unit tests passing (was 153). 10× zero-flake. Ruff clean.
+- `test_list_ids_returns_curated_dataflows` updated from 13 to 14
+  expected curated IDs.
+
 ## [0.7.0] - 2026-05-16
 
 ### Added — Retail Trade (43-year historical series)
