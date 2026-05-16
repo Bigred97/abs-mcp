@@ -1,0 +1,102 @@
+id: C21_G01_POA
+name: Census 2021 — Selected Person Characteristics by Postcode
+description: |
+  ABS Census 2021 G01 table at postal area (POA) level — ~2,600 postcodes.
+  36 person-characteristic counts including total population, age groups
+  (0-4, 5-14, 15-19, 20-24, 25-34, 35-44, 45-54, 55-64, 65-74, 75-84,
+  85+), Indigenous status, birthplace, language at home, citizenship,
+  and education attendance.
+
+  Direct companion to `C21_G02_POA` (medians: income, mortgage, rent,
+  age, household size) — joined on the same POA postcode. Together
+  they form the complete location-intelligence demographic profile
+  used by property analytics (Domain, REA, CoreLogic), retail site
+  selection (Woolworths, Coles, Bunnings), insurance pricing
+  (Medibank for age-based premium underwriting), and marketing
+  segmentation.
+
+  Customer query examples:
+  - "How many people aged 25-34 live in postcode 2000?"
+  - "What's the Indigenous population share of postcode 3000?"
+  - "What's the languages-other-than-English share of postcode 6000?"
+
+  Sydney CBD (postcode 2000) Census 2021 total population: 27,936.
+
+  Census data is collected every 5 years; G01 here is the 2021 snapshot.
+update_frequency: five_yearly
+source_url: https://www.abs.gov.au/census/find-census-data
+search_keywords:
+  - census
+  - census 2021
+  - population by postcode
+  - age groups postcode
+  - indigenous population
+  - language at home
+  - birthplace
+  - citizenship
+  - census g01 postcode
+  - demographics postcode
+  - poa demographics
+  - catchment demographics
+  - location intelligence
+dimensions:
+  sex:
+    sdmx_id: SEXP
+    description: Sex breakdown (defaults to persons — both sexes combined)
+    values:
+      persons: { sdmx_code: "3", description: "Persons (total — both sexes)" }
+      male:    { sdmx_code: "1" }
+      female:  { sdmx_code: "2" }
+  measure:
+    sdmx_id: PCHAR
+    description: Selected person characteristic (defaults to total persons)
+    values:
+      total_persons: { sdmx_code: "P_1", description: "Total persons (population count)" }
+      age_0_4:   { sdmx_code: "0_4", description: "Age 0-4 years" }
+      age_5_14:  { sdmx_code: "5_14", description: "Age 5-14 years" }
+      age_15_19: { sdmx_code: "15_19", description: "Age 15-19 years" }
+      age_20_24: { sdmx_code: "20_24", description: "Age 20-24 years" }
+      age_25_34: { sdmx_code: "25_34", description: "Age 25-34 years" }
+      age_35_44: { sdmx_code: "35_44", description: "Age 35-44 years" }
+      age_45_54: { sdmx_code: "45_54", description: "Age 45-54 years" }
+      age_55_64: { sdmx_code: "55_64", description: "Age 55-64 years" }
+      age_65_74: { sdmx_code: "65_74", description: "Age 65-74 years" }
+      age_75_84: { sdmx_code: "75_84", description: "Age 75-84 years" }
+      age_85_plus: { sdmx_code: "GE85", description: "Age 85 years and over" }
+      counted_at_home: { sdmx_code: "N_1", description: "Counted on Census night: At home" }
+      counted_elsewhere_aus: { sdmx_code: "N_2", description: "Counted on Census night: Elsewhere in Australia" }
+      indigenous_aboriginal: { sdmx_code: "A_2", description: "Aboriginal persons" }
+      indigenous_torres_strait: { sdmx_code: "A_3", description: "Torres Strait Islander persons" }
+      indigenous_both: { sdmx_code: "A_4", description: "Both Aboriginal and Torres Strait Islander" }
+      indigenous_total: { sdmx_code: "A_T", description: "Total Aboriginal and/or Torres Strait Islander persons" }
+      birthplace_australia: { sdmx_code: "B_11", description: "Born in Australia" }
+      birthplace_elsewhere: { sdmx_code: "B_O", description: "Born elsewhere" }
+      language_english_only: { sdmx_code: "L_1201", description: "Language used at home: English only" }
+      language_other: { sdmx_code: "L_O", description: "Language used at home: Other language" }
+      australian_citizen: { sdmx_code: "C_1", description: "Australian citizen" }
+  region:
+    sdmx_id: REGION
+    description: |
+      4-digit postcode (e.g. '2000' for Sydney CBD, '3000' for Melbourne
+      CBD, '6000' for Perth CBD). 2,600+ postal areas available.
+    permissive: true
+    values:
+      australia: { sdmx_code: "AUS" }
+  region_type:
+    sdmx_id: REGION_TYPE
+    description: Geographic granularity (defaults to POA)
+    hidden: true
+    default: "POA"
+  state:
+    sdmx_id: STATE
+    description: Filter to a single state's postcodes (optional)
+    values:
+      all: { sdmx_code: "AUS" }
+      nsw: { sdmx_code: "1" }
+      vic: { sdmx_code: "2" }
+      qld: { sdmx_code: "3" }
+      sa:  { sdmx_code: "4" }
+      wa:  { sdmx_code: "5" }
+      tas: { sdmx_code: "6" }
+      nt:  { sdmx_code: "7" }
+      act: { sdmx_code: "8" }

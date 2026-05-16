@@ -1,0 +1,71 @@
+id: PPI_FD
+name: Producer Price Index — Final Demand (Quarterly)
+description: |
+  Quarterly Producer Price Index for Final Demand — the input-cost
+  inflation gauge that completes the inflation triad alongside CPI
+  (consumer inflation) and WPI (wage inflation). Cited by RBA in every
+  Statement on Monetary Policy, by AFR in every quarterly inflation
+  story, by bank chief economists modelling pass-through.
+
+  Defaults to YoY % change of Total All Industries, Total source
+  (domestic + imports), Total excluding exports destination, quarterly
+  cadence — the canonical headline series.
+
+  Latest reading (Q1 2026): PPI Final Demand YoY 3.0% (vs Q1 2025).
+
+  Override `index` to drill into specific ANZSIC industries (830
+  available — A=Agriculture, B=Mining, C=Manufacturing, etc.). Override
+  `source` to split domestic vs imports — critical for tracking
+  imported-inflation pass-through. Override `destination` for
+  exports-only, consumer-bound, or capital-bound flows.
+
+  Joins to abs.CPI (consumer-end inflation) and abs.WPI (wage inflation)
+  by quarter for full inflation pass-through analysis. Customer
+  audience: macro persona — bank chief economists (CBA / Westpac /
+  Macquarie research desks), super fund strategists, RBA-watchers,
+  AFR / Bloomberg / Reuters journalists, Treasury economists.
+update_frequency: quarterly
+source_url: https://www.abs.gov.au/statistics/economy/price-indexes-and-inflation/producer-price-indexes-australia
+search_keywords: [ppi, producer price, producer prices, producer inflation, input cost, input inflation, supply chain inflation, wholesale prices, ppi final demand, inflation triad, imported inflation, manufacturing input costs]
+dimensions:
+  measure:
+    sdmx_id: MEASURE
+    description: Index transformation. Defaults to YoY % change (MEASURE=3 — the headline AFR/RBA cite). Override for index level (1), QoQ % change (2), points contribution (4), or change in contribution (5).
+    values:
+      yoy_pct_change: { sdmx_code: "3", description: "% change from corresponding quarter of previous year (headline PPI)" }
+      mom_pct_change: { sdmx_code: "2", description: "% change from previous quarter" }
+      index_number: { sdmx_code: "1", description: "Index number (reference period = 100)" }
+      points_contribution: { sdmx_code: "4", description: "Points contribution to total index" }
+      change_in_contribution: { sdmx_code: "5", description: "Change in contribution to total index" }
+    default: "3"
+  index:
+    sdmx_id: INDEX
+    description: |
+      ANZSIC industry/item code. PPI Final Demand is published only as
+      Total All Industries (`TOT`) at the headline source/destination
+      combinations. Industry-level PPI is in the separate `PPI` dataflow
+      (not yet curated). Defaults to TOT.
+    hidden: true
+    default: "TOT"
+  source:
+    sdmx_id: SOURCE
+    description: Origin of the price flow (defaults to total — domestic + imports combined)
+    default: "TOT"
+    values:
+      total: { sdmx_code: "TOT", description: "Total (domestic + imports)" }
+      domestic: { sdmx_code: "DOM", description: "Domestic production only" }
+      import: { sdmx_code: "IMP", description: "Imports only — imported-inflation signal" }
+  destination:
+    sdmx_id: DESTINATION
+    description: Final-demand destination of the price flow (defaults to total excluding exports — the headline)
+    default: "TOTXE"
+    values:
+      total_excl_exports: { sdmx_code: "TOTXE", description: "Total excluding exports (headline PPI Final Demand)" }
+      total_incl_exports: { sdmx_code: "TOTIE", description: "Total including exports" }
+      exports: { sdmx_code: "EXP", description: "Exports only" }
+      consumer: { sdmx_code: "CON", description: "Consumer destination" }
+      capital: { sdmx_code: "KAP", description: "Capital destination" }
+  frequency:
+    sdmx_id: FREQ
+    hidden: true
+    default: "Q"
