@@ -16,6 +16,14 @@ description: |
   Census data is collected every 5 years; G02 here is the 2021 snapshot.
 update_frequency: five_yearly
 source_url: https://www.abs.gov.au/census/find-census-data
+# When latest() is called with no filters, the unfiltered SDMX fan-out
+# (~2,400 SA2s × 8 measures = ~19,200 rows) overruns the ABS API and raises.
+# Default to a single national headline observation so bare latest() returns
+# a sensible 1-row snapshot. Users still get full fan-out by passing filters
+# explicitly (e.g. latest(filters={'region': '117031337'})).
+latest_defaults:
+  region: australia
+  measure: median_age
 search_keywords:
   - census
   - census 2021

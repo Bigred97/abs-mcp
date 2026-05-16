@@ -75,6 +75,12 @@ class CuratedDataflow:
     update_frequency: str | None
     dimensions: dict[str, CuratedDimension]
     search_keywords: tuple[str, ...] = ()  # extra terms folded into the search haystack
+    # Plain-English filters merged into a bare `latest()` call (no user filters)
+    # to prevent unfiltered SDMX fan-out on large register-style datasets
+    # (e.g. Census G02 SA2/POA, ~2,400 regions × 8 measures). Same keys/values
+    # users would pass to `latest(filters=...)` — translated through
+    # `translate_filters` like a normal user query.
+    latest_defaults: dict[str, str] = field(default_factory=dict)
 
 
 _REGISTRY: dict[str, CuratedDataflow] | None = None
@@ -132,6 +138,13 @@ def _load_one(path: Path) -> CuratedDataflow:
         dim_name: _parse_dimension(dim_name, dim_raw)
         for dim_name, dim_raw in (raw.get("dimensions") or {}).items()
     }
+    latest_defaults_raw = raw.get("latest_defaults") or {}
+    if not isinstance(latest_defaults_raw, dict):
+        raise ValueError(
+            f"latest_defaults for {raw.get('id')!r} must be a mapping of "
+            f"plain-English filter keys to values, got {type(latest_defaults_raw).__name__}."
+        )
+    latest_defaults = {str(k): str(v) for k, v in latest_defaults_raw.items()}
     return CuratedDataflow(
         id=str(raw["id"]),
         name=str(raw["name"]),
@@ -140,6 +153,7 @@ def _load_one(path: Path) -> CuratedDataflow:
         update_frequency=raw.get("update_frequency"),
         dimensions=dims,
         search_keywords=tuple(raw.get("search_keywords") or ()),
+        latest_defaults=latest_defaults,
     )
 
 

@@ -16,6 +16,7 @@ def test_list_ids_returns_curated_dataflows():
         "LF", "CPI", "ABS_ANNUAL_ERP_ASGS2021", "BA_GCCSA", "LEND_HOUSING",
         "WPI", "JV", "ANA_AGG", "AWE", "ERP_Q",
         "C21_G02_SA2", "C21_G02_POA", "RT", "HSI_M",
+        "PPI_FD", "C21_G01_POA",
     }
 
 
@@ -195,6 +196,102 @@ def test_translate_filters_rejects_empty_list_with_hint():
     lf = curated.get("LF")
     with pytest.raises(ValueError, match="empty list"):
         curated.translate_filters(lf, {"region": []})
+
+
+# ---- 0.8.1: latest_defaults for large-fan-out Census datasets ----
+
+
+def test_c21_g02_sa2_yaml_declares_latest_defaults():
+    """Regression (0.8.1): bare `latest('C21_G02_SA2')` previously overran
+    2,400 SA2 × 8 measure = 19,200 row SDMX fan-out and raised ValueError.
+    The YAML must encode a sensible default filter so bare latest() narrows
+    to a 1-row snapshot."""
+    cd = curated.get("C21_G02_SA2")
+    assert cd is not None
+    assert cd.latest_defaults, "C21_G02_SA2 must declare latest_defaults"
+    # The defaults must translate through translate_filters cleanly — i.e.
+    # they're valid plain-English keys/values on the actual dataset.
+    sdmx = curated.translate_filters(cd, cd.latest_defaults)
+    assert sdmx, "latest_defaults must produce non-empty SDMX filters"
+
+
+def test_c21_g02_poa_yaml_declares_latest_defaults():
+    """Companion regression (0.8.1): C21_G02_POA had the same large-fan-out
+    issue (~2,600 POAs × 8 measures ≈ 21k rows for bare latest()). Same fix."""
+    cd = curated.get("C21_G02_POA")
+    assert cd is not None
+    assert cd.latest_defaults
+    sdmx = curated.translate_filters(cd, cd.latest_defaults)
+    assert sdmx
+
+
+async def test_latest_bare_call_on_c21_g02_sa2_resolves_default_filters(monkeypatch):
+    """Regression (0.8.1): `latest('C21_G02_SA2')` with no filters must merge
+    in the YAML `latest_defaults` block instead of fanning out across 2,400 SA2s.
+
+    We capture the filters that reach `_get_data_impl` so the assertion is
+    deterministic and does not require a live ABS round-trip."""
+    from abs_mcp import server
+
+    captured: dict = {}
+
+    async def fake_impl(dataset_id, filters, start, end, fmt, last_n=None):
+        captured["dataset_id"] = dataset_id
+        captured["filters"] = filters
+        captured["last_n"] = last_n
+        # Build a minimal-but-real DataResponse so the caller sees row_count > 0.
+        from datetime import datetime, timezone
+
+        from abs_mcp.models import DataResponse
+        return DataResponse(
+            dataset_id=dataset_id,
+            dataset_name="stub",
+            query=filters or {},
+            period={"start": "2021", "end": "2021"},
+            row_count=1,
+            records=[],
+            retrieved_at=datetime.now(timezone.utc),
+            source_url="https://www.abs.gov.au/census/find-census-data",
+            abs_url="https://www.abs.gov.au/census/find-census-data",
+        )
+
+    monkeypatch.setattr(server, "_get_data_impl", fake_impl)
+    r = await server.latest("C21_G02_SA2")
+    assert r.row_count > 0
+    # The YAML defaults must have been merged into the call.
+    assert captured["filters"] == {"region": "australia", "measure": "median_age"}
+    assert captured["last_n"] == 1
+
+
+async def test_latest_with_explicit_filters_on_c21_g02_sa2_bypasses_defaults(monkeypatch):
+    """Filtered `latest('C21_G02_SA2', filters={...})` must NOT have defaults
+    merged in — user filters take full precedence."""
+    from abs_mcp import server
+
+    captured: dict = {}
+
+    async def fake_impl(dataset_id, filters, start, end, fmt, last_n=None):
+        captured["filters"] = filters
+        from datetime import datetime, timezone
+
+        from abs_mcp.models import DataResponse
+        return DataResponse(
+            dataset_id=dataset_id,
+            dataset_name="stub",
+            query=filters or {},
+            period={"start": "2021", "end": "2021"},
+            row_count=1,
+            records=[],
+            retrieved_at=datetime.now(timezone.utc),
+            source_url="https://www.abs.gov.au/census/find-census-data",
+            abs_url="https://www.abs.gov.au/census/find-census-data",
+        )
+
+    monkeypatch.setattr(server, "_get_data_impl", fake_impl)
+    user_filters = {"measure": "median_personal_income_weekly", "region": "nsw"}
+    await server.latest("C21_G02_SA2", filters=user_filters)
+    # User filters preserved exactly, not silently merged with defaults.
+    assert captured["filters"] == user_filters
 
 
 def test_translate_filters_rejects_empty_value():

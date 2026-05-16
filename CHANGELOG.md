@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.8.1] - 2026-05-16
+
+### Fixed
+
+- `C21_G02_SA2.latest()` (and `C21_G02_POA.latest()`): bare call without
+  filters previously overran the SDMX fan-out (2,400 SA2 × 8 measures ≈
+  19,200 rows for SA2; ~21k rows for POA) and raised `ValueError`. The
+  curated YAML now carries a `latest_defaults:` block which is merged
+  into bare `latest()` calls only — filtered calls continue to bypass
+  the defaults so explicit user filters still take full precedence.
+  - `C21_G02_SA2`: defaults to `region=australia, measure=median_age`
+    (1-row national median age snapshot).
+  - `C21_G02_POA`: defaults to `region=2000, measure=median_age`
+    (POA codelist has no national 'AUS' aggregate; postcode 2000
+    / Sydney CBD anchors a sensible default).
+- Adds 4 regression tests covering YAML loading and the bare/filtered
+  latest() merge behaviour. 10× zero-flake unit-test pass.
+
 ## [0.8.0] - 2026-05-16
 
 ### Added — HSI_M (Monthly Household Spending Indicator, current cadence)

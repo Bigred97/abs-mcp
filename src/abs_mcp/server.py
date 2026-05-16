@@ -620,6 +620,16 @@ async def latest(
         DataResponse with one most-recent observation per matched dimension
         combination. Same envelope as get_data.
     """
+    # When no filters are supplied, fall back to the YAML-curated
+    # `latest_defaults` block (if present). Large register-style dataflows —
+    # e.g. Census G02 SA2 (~2,400 regions × 8 measures) — overrun the ABS API
+    # when fully fanned out; the default narrows to a sensible 1-row snapshot.
+    # Filtered calls bypass this entirely so explicit queries keep working.
+    if not filters:
+        norm_id = _normalize_dataset_id(dataset_id)
+        cd = curated.get(norm_id)
+        if cd is not None and cd.latest_defaults:
+            filters = dict(cd.latest_defaults)
     return await _get_data_impl(dataset_id, filters, None, None, "records", last_n=1)
 
 

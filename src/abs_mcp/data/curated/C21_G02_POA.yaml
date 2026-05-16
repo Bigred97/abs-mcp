@@ -16,6 +16,16 @@ description: |
   Census data is collected every 5 years; G02 here is the 2021 snapshot.
 update_frequency: five_yearly
 source_url: https://www.abs.gov.au/census/find-census-data
+# When latest() is called with no filters, the unfiltered SDMX fan-out
+# (~2,600 POAs × 8 measures ≈ 21,000 rows) returns a dump too large for a
+# "latest snapshot" tool. The POA codelist has no national 'AUS' aggregate
+# (each row is keyed to a specific 4-digit postcode), so we anchor the
+# default to postcode 2000 (Sydney CBD) — a canonical, well-known postcode
+# for a sensible 1-row snapshot. Users still get full fan-out by passing
+# filters explicitly (e.g. latest(filters={'region': '3000'})).
+latest_defaults:
+  region: "2000"
+  measure: median_age
 search_keywords:
   - census
   - census 2021
