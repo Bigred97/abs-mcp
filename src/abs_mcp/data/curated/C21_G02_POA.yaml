@@ -1,0 +1,72 @@
+id: C21_G02_POA
+name: Census 2021 — Selected Medians and Averages by Postcode
+description: |
+  ABS Census 2021 G02 table at postal area (POA) level — ~2,600 Australian
+  postcodes. Eight commercially-critical median/average measures:
+
+  - Median age, median personal/family/household income (weekly)
+  - Median mortgage repayment (monthly), median rent (weekly)
+  - Average persons per bedroom, average household size
+
+  Postcode-keyed Census data is the natural join partner for ATO's
+  postcode-keyed income statistics (`ato-mcp.IND_POSTCODE`). Together they
+  give marketing, retail expansion, lending underwriting, and insurance
+  pricing teams a complete picture of any postcode's economic profile.
+
+  Census data is collected every 5 years; G02 here is the 2021 snapshot.
+update_frequency: five_yearly
+source_url: https://www.abs.gov.au/census/find-census-data
+search_keywords:
+  - census
+  - census 2021
+  - postcode demographics
+  - median income postcode
+  - household income postcode
+  - median rent postcode
+  - median mortgage postcode
+  - poa
+  - postal area
+  - location intelligence
+  - catchment analysis
+  - marketing segmentation
+  - g02 postcode
+dimensions:
+  measure:
+    sdmx_id: MEDAVG
+    description: Selected median or average measure
+    values:
+      median_age: { sdmx_code: "1", description: "Median age of persons" }
+      median_personal_income_weekly: { sdmx_code: "2", description: "Median total personal income ($/weekly)" }
+      median_family_income_weekly: { sdmx_code: "3", description: "Median total family income ($/weekly)" }
+      median_household_income_weekly: { sdmx_code: "4", description: "Median total household income ($/weekly)" }
+      median_mortgage_repayment_monthly: { sdmx_code: "5", description: "Median mortgage repayment ($/monthly)" }
+      median_rent_weekly: { sdmx_code: "6", description: "Median rent ($/weekly)" }
+      avg_persons_per_bedroom: { sdmx_code: "7", description: "Average number of persons per bedroom" }
+      avg_household_size: { sdmx_code: "8", description: "Average household size" }
+  region:
+    sdmx_id: REGION
+    description: |
+      4-digit postcode (e.g. '2000' for Sydney CBD, '3000' for Melbourne CBD,
+      '6000' for Perth CBD). 2,600+ postal areas available. Use raw 4-digit
+      postcodes directly.
+    permissive: true
+    values:
+      australia: { sdmx_code: "AUS" }
+  region_type:
+    sdmx_id: REGION_TYPE
+    description: Geographic granularity (defaults to POA)
+    hidden: true
+    default: "POA"
+  state:
+    sdmx_id: STATE
+    description: Filter to a single state's postcodes (optional)
+    values:
+      all: { sdmx_code: "AUS" }
+      nsw: { sdmx_code: "1" }
+      vic: { sdmx_code: "2" }
+      qld: { sdmx_code: "3" }
+      sa:  { sdmx_code: "4" }
+      wa:  { sdmx_code: "5" }
+      tas: { sdmx_code: "6" }
+      nt:  { sdmx_code: "7" }
+      act: { sdmx_code: "8" }

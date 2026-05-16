@@ -1,0 +1,90 @@
+id: C21_G02_SA2
+name: Census 2021 — Selected Medians and Averages by SA2
+description: |
+  ABS Census 2021 G02 table at Statistical Area Level 2 (~2,400 SA2 regions
+  nationally). Eight commercially-critical median/average measures:
+
+  - Median age, median personal/family/household income (weekly)
+  - Median mortgage repayment (monthly), median rent (weekly)
+  - Average persons per bedroom, average household size
+
+  This is the gold dataset for location intelligence, site selection, retail
+  catchment analysis, and underwriting. Combine with ATO postcode income
+  (ato-mcp `IND_POSTCODE`) for richer income mapping, and ABS_ANNUAL_ERP_ASGS2021
+  for current population estimates by the same SA2 codes.
+
+  Census data is collected every 5 years; G02 here is the 2021 snapshot.
+update_frequency: five_yearly
+source_url: https://www.abs.gov.au/census/find-census-data
+search_keywords:
+  - census
+  - census 2021
+  - median income
+  - household income
+  - median rent
+  - median mortgage
+  - median age
+  - household size
+  - selected medians
+  - sa2 demographics
+  - location intelligence
+  - catchment analysis
+  - site selection
+  - g02
+dimensions:
+  measure:
+    sdmx_id: MEDAVG
+    description: Selected median or average measure
+    values:
+      median_age: { sdmx_code: "1", description: "Median age of persons" }
+      median_personal_income_weekly: { sdmx_code: "2", description: "Median total personal income ($/weekly)" }
+      median_family_income_weekly: { sdmx_code: "3", description: "Median total family income ($/weekly)" }
+      median_household_income_weekly: { sdmx_code: "4", description: "Median total household income ($/weekly)" }
+      median_mortgage_repayment_monthly: { sdmx_code: "5", description: "Median mortgage repayment ($/monthly)" }
+      median_rent_weekly: { sdmx_code: "6", description: "Median rent ($/weekly)" }
+      avg_persons_per_bedroom: { sdmx_code: "7", description: "Average number of persons per bedroom" }
+      avg_household_size: { sdmx_code: "8", description: "Average household size" }
+  region:
+    sdmx_id: REGION
+    description: |
+      ASGS 2021 region code. Use 'AUS' for Australia, '1'–'8' for
+      states/territories, GCCSA codes like '1GSYD', or 9-digit SA2 codes
+      (e.g. '117031337' for Sydney - Haymarket). 2,400+ SA2 codes available.
+    permissive: true
+    values:
+      australia: { sdmx_code: "AUS" }
+      nsw: { sdmx_code: "1" }
+      vic: { sdmx_code: "2" }
+      qld: { sdmx_code: "3" }
+      sa:  { sdmx_code: "4" }
+      wa:  { sdmx_code: "5" }
+      tas: { sdmx_code: "6" }
+      nt:  { sdmx_code: "7" }
+      act: { sdmx_code: "8" }
+      greater_sydney: { sdmx_code: "1GSYD" }
+      greater_melbourne: { sdmx_code: "2GMEL" }
+      greater_brisbane: { sdmx_code: "3GBRI" }
+      greater_adelaide: { sdmx_code: "4GADE" }
+      greater_perth: { sdmx_code: "5GPER" }
+  region_type:
+    sdmx_id: REGION_TYPE
+    description: Geographic granularity (defaults to SA2)
+    values:
+      sa2: { sdmx_code: "SA2", description: "Statistical Area Level 2 (~2,400 regions; default)" }
+      sa3: { sdmx_code: "SA3", description: "Statistical Area Level 3" }
+      gccsa: { sdmx_code: "GCCSA", description: "Greater Capital City Statistical Areas" }
+      states: { sdmx_code: "STE", description: "States and Territories" }
+      australia: { sdmx_code: "AUS" }
+  state:
+    sdmx_id: STATE
+    description: Filter to a single state's regions (optional)
+    values:
+      all: { sdmx_code: "AUS" }
+      nsw: { sdmx_code: "1" }
+      vic: { sdmx_code: "2" }
+      qld: { sdmx_code: "3" }
+      sa:  { sdmx_code: "4" }
+      wa:  { sdmx_code: "5" }
+      tas: { sdmx_code: "6" }
+      nt:  { sdmx_code: "7" }
+      act: { sdmx_code: "8" }

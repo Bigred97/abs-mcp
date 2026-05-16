@@ -1,5 +1,43 @@
 # Changelog
 
+## [0.6.0] - 2026-05-16
+
+### Added — Census 2021 G02 medians (Wave 1 portfolio expansion)
+
+- **`C21_G02_SA2` — Census 2021 G02 Selected Medians and Averages by SA2.**
+  Eight commercially-critical measures at Statistical Area Level 2 (~2,400
+  regions): median age, median personal/family/household income (weekly),
+  median mortgage repayment (monthly), median rent (weekly), average persons
+  per bedroom, average household size. Permissive REGION dimension accepts
+  any ASGS 2021 SA2 code.
+- **`C21_G02_POA` — Census 2021 G02 Selected Medians and Averages by
+  Postcode.** Same eight measures keyed by 4-digit postal area (~2,600
+  postcodes). Direct join partner for `ato-mcp.IND_POSTCODE` — together
+  they replace commercial location-intelligence subscriptions (Experian
+  Mosaic, Equifax) for site selection, marketing segmentation, lending
+  underwriting, and insurance pricing.
+- Wired to ABS's SDMX endpoint at `ABS,C21_G02_SA2` / `ABS,C21_G02_POA`
+  (no new parser code; existing SDMX client handles it).
+
+### Customer-value validation (live ABS fetch, 2026-05-16)
+
+- Sydney CBD (postcode 2000): median household income $2,225/wk, median
+  mortgage $2,800/mo, median rent $625/wk, median age 32.
+- Brisbane CBD (4000): median household income $1,860/wk.
+- Sydney Haymarket SA2 (117031645): median household income $2,108/wk,
+  median mortgage $2,600/mo.
+- `top_n` highest-income postcodes correctly surface Seaforth (2092 —
+  $4,184/wk), Northbridge (2063 — $3,874/wk), City Beach Perth (6015 —
+  $3,700/wk), and Vaucluse (2030 — $3,481/wk).
+- Search routing: "median income", "postcode demographics", "census",
+  "median rent", "household size" all hit `C21_G02_POA` / `C21_G02_SA2`
+  in the top 2.
+
+### Tests
+
+- 153 unit tests now (was 151). 10× zero-flake gauntlet.
+- New `test_list_ids_returns_curated_dataflows` asserts the 12 curated IDs.
+
 ## [0.5.0] - 2026-05-15
 
 ### Added
