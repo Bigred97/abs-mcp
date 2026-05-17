@@ -6,6 +6,7 @@ sdmx1 object model without depending on its synchronous Client.
 """
 from __future__ import annotations
 
+import asyncio
 import time
 from contextvars import ContextVar
 from io import BytesIO
@@ -132,7 +133,11 @@ class ABSClient:
     ) -> M:
         body = await self._fetch_bytes(url, kind, accept)
         try:
-            msg = sdmx.read_sdmx(BytesIO(body))
+            # Run sync SDMX-XML parse off the event loop. Large dataflows
+            # (CPI, Census, ANA_AGG) ship 5-20MB XML payloads; sdmx.read_sdmx
+            # is CPU-bound XML traversal that takes 1-3 seconds and would
+            # otherwise block the async tool for every concurrent request.
+            msg = await asyncio.to_thread(sdmx.read_sdmx, BytesIO(body))
         except Exception as e:
             # Callers catch ABSAPIError; anything else escapes the contract.
             # Happens on schema drift or an HTML error page slipping past status checks.

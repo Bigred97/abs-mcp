@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.10.1] - 2026-05-17
+
+### Fixed — event-loop blocking on sync SDMX-XML parse
+
+`_fetch_parsed` called `sdmx.read_sdmx(BytesIO(body))` synchronously
+inside an async function body. Large ABS dataflows (CPI, Census,
+ANA_AGG) ship 5-20MB SDMX-XML payloads, and `sdmx1`'s XML reader is
+CPU-bound traversal that takes 1-3 seconds. The sync call blocked the
+event loop for every concurrent request, serialised tool calls behind a
+single parse, and stalled downstream consumers like the `ausdata-api`
+gateway against its 20s budget. Wrapped in `asyncio.to_thread` so the
+parse runs on the default executor without blocking other in-flight
+calls. Matches the 0.4.7 / 0.5.4 / 0.6.4 / 0.8.6 / 0.8.6 portfolio-wide
+fixes in aihw / wgea / asic / apra / ato — abs-mcp's variant is the
+biggest of the lot, both in payload size and customer-hit frequency.
+
 ## [0.10.0] - 2026-05-17
 
 ### BREAKING — `CPI` now returns quarterly periods (re-pointed to cat 6401.0)
