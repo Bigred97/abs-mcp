@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.11.5] - 2026-05-18
+
+### Fixed — C21_G01_POA latest() no longer dumps 47 MB
+
+`latest('C21_G01_POA')` returned all 285,438 rows (~47 MB JSON, ~12M
+tokens) — every postcode × every person characteristic × sex. Customer
+querying "what's the latest Census postcode data?" got an unusable
+context-blowing response.
+
+Added `latest_defaults` to C21_G01_POA.yaml pointing at postcode 2000
+(Sydney CBD) + total_persons. Equivalent to C21_G02_SA2's existing
+pattern. Customers narrow to their postcode of interest for typical
+location-intelligence queries.
+
+Verification:
+- `latest('C21_G01_POA')` → 3 rows / 1 KB (was 285k rows / 47 MB)
+- Default returns: postcode 2000 total population by sex (males 14,223,
+  females 13,713, persons 27,936). Matches Census 2021 published total.
+
+195 unit tests pass.
+
 ## [0.11.4] - 2026-05-18
 
 ### Improved — proportional relevance scaling (no more ties at 100)

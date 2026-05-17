@@ -25,6 +25,15 @@ description: |
   Census data is collected every 5 years; G01 here is the 2021 snapshot.
 update_frequency: five_yearly
 source_url: https://www.abs.gov.au/census/find-census-data
+# latest() with no filters would otherwise return ~285,000 rows
+# (~2,600 postcodes × ~55 person characteristics × 2 sex categories),
+# blowing the agent context window. Default to postcode 2000 (Sydney
+# CBD) total population — a recognizable demo. Customers should narrow
+# to their postcode of interest + the specific measure (age band,
+# language, etc.) for typical location-intelligence queries.
+latest_defaults:
+  region: "2000"
+  measure: total_persons
 search_keywords:
   - census
   - census 2021
