@@ -6,6 +6,10 @@ unit tests, not live — validation fires before `_get_client()` is reached.
 """
 from __future__ import annotations
 
+import ast
+import pathlib
+import re
+
 import pytest
 
 from abs_mcp import server
@@ -317,3 +321,167 @@ async def test_search_datasets_limit_type_error_suggests_valid_range():
     must include a concrete worked example so the LLM can self-correct."""
     with pytest.raises(ValueError, match=r"limit=10"):
         await server.search_datasets("cpi", limit="ten")  # type: ignore[arg-type]
+
+
+# ---------- 0.9.3: error-message scrubbing for transport-agnostic hints ----------
+
+# Forbidden substrings that previously leaked into REST-customer-facing errors.
+_LEAK_FORBIDDEN = (
+    "api.abs.gov.au",       # internal upstream host
+    "data.api.abs.gov.au",  # internal upstream host (full)
+    "describe_dataset(",    # MCP-only tool name with call syntax
+)
+
+# At least one helpful-hint marker every error must carry.
+_HINT_MARKERS = ("Try", "try ", "Did you mean", "Valid", "valid ", "Use the",
+                 "Example", "example", "Pass ", "pass at ", "or ")
+
+
+def _assert_scrubbed_and_helpful(msg: str) -> None:
+    for bad in _LEAK_FORBIDDEN:
+        assert bad not in msg, (
+            f"Leak: error contains forbidden substring {bad!r}: {msg}"
+        )
+    assert any(m in msg for m in _HINT_MARKERS), (
+        f"No helpful hint found in error: {msg}"
+    )
+
+
+async def test_value_errors_dont_leak_upstream_urls_query_failure():
+    """Reproduces the original audit case: bad period → ABS API 422.
+    Previously leaked '.../data/ABS,CPI/.10001.10..M?startPeriod=not-a-date'."""
+    with pytest.raises(ValueError) as exc:
+        await server._get_data_impl("CPI", None, "not-a-date", None, "records")
+    _assert_scrubbed_and_helpful(str(exc.value))
+
+
+async def test_value_errors_dont_leak_unknown_filter_curated():
+    """Curated-dataflow unknown-filter path used to say 'Try describe_dataset(X)'."""
+    with pytest.raises(ValueError) as exc:
+        await server._get_data_impl(
+            "LF", {"not_a_real_dim": "nsw"}, None, None, "records"
+        )
+    _assert_scrubbed_and_helpful(str(exc.value))
+
+
+async def test_value_errors_dont_leak_unknown_value_curated():
+    """Curated-dataflow unknown-value path used to suffix '.See describe_dataset(X) ...'."""
+    with pytest.raises(ValueError) as exc:
+        await server._get_data_impl(
+            "LF", {"region": "atlantis"}, None, None, "records"
+        )
+    _assert_scrubbed_and_helpful(str(exc.value))
+
+
+async def test_value_errors_dont_leak_unknown_measure_top_n():
+    """top_n unknown-measure path used to end '.See describe_dataset(X) ...'."""
+    with pytest.raises(ValueError) as exc:
+        await server.top_n("LF", measure="not_a_real_measure", n=5)
+    _assert_scrubbed_and_helpful(str(exc.value))
+
+
+async def test_value_errors_dont_leak_unknown_dataset_describe():
+    """describe_dataset failure used to embed the upstream URL via ABSAPIError."""
+    # A syntactically valid but non-existent dataset id triggers the ABSAPIError
+    # path inside describe_dataset → wrapped into ValueError.
+    with pytest.raises(ValueError) as exc:
+        await server.describe_dataset("ZZ_NOT_A_REAL_DATAFLOW_XYZ")
+    _assert_scrubbed_and_helpful(str(exc.value))
+
+
+async def test_absapierror_message_does_not_embed_url():
+    """Unit-test the underlying ABSAPIError text — it must not embed the URL,
+    since downstream ValueErrors interpolate it via f'... ({e})'."""
+    import httpx
+
+    from abs_mcp.client import ABSClient
+
+    # Mock transport returns 422 for any request — same as ABS's response on
+    # the bad-period reproducer. The handler signature accepts the request.
+    def handler(_request: httpx.Request) -> httpx.Response:
+        return httpx.Response(422, text="bad request")
+
+    transport = httpx.MockTransport(handler)
+    client = ABSClient(transport=transport)
+    try:
+        from abs_mcp.client import ABSAPIError
+
+        with pytest.raises(ABSAPIError) as exc:
+            await client.get_data("CPI", key=".10001.10..M")
+        msg = str(exc.value)
+        # The status code stays (informative + transport-agnostic).
+        assert "422" in msg
+        # The URL and the internal SDMX key must not appear.
+        assert "api.abs.gov.au" not in msg, f"URL leak: {msg}"
+        assert ".10001.10..M" not in msg, f"SDMX key leak: {msg}"
+        assert "/rest/data/" not in msg, f"URL path leak: {msg}"
+    finally:
+        await client.aclose()
+
+
+# ----- transport-agnostic error hints (mirrors rba-mcp's guard) -----
+#
+# Error messages must not reference MCP-tool names (e.g. `describe_dataset()`,
+# `search_datasets()`, `list_curated()`). An error from the abs_mcp package
+# should read the same whether the caller is an MCP client, a REST gateway,
+# or a Python script calling the functions directly.
+
+_SRC_ROOT = pathlib.Path(__file__).resolve().parent.parent / "src" / "abs_mcp"
+
+
+def _extract_user_facing_strings() -> list[tuple[pathlib.Path, int, str]]:
+    """Walk every .py under src/abs_mcp/, parse the AST, and yield only the
+    string arguments to `raise <SomeExc>(...)` calls — these are the strings
+    users actually see in error reports.
+    """
+    out: list[tuple[pathlib.Path, int, str]] = []
+    for py in _SRC_ROOT.rglob("*.py"):
+        tree = ast.parse(py.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Raise) or node.exc is None:
+                continue
+            call = node.exc if isinstance(node.exc, ast.Call) else None
+            if call is None:
+                continue
+            for arg in call.args:
+                pieces: list[str] = []
+                if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
+                    pieces.append(arg.value)
+                elif isinstance(arg, ast.JoinedStr):
+                    for v in arg.values:
+                        if isinstance(v, ast.Constant) and isinstance(v.value, str):
+                            pieces.append(v.value)
+                elif isinstance(arg, ast.BinOp):
+                    stack: list[ast.AST] = [arg]
+                    while stack:
+                        cur = stack.pop()
+                        if isinstance(cur, ast.Constant) and isinstance(cur.value, str):
+                            pieces.append(cur.value)
+                        elif isinstance(cur, ast.BinOp):
+                            stack.append(cur.left)
+                            stack.append(cur.right)
+                        elif isinstance(cur, ast.JoinedStr):
+                            for v in cur.values:
+                                stack.append(v)
+                if pieces:
+                    out.append((py, node.lineno, "".join(pieces)))
+    return out
+
+
+def test_no_mcp_tool_refs_in_error_strings():
+    """No error message references an MCP tool by name
+    (`describe_dataset(...)`, `search_datasets(...)`, `list_curated(...)`).
+    The hint must suggest what to do (look up valid keys, retry, etc.)
+    without naming a specific transport's API surface.
+    """
+    pat = re.compile(r"\b(describe_dataset|search_datasets|list_curated)\s*\(")
+    offenders: list[str] = []
+    for path, lineno, text in _extract_user_facing_strings():
+        if pat.search(text):
+            offenders.append(f"{path.relative_to(_SRC_ROOT.parent.parent)}:{lineno}: {text!r}")
+    assert not offenders, (
+        "User-facing error messages reference MCP tool names — "
+        "these are transport-specific and shouldn't leak through ValueError. "
+        "Replace with transport-agnostic hints (e.g. 'See the valid-options list "
+        f"for X').\n  {chr(10).join(offenders)}"
+    )

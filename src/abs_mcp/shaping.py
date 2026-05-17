@@ -218,12 +218,19 @@ def build_response(
     curated: CuratedDataflow | None = None,
     start_period: str | None = None,
     end_period: str | None = None,
+    sdmx_id: str | None = None,
 ) -> DataResponse:
-    name = curated.name if curated else _dataset_name(dsd_msg, dataset_id)
+    # `dataset_id` is the user-facing display ID (what the caller passed).
+    # `sdmx_id` is the resolved ABS SDMX dataflow ID for DSD/data lookups —
+    # required when a curated dataflow indirects to a different SDMX dataflow
+    # (e.g. curated `CPI` → SDMX `CPI_Q`). Defaults to `dataset_id` for the
+    # legacy no-indirection path.
+    lookup_id = sdmx_id or dataset_id
+    name = curated.name if curated else _dataset_name(dsd_msg, lookup_id)
 
     # underlying is always the records list; csv/series derive their shape from it
     # without re-parsing the SDMX message a second time.
-    underlying = to_records(msg, dsd_msg, dataset_id, curated=curated)
+    underlying = to_records(msg, dsd_msg, lookup_id, curated=curated)
     records: list[Observation] | list[dict[str, Any]]
     if fmt == "csv":
         records = []

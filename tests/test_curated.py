@@ -13,11 +13,41 @@ def reset_registry():
 def test_list_ids_returns_curated_dataflows():
     ids = curated.list_ids()
     assert set(ids) == {
-        "LF", "CPI", "ABS_ANNUAL_ERP_ASGS2021", "BA_GCCSA", "LEND_HOUSING",
-        "WPI", "JV", "ANA_AGG", "AWE", "ERP_Q",
+        "LF", "CPI", "CPI_MONTHLY", "ABS_ANNUAL_ERP_ASGS2021", "BA_GCCSA",
+        "LEND_HOUSING", "WPI", "JV", "ANA_AGG", "AWE", "ERP_Q",
         "C21_G02_SA2", "C21_G02_POA", "RT", "HSI_M",
         "PPI_FD", "C21_G01_POA",
     }
+
+
+def test_cpi_indirects_to_quarterly_sdmx_dataflow():
+    """The user-facing `CPI` dataset must resolve to the SDMX `CPI_Q` dataflow
+    (cat 6401.0) so periods come back quarterly and align with WPI. See
+    CHANGELOG 0.10.0 — period-format breaking change."""
+    cd = curated.get("CPI")
+    assert cd is not None
+    assert cd.id == "CPI"
+    assert cd.sdmx_dataflow_id == "CPI_Q"
+    assert cd.sdmx_id == "CPI_Q"
+
+
+def test_cpi_monthly_indirects_to_monthly_indicator_sdmx_dataflow():
+    """`CPI_MONTHLY` preserves customer access to the monthly indicator
+    (cat 6484.0) via its own SDMX dataflow `CPI_M`."""
+    cd = curated.get("CPI_MONTHLY")
+    assert cd is not None
+    assert cd.id == "CPI_MONTHLY"
+    assert cd.sdmx_dataflow_id == "CPI_M"
+    assert cd.sdmx_id == "CPI_M"
+
+
+def test_sister_curated_without_indirection_falls_back_to_id():
+    """Curated dataflows without `sdmx_dataflow_id` keep the legacy behavior
+    where the user-facing ID is also the SDMX dataflow ID."""
+    lf = curated.get("LF")
+    assert lf is not None
+    assert lf.sdmx_dataflow_id is None
+    assert lf.sdmx_id == "LF"
 
 
 def test_get_lf_loads_dimensions():
@@ -411,7 +441,7 @@ def test_unknown_filter_message_points_to_describe_dataset():
     """Regression: every Unknown-filter raise must point at describe_dataset(id)
     so the LLM has a self-correction path, not just a rejection notice."""
     lf = curated.get("LF")
-    with pytest.raises(ValueError, match=r"describe_dataset\('LF'\)"):
+    with pytest.raises(ValueError, match=r"describe endpoint or describe tool.*'LF'"):
         curated.translate_filters(lf, {"state": "nsw"})
 
 
@@ -426,7 +456,7 @@ def test_unknown_filter_message_includes_did_you_mean_for_typo():
 def test_unknown_value_message_points_to_describe_dataset():
     """Regression: every Unknown-value raise must point at describe_dataset(id)."""
     lf = curated.get("LF")
-    with pytest.raises(ValueError, match=r"describe_dataset\('LF'\)"):
+    with pytest.raises(ValueError, match=r"describe endpoint or describe tool.*'LF'"):
         # 'narnia' is not a state, not a postcode, not a curated key.
         curated.translate_filters(lf, {"region": "narnia"})
 
@@ -443,5 +473,5 @@ def test_hidden_dim_filter_message_points_to_describe_dataset():
     """The auto-managed-dim path also gets the describe_dataset pointer so
     LLMs can discover the visible filter surface."""
     lf = curated.get("LF")
-    with pytest.raises(ValueError, match=r"describe_dataset\('LF'\)"):
+    with pytest.raises(ValueError, match=r"describe endpoint or describe tool.*'LF'"):
         curated.translate_filters(lf, {"age": "15-19"})

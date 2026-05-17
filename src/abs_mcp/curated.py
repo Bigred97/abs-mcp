@@ -81,6 +81,17 @@ class CuratedDataflow:
     # users would pass to `latest(filters=...)` — translated through
     # `translate_filters` like a normal user query.
     latest_defaults: dict[str, str] = field(default_factory=dict)
+    # SDMX dataflow ID actually queried on ABS. When None, falls back to `id`.
+    # Use this to expose a clean user-facing name (e.g. `CPI`) that maps to a
+    # different underlying SDMX dataflow (`CPI_Q` for the canonical quarterly
+    # series, `CPI_M` for the monthly indicator). Avoids forcing customers to
+    # know ABS's internal dataflow naming.
+    sdmx_dataflow_id: str | None = None
+
+    @property
+    def sdmx_id(self) -> str:
+        """The SDMX dataflow ID to query against the ABS Data API."""
+        return self.sdmx_dataflow_id or self.id
 
 
 _REGISTRY: dict[str, CuratedDataflow] | None = None
@@ -145,6 +156,7 @@ def _load_one(path: Path) -> CuratedDataflow:
             f"plain-English filter keys to values, got {type(latest_defaults_raw).__name__}."
         )
     latest_defaults = {str(k): str(v) for k, v in latest_defaults_raw.items()}
+    sdmx_df_id = raw.get("sdmx_dataflow_id")
     return CuratedDataflow(
         id=str(raw["id"]),
         name=str(raw["name"]),
@@ -154,6 +166,7 @@ def _load_one(path: Path) -> CuratedDataflow:
         dimensions=dims,
         search_keywords=tuple(raw.get("search_keywords") or ()),
         latest_defaults=latest_defaults,
+        sdmx_dataflow_id=str(sdmx_df_id) if sdmx_df_id else None,
     )
 
 
@@ -239,14 +252,16 @@ def translate_filters(
                     f"Filter '{user_dim}' is auto-managed for dataset '{curated.id}' "
                     "and cannot be set by users. "
                     f"User-facing filters: {', '.join(valid)}. "
-                    f"Try describe_dataset('{curated.id}') to see the full schema."
+                    f"Use the describe endpoint or describe tool to see the full "
+                    f"schema for dataset '{curated.id}'."
                 )
             suggestion = _did_you_mean(user_dim, valid)
             raise ValueError(
                 f"Unknown filter '{user_dim}' for dataset '{curated.id}'."
                 f"{suggestion} "
                 f"Valid filters: {', '.join(valid)}. "
-                f"Try describe_dataset('{curated.id}') to see the full schema."
+                f"Use the describe endpoint or describe tool to see the full "
+                f"schema for dataset '{curated.id}'."
             )
         dim = visible_dims[user_dim]
         if isinstance(user_val, list):
@@ -268,7 +283,8 @@ def translate_filters(
                     f"Filter '{user_dim}' has an empty value. "
                     f"Try one of: {', '.join(valid_keys[:15])}"
                     + ("..." if len(valid_keys) > 15 else "")
-                    + f". See describe_dataset('{curated.id}') for the full schema."
+                    + f". Use the describe endpoint or describe tool to see the "
+                    f"full schema for dataset '{curated.id}'."
                 )
             if v_str in dim.values:
                 codes.append(dim.values[v_str].sdmx_code)
@@ -300,7 +316,8 @@ def translate_filters(
                         f"{suggestion} "
                         f"Try one of: {', '.join(valid_keys[:15])}"
                         + ("..." if len(valid_keys) > 15 else "")
-                        + f". See describe_dataset('{curated.id}') for the full schema."
+                        + f". Use the describe endpoint or describe tool to see "
+                        f"the full schema for dataset '{curated.id}'."
                     )
         out[dim.sdmx_id] = codes
     return out

@@ -104,11 +104,13 @@ Add to `~/.cursor/mcp.json` (or workspace `.cursor/mcp.json`):
 
 ## Curated dataflows
 
-For these ten, `filters` accepts plain-English values (e.g. `"region": "nsw"` instead of `"REGION": "1"`):
+For these curated dataflows, `filters` accepts plain-English values (e.g. `"region": "nsw"` instead of `"REGION": "1"`):
 
 - **LF** — Labour Force, monthly: employment, unemployment, participation by state/sex
-- **CPI** — Consumer Price Index, quarterly inflation by capital city and category
+- **CPI** — Consumer Price Index, quarterly inflation (cat 6401.0 — the headline rate)
+- **CPI_MONTHLY** — Monthly CPI Indicator (cat 6484.0), full sub-category and per-city breakdown
 - **WPI** — Wage Price Index, quarterly wage growth by industry/sector/state
+- **PPI_FD** — Producer Price Index Final Demand, quarterly producer inflation
 - **JV** — Job Vacancies, quarterly labour demand by industry/sector/state
 - **AWE** — Average Weekly Earnings, half-yearly by industry/sector/state
 - **ANA_AGG** — National Accounts: GDP, GDP per capita, terms of trade, real income (Australia, quarterly)
@@ -116,6 +118,9 @@ For these ten, `filters` accepts plain-English values (e.g. `"region": "nsw"` in
 - **ERP_Q** — Quarterly Estimated Resident Population, by state/sex/age
 - **BA_GCCSA** — Building Approvals, monthly by state/capital region and building type
 - **LEND_HOUSING** — Lending Indicators, quarterly new housing loan commitments by purpose, lender, and state
+- **HSI_M** — Monthly Household Spending Indicator (ABS-blessed retail-trade replacement)
+- **RT** — Retail Trade (43-year historical series, ceased Jul 2025)
+- **C21_G01_POA / C21_G02_POA / C21_G02_SA2** — Census 2021 selected characteristics and medians by postcode / SA2
 
 Any other ABS dataflow still works — pass raw SDMX dimension IDs and codes.
 
@@ -163,11 +168,13 @@ Returns:
 get_data(dataset_id="BA_GCCSA", filters={"region": "nsw", "measure": "dwelling_units"}, start_period="2024")
 ```
 
-**"Compare quarterly CPI in Sydney vs Melbourne"**
+**"Compare monthly CPI inflation in Sydney vs Melbourne"**
 
 ```
-get_data(dataset_id="CPI", filters={"region": ["sydney", "melbourne"], "measure": "change_year"}, start_period="2023")
+get_data(dataset_id="CPI_MONTHLY", filters={"region": ["sydney", "melbourne"], "measure": "change_year"}, start_period="2023")
 ```
+
+(`CPI` itself publishes only the national weighted average at quarterly cadence; the monthly indicator carries per-city series.)
 
 ## Period formats
 
@@ -176,7 +183,8 @@ ABS uses different period formats per dataflow. Pass `start_period` / `end_perio
 | Dataflows | Frequency | Format | Example |
 |---|---|---|---|
 | LF, BA_GCCSA | Monthly | `YYYY-MM` | `"2026-03"` |
-| CPI, WPI, JV, ANA_AGG, LEND_HOUSING, ERP_Q | Quarterly | `YYYY-Q*` or `YYYY-MM` | `"2025-Q4"` |
+| CPI, WPI, PPI_FD, JV, ANA_AGG, LEND_HOUSING, ERP_Q | Quarterly | `YYYY-Q*` | `"2025-Q4"` |
+| CPI_MONTHLY, HSI_M | Monthly | `YYYY-MM` | `"2025-12"` |
 | AWE | Half-yearly | `YYYY-S*` | `"2025-S2"` |
 | ABS_ANNUAL_ERP_ASGS2021 | Annual | `YYYY` | `"2025"` |
 

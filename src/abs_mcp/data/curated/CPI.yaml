@@ -1,57 +1,74 @@
 id: CPI
-name: Consumer Price Index
+sdmx_dataflow_id: CPI_Q
+name: Consumer Price Index (Quarterly)
 description: |
-  Quarterly Consumer Price Index by capital city and All groups / sub-categories.
-  Source: ABS Catalogue 6401.0.
+  Quarterly Consumer Price Index — the official inflation rate the RBA,
+  Treasury, AFR, and economists reference when they say "CPI". Source:
+  ABS Catalogue 6401.0.
+
+  Periods are quarterly (e.g. 2025-Q1, 2025-Q2). Pairs naturally with WPI
+  on the same period grid for real-wages analysis.
+
+  For the supplementary monthly indicator (cat 6484.0) — published faster
+  but with a narrower measure set and considered less authoritative — use
+  the CPI_MONTHLY dataset.
 update_frequency: quarterly
 source_url: https://www.abs.gov.au/statistics/economy/price-indexes-and-inflation/consumer-price-index-australia
-search_keywords: [inflation, cost of living, consumer prices, price index, basket of goods, deflation, cpi inflation, headline inflation]
+search_keywords:
+  - inflation
+  - cost of living
+  - consumer prices
+  - price index
+  - basket of goods
+  - deflation
+  - cpi inflation
+  - headline inflation
+  - quarterly cpi
+  - core inflation
+  - trimmed mean
+  - weighted median
 dimensions:
   measure:
     sdmx_id: MEASURE
-    description: What is being measured
+    description: What is being measured (defaults to annual % change — the headline inflation figure)
+    default: "3"
     values:
-      index: { sdmx_code: "1", description: "Index numbers" }
+      change_year: { sdmx_code: "3", description: "% change from corresponding quarter of previous year (annual inflation)" }
       change_quarter: { sdmx_code: "2", description: "% change from previous quarter" }
-      change_year: { sdmx_code: "3", description: "% change from previous year (annual inflation)" }
-      contribution_to_index: { sdmx_code: "4" }
+      index: { sdmx_code: "1", description: "Index numbers (quarterly)" }
   category:
     sdmx_id: INDEX
-    description: CPI category (defaults to All groups)
-    default: "10001"
+    description: |
+      Which series to query (defaults to headline All Groups CPI, seasonally
+      adjusted — the figure the RBA targets). ABS publishes the quarterly
+      annual-change series only for the seasonally adjusted headline plus the
+      two core measures (trimmed mean, weighted median). Sub-category
+      breakdowns (food, housing, transport, etc.) are only published
+      monthly — use the CPI_MONTHLY dataset for those.
+    default: "999901"
     values:
-      all_groups: { sdmx_code: "10001", description: "All groups CPI" }
-      food: { sdmx_code: "20001", description: "Food and non-alcoholic beverages" }
-      alcohol_tobacco: { sdmx_code: "20002", description: "Alcohol and tobacco" }
-      clothing: { sdmx_code: "20003", description: "Clothing and footwear" }
-      housing: { sdmx_code: "20004", description: "Housing" }
-      furnishings: { sdmx_code: "20005", description: "Furnishings, household equipment and services" }
-      health: { sdmx_code: "20006", description: "Health" }
-      transport: { sdmx_code: "20007", description: "Transport" }
-      communication: { sdmx_code: "20008", description: "Communication" }
-      recreation: { sdmx_code: "20009", description: "Recreation and culture" }
-      education: { sdmx_code: "20010", description: "Education" }
-      insurance_financial: { sdmx_code: "20011", description: "Insurance and financial services" }
+      all_groups: { sdmx_code: "999901", description: "All groups CPI, seasonally adjusted (headline)" }
+      trimmed_mean: { sdmx_code: "999902", description: "Trimmed Mean — RBA's preferred core inflation measure" }
+      weighted_median: { sdmx_code: "999903", description: "Weighted Median — alternative core inflation measure" }
   region:
     sdmx_id: REGION
-    description: Capital city (or 'australia' for the weighted average)
+    description: |
+      Region. The quarterly CPI publishes the national weighted-average of
+      eight capital cities only. For per-city CPI use CPI_MONTHLY, which
+      carries city-level series.
+    default: "50"
     values:
       australia: { sdmx_code: "50", description: "Weighted average of eight capital cities" }
-      sydney: { sdmx_code: "1" }
-      melbourne: { sdmx_code: "2" }
-      brisbane: { sdmx_code: "3" }
-      adelaide: { sdmx_code: "4" }
-      perth: { sdmx_code: "5" }
-      hobart: { sdmx_code: "6" }
-      darwin: { sdmx_code: "7" }
-      canberra: { sdmx_code: "8" }
   adjustment:
     sdmx_id: TSEST
-    description: Time-series treatment (CPI defaults to original — the official figure)
+    description: |
+      Time-series treatment. Quarterly CPI publishes annual-change data only
+      for the seasonally adjusted (SA) series. Hidden so the headline
+      change_year query works without the user reasoning about TSEST.
     hidden: true
-    default: "10"
+    default: "20"
   frequency:
     sdmx_id: FREQ
-    description: ABS publishes CPI's annual % change series under FREQ='M' even though the underlying CPI is quarterly.
+    description: ABS frequency code — quarterly for this dataflow.
     hidden: true
-    default: "M"
+    default: "Q"

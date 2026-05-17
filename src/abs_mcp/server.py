@@ -14,7 +14,7 @@ from fastmcp import FastMCP
 from pydantic import Field
 
 from . import curated
-from .catalog import describe_from_dsd, list_dataflows, search_in_memory
+from .catalog import _ranker_context, describe_from_dsd, list_dataflows, search_in_memory
 from .client import ABSAPIError, ABSClient, get_stale_signal, reset_stale_signal
 from .models import (
     CuratedFilter,
@@ -77,18 +77,18 @@ def _normalize_dataset_id(dataset_id: Any) -> str:
     if not isinstance(dataset_id, str):
         raise ValueError(
             f"dataset_id must be a string, got {type(dataset_id).__name__}. "
-            "Try search_datasets() to discover valid IDs like 'LF', 'CPI', or 'ANA_AGG'."
+            "Search by keyword to discover valid IDs like 'LF', 'CPI', or 'ANA_AGG'."
         )
     normalized = dataset_id.strip().upper()
     if not normalized:
         raise ValueError(
-            "dataset_id is empty. Try search_datasets() to discover IDs like 'LF', 'CPI', or 'ANA_AGG'."
+            "dataset_id is empty. Search by keyword to discover IDs like 'LF', 'CPI', or 'ANA_AGG'."
         )
     if not _DATASET_ID_PATTERN.match(normalized):
         raise ValueError(
             f"dataset_id {dataset_id!r} contains invalid characters — "
             "ABS dataflow IDs use only letters, digits, and underscores. "
-            "Try search_datasets() to discover valid IDs."
+            "Search by keyword to discover valid IDs."
         )
     return normalized
 
@@ -226,17 +226,30 @@ async def search_datasets(
             f"limit must be >= 1, got {limit}. Use a value between 1 and 100."
         )
     client = await _get_client()
+    curated_id_set = set(curated.list_ids())
     try:
-        summaries = await list_dataflows(client, curated_ids=set(curated.list_ids()))
+        summaries = await list_dataflows(client, curated_ids=curated_id_set)
     except ABSAPIError as e:
         raise ValueError(
             f"Could not fetch ABS dataflow catalogue: {e}. "
             "The ABS Data API may be temporarily unreachable — retry in a moment. "
-            "Meanwhile, list_curated() returns the 10 curated dataflow IDs "
-            "(LF, CPI, WPI, JV, AWE, ANA_AGG, BA_GCCSA, LEND_HOUSING, ERP_Q, "
-            "ABS_ANNUAL_ERP_ASGS2021) which you can query directly."
+            "Meanwhile, the curated dataflow IDs "
+            "(LF, CPI, CPI_MONTHLY, WPI, PPI_FD, JV, AWE, ANA_AGG, BA_GCCSA, "
+            "LEND_HOUSING, ERP_Q, ABS_ANNUAL_ERP_ASGS2021, HSI_M, RT, "
+            "C21_G01_POA, C21_G02_POA, C21_G02_SA2) can still be queried directly."
         ) from e
-    return search_in_memory(summaries, query, limit=limit)
+    # The new two-pool ranker needs the keyword overlay + deprecation set to
+    # apply the curated bonus and ceased-dataset penalty. Without these the
+    # fuzzy match falls back to id+name only and long Census descriptions
+    # drown out curated entries for natural-language queries.
+    overlay, deprecated = _ranker_context(curated_id_set)
+    return search_in_memory(
+        summaries,
+        query,
+        limit=limit,
+        keyword_overlay=overlay,
+        deprecated_ids=deprecated,
+    )
 
 
 @mcp.tool
@@ -341,7 +354,8 @@ async def describe_dataset(
         dsd_msg = await client.get_datastructure(dataset_id)
     except ABSAPIError as e:
         raise ValueError(
-            f"Dataset '{dataset_id}' not found. Try search_datasets to discover valid IDs. ({e})"
+            f"Dataset '{dataset_id}' not found ({e}). "
+            "Use the search endpoint or search tool to discover valid dataset IDs."
         ) from e
     return describe_from_dsd(dataset_id, dsd_msg)
 
@@ -401,21 +415,30 @@ async def _get_data_impl(
     client = await _get_client()
     cd, sdmx_filters, user_query_echo = await _resolve_filters(dataset_id, filters)
 
+    # Curated dataflows may map their user-facing `id` to a different ABS SDMX
+    # dataflow via `sdmx_dataflow_id` — e.g. curated `CPI` resolves to SDMX
+    # `CPI_Q`. SDMX queries (DSD + data) MUST use the resolved ID; the response
+    # keeps the user-facing `dataset_id` so the customer sees what they asked
+    # for.
+    sdmx_id = cd.sdmx_id if cd is not None else dataset_id
+
     try:
-        dsd_msg = await client.get_datastructure(dataset_id)
+        dsd_msg = await client.get_datastructure(sdmx_id)
     except ABSAPIError as e:
         raise ValueError(
-            f"Dataset '{dataset_id}' not found. Try search_datasets to discover valid IDs. ({e})"
+            f"Dataset '{dataset_id}' not found ({e}). "
+            "Use the search endpoint or search tool to discover valid dataset IDs."
         ) from e
 
-    if dataset_id not in dsd_msg.structure:
+    if sdmx_id not in dsd_msg.structure:
         raise ValueError(
             f"DSD for '{dataset_id}' missing in API response. "
             "This usually means the dataflow ID exists but its data-structure "
-            f"definition is unpublished or moved. Try search_datasets to find the "
-            f"current ID, or list_curated() for the 10 always-supported dataflows."
+            "definition is unpublished or moved. Use the search endpoint or "
+            "search tool to find the current ID, or the list-curated endpoint "
+            "for always-supported dataflows."
         )
-    dim_order = [d.id for d in dsd_msg.structure[dataset_id].dimensions.components]
+    dim_order = [d.id for d in dsd_msg.structure[sdmx_id].dimensions.components]
     # For non-curated dataflows, validate user keys against the DSD here —
     # build_sdmx_key silently drops keys not in dim_order, which previously
     # let a typoed dim name return unfiltered data while the response echoed
@@ -427,22 +450,33 @@ async def _get_data_impl(
             raise ValueError(
                 f"Unknown filter key(s) {unknown} for dataset '{dataset_id}'. "
                 f"Valid SDMX dimensions: {valid_dims}. "
-                f"Try describe_dataset('{dataset_id}') to see filter shapes."
+                f"Use the describe endpoint or describe tool to see filter shapes "
+                f"for dataset '{dataset_id}'."
             )
     sdmx_key = curated.build_sdmx_key(dim_order, sdmx_filters) or "all"
 
     try:
         data_msg = await client.get_data(
-            dataset_id,
+            sdmx_id,
             key=sdmx_key,
             start_period=start_period,
             end_period=end_period,
             last_n=last_n,
         )
     except ABSAPIError as e:
+        # Don't leak the internal SDMX key (e.g. ".10001.10..M") or the upstream
+        # URL into the error message — REST callers don't speak SDMX and the
+        # internal key shape confuses humans. Echo the user-facing filter
+        # dimensions instead, and point to the transport-agnostic describe entry.
+        user_dims = sorted((filters or {}).keys()) or None
+        dim_hint = (
+            f" filters: {user_dims}." if user_dims else " (no filters supplied)."
+        )
         raise ValueError(
-            f"Query failed for {dataset_id} with key '{sdmx_key}'. "
-            f"Try describe_dataset('{dataset_id}') to see valid filter values. ({e})"
+            f"Query failed for dataset '{dataset_id}' ({e})."
+            f"{dim_hint} "
+            "Use the describe endpoint or describe tool to see valid filter values "
+            f"for dataset '{dataset_id}'."
         ) from e
 
     resp = build_response(
@@ -455,6 +489,7 @@ async def _get_data_impl(
         curated=cd,
         start_period=start_period,
         end_period=end_period,
+        sdmx_id=sdmx_id,
     )
     # If any fetch in the chain (DSD or data) served a stale-cache fallback
     # because the upstream API was unreachable, propagate it to the response.
@@ -741,7 +776,8 @@ async def top_n(
         raise ValueError(
             "measure is required and must be a non-empty string. "
             "Example: top_n('LF', 'unemployment_rate', n=5). "
-            "Try describe_dataset(<id>) to see available measure keys."
+            "Use the describe endpoint or describe tool to see available "
+            "measure keys for the dataset."
         )
     if isinstance(n, bool) or not isinstance(n, int):
         raise ValueError(
@@ -774,7 +810,7 @@ async def top_n(
         raise ValueError(
             f"top_n requires a curated dataflow with a 'measure' dimension. "
             f"Dataset {dataset_id!r} is not curated. "
-            "Try list_curated() to see the 10 dataflows that support top_n "
+            "Enumerate the curated set to see the 10 dataflows that support top_n "
             "(LF, CPI, ANA_AGG, AWE, BA_GCCSA, ERP_Q, JV, LEND_HOUSING, "
             "WPI, ABS_ANNUAL_ERP_ASGS2021)."
         )
@@ -782,8 +818,9 @@ async def top_n(
         raise ValueError(
             f"Dataset {norm_id!r} does not expose a user-facing 'measure' "
             "dimension. top_n is only meaningful when the dataset has a "
-            "measure dimension to filter on. Try describe_dataset() to "
-            "inspect the dataset's filter schema, or use get_data() directly."
+            "measure dimension to filter on. Use the describe endpoint or "
+            "describe tool to inspect the dataset's filter schema, or use the "
+            "get-data endpoint directly."
         )
     measure_dim = cd.dimensions["measure"]
     measure_keys = sorted(measure_dim.values.keys())
@@ -796,7 +833,8 @@ async def top_n(
             f"Unknown measure {measure!r} for dataset {norm_id!r}."
             f"{suggestion} "
             f"Try one of: {shown}{rest}. "
-            f"See describe_dataset({norm_id!r}) for the full measure list."
+            f"Use the describe endpoint or describe tool to see the full "
+            f"measure list for dataset {norm_id!r}."
         )
 
     # Merge `measure` into the user-supplied filters. Reject collision so the

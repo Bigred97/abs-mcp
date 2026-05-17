@@ -6,7 +6,7 @@ description: |
   Source: ABS Catalogue 3101.0.
 update_frequency: quarterly
 source_url: https://www.abs.gov.au/statistics/people/population/national-state-and-territory-population
-search_keywords: [population, residents, quarterly population, demographics, erp, people, state population, age groups]
+search_keywords: [population, residents, quarterly population, population quarterly, population latest, demographics, erp, people, state population, age groups]
 dimensions:
   measure:
     sdmx_id: MEASURE

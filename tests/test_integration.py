@@ -141,11 +141,13 @@ async def test_describe_curated_surfaces_hidden_defaults():
     assert by_name["frequency"].values[0].sdmx_code == "M"
 
 
-async def test_list_curated_returns_ten():
+async def test_list_curated_returns_full_set():
     ids = server.list_curated()
     assert set(ids) == {
-        "LF", "CPI", "ABS_ANNUAL_ERP_ASGS2021", "BA_GCCSA", "LEND_HOUSING",
-        "WPI", "JV", "ANA_AGG", "AWE", "ERP_Q",
+        "LF", "CPI", "CPI_MONTHLY", "ABS_ANNUAL_ERP_ASGS2021", "BA_GCCSA",
+        "LEND_HOUSING", "WPI", "JV", "ANA_AGG", "AWE", "ERP_Q",
+        "C21_G02_SA2", "C21_G02_POA", "RT", "HSI_M",
+        "PPI_FD", "C21_G01_POA",
     }
 
 
@@ -179,6 +181,7 @@ async def test_latest_jv_total_vacancies_nsw():
     ("LF", {"region": "nsw", "measure": "unemployment_rate"}, "Percent"),
     ("LF", {"region": "nsw", "measure": "employed_persons"}, "Number"),
     ("CPI", {"region": "australia", "measure": "change_year"}, "Percent"),
+    ("CPI_MONTHLY", {"region": "australia", "measure": "change_year"}, "Percent"),
     ("ABS_ANNUAL_ERP_ASGS2021", {"region": "nsw", "region_type": "states"}, "Persons"),
     ("BA_GCCSA", {"region": "nsw", "measure": "dwelling_units"}, "Number"),
     ("LEND_HOUSING", {"region": "nsw", "measure": "value"}, "Australian Dollars"),
@@ -299,6 +302,57 @@ async def test_wpi_state_level_works():
     assert len(resp.records) >= 1
     assert resp.records[0].value is not None
     assert resp.records[0].dimensions["region"] == "New South Wales"
+
+
+async def test_cpi_and_wpi_periods_align_for_real_wages_workflow():
+    """Regression for 0.10.0: CPI must return quarterly periods that overlap
+    with WPI on the same period grid. Pre-0.10.0, CPI's `change_year` defaulted
+    to FREQ=M and returned monthly periods (2025-04, 2025-05, ...), breaking
+    every quarterly cross-source join — most notably the WPI × CPI real-wages
+    workflow in ausdata-api's /v1/real-wages endpoint.
+
+    On the last 4 published quarters both datasets should overlap on all 4."""
+    cpi = await server.get_data(
+        dataset_id="CPI",
+        filters={"region": "australia", "measure": "change_year"},
+        start_period="2025-Q1",
+        end_period="2025-Q4",
+    )
+    wpi = await server.get_data(
+        dataset_id="WPI",
+        filters={"region": "australia", "measure": "change_year"},
+        start_period="2025-Q1",
+        end_period="2025-Q4",
+    )
+    cpi_periods = {r.period for r in cpi.records if r.period}
+    wpi_periods = {r.period for r in wpi.records if r.period}
+    # Every CPI period must look quarterly (YYYY-Qn), not monthly (YYYY-MM)
+    for p in cpi_periods:
+        assert "Q" in p, f"CPI period {p!r} is not quarterly — pre-0.10.0 regression"
+    # CPI and WPI publish the same four quarters
+    overlap = cpi_periods & wpi_periods
+    assert {"2025-Q1", "2025-Q2", "2025-Q3", "2025-Q4"} <= overlap, (
+        f"CPI×WPI period overlap should cover all 4 quarters of 2025; "
+        f"got CPI={sorted(cpi_periods)}, WPI={sorted(wpi_periods)}, overlap={sorted(overlap)}"
+    )
+
+
+async def test_cpi_monthly_returns_monthly_periods_with_subcategories():
+    """CPI_MONTHLY preserves the monthly indicator product (cat 6484.0) with
+    full sub-category support — what pre-0.10.0 customers got when calling
+    CPI. Housing inflation here returns a small monthly y/y % change."""
+    resp = await server.get_data(
+        dataset_id="CPI_MONTHLY",
+        filters={"region": "australia", "measure": "change_year", "category": "housing"},
+        start_period="2025-04",
+        end_period="2025-09",
+    )
+    assert len(resp.records) >= 3
+    for r in resp.records:
+        assert r.period and "-" in r.period and "Q" not in r.period, (
+            f"CPI_MONTHLY period {r.period!r} should be monthly (YYYY-MM)"
+        )
+        assert r.unit == "Percent"
 
 
 async def test_get_data_rejects_unknown_filter_key_on_non_curated():

@@ -4,7 +4,7 @@
 
 abs-mcp is the Australian Bureau of Statistics (ABS) member of the Australian Public Data MCP portfolio. It wraps the SDMX-XML 2.1 endpoint at data.api.abs.gov.au, translating ABS dataflow codes into curated plain-English filter keys ("region: nsw", "measure: unemployment_rate") so an LLM can answer real economic questions without knowing what `M13.3.1599.20.1.M` means.
 
-10 curated dataflows cover the most-asked indicators. The other ~1,200 ABS dataflows are still accessible via raw SDMX dimension IDs. Every response carries the CC-BY 4.0 International attribution and the canonical ABS source URL. SQLite cache TTLs are tuned for the ABS publication cadence (15min latest / 1h data / 24h catalogue / 7d structure) and the server falls back to cached payloads with `stale=True` when the upstream API is unreachable.
+17 curated dataflows cover the most-asked indicators. The other ~1,200 ABS dataflows are still accessible via raw SDMX dimension IDs. Every response carries the CC-BY 4.0 International attribution and the canonical ABS source URL. SQLite cache TTLs are tuned for the ABS publication cadence (15min latest / 1h data / 24h catalogue / 7d structure) and the server falls back to cached payloads with `stale=True` when the upstream API is unreachable.
 
 ## Documentation
 
@@ -14,16 +14,16 @@ abs-mcp is the Australian Bureau of Statistics (ABS) member of the Australian Pu
 
 ## Tools
 
-- search_datasets(query, limit=10): Fuzzy search across the 10 curated dataflows plus ~1,200 raw ABS dataflows; curated entries get a relevance boost
+- search_datasets(query, limit=10): Fuzzy search across the 17 curated dataflows plus ~1,200 raw ABS dataflows; curated entries get a relevance boost
 - describe_dataset(dataset_id): Plain-English dimensions, filter values, source URL; surfaces hidden defaults (age 15+, seasonally adjusted, etc.)
 - get_data(dataset_id, filters, start_period, end_period, format): Filtered historical query; supports list filters for multi-state / multi-measure comparisons; format='records'|'series'|'csv'
 - latest(dataset_id, filters): Most recent observation, wraps get_data with lastNObservations=1; 15-minute cache TTL
-- list_curated(): Enumerate the 10 curated dataflow IDs (LF, CPI, WPI, JV, AWE, ANA_AGG, BA_GCCSA, LEND_HOUSING, ERP_Q, ABS_ANNUAL_ERP_ASGS2021)
+- list_curated(): Enumerate curated dataflow IDs (LF, CPI [quarterly cat 6401.0], CPI_MONTHLY [cat 6484.0], WPI, PPI_FD, JV, AWE, ANA_AGG, BA_GCCSA, LEND_HOUSING, ERP_Q, ABS_ANNUAL_ERP_ASGS2021, HSI_M, RT, C21_G01_POA, C21_G02_POA, C21_G02_SA2)
 
 ## Example queries
 
 - "What's the unemployment rate for NSW?"
-- "Show CPI quarterly inflation for the last 5 years"
+- "Show CPI quarterly inflation for the last 5 years" — quarterly headline; `CPI_MONTHLY` for the monthly indicator and per-city / sub-category breakdown
 - "Compare wage growth across states in 2024"
 - "AU GDP quarterly growth and per capita over the last decade"
 - "Dwelling approvals in NSW by month"

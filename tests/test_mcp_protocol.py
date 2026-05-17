@@ -24,15 +24,17 @@ async def mcp_client():
         yield c
 
 
-async def test_tools_list_exposes_five_tools(mcp_client: Client) -> None:
+async def test_tools_list_exposes_full_tool_surface(mcp_client: Client) -> None:
     tools = await mcp_client.list_tools()
     names = {t.name for t in tools}
+    # Core 5 (per CLAUDE.md) plus the data-shape extra `top_n`.
     assert names == {
         "search_datasets",
         "describe_dataset",
         "get_data",
         "latest",
         "list_curated",
+        "top_n",
     }
 
 
@@ -43,14 +45,16 @@ async def test_each_tool_has_input_schema(mcp_client: Client) -> None:
         assert t.description, f"{t.name} has no description"
 
 
-async def test_call_list_curated_returns_five() -> None:
+async def test_call_list_curated_returns_full_set() -> None:
     async with Client(server.mcp) as c:
         result = await c.call_tool("list_curated", {})
     payload = result.data
     assert isinstance(payload, list)
     assert set(payload) == {
-        "LF", "CPI", "ABS_ANNUAL_ERP_ASGS2021", "BA_GCCSA", "LEND_HOUSING",
-        "WPI", "JV", "ANA_AGG", "AWE", "ERP_Q",
+        "LF", "CPI", "CPI_MONTHLY", "ABS_ANNUAL_ERP_ASGS2021", "BA_GCCSA",
+        "LEND_HOUSING", "WPI", "JV", "ANA_AGG", "AWE", "ERP_Q",
+        "C21_G02_SA2", "C21_G02_POA", "RT", "HSI_M",
+        "PPI_FD", "C21_G01_POA",
     }
 
 

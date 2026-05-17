@@ -1,0 +1,77 @@
+id: CPI_MONTHLY
+sdmx_dataflow_id: CPI_M
+name: Monthly Consumer Price Index Indicator
+description: |
+  Monthly Consumer Price Index Indicator — the supplementary monthly product
+  ABS introduced in 2022 to give a more frequent read on inflation between
+  the official quarterly CPI releases. Source: ABS Catalogue 6484.0.
+
+  Periods are monthly (e.g. 2025-04, 2025-05). For the canonical quarterly
+  CPI that economists, the RBA, and Treasury cite when they say "CPI" or
+  "inflation rate", use the CPI dataset.
+
+  This monthly indicator carries the full sub-category breakdown (food,
+  housing, transport, etc.) and individual capital cities — neither of which
+  the quarterly CPI publishes at the headline level.
+update_frequency: monthly
+source_url: https://www.abs.gov.au/statistics/economy/price-indexes-and-inflation/monthly-consumer-price-index-indicator
+search_keywords:
+  - monthly cpi
+  - monthly inflation
+  - monthly cpi indicator
+  - monthly consumer prices
+  - monthly price index
+  - monthly inflation indicator
+  - between quarterly cpi releases
+  - faster cadence inflation
+dimensions:
+  measure:
+    sdmx_id: MEASURE
+    description: What is being measured (defaults to annual % change — the headline indicator figure)
+    default: "3"
+    values:
+      change_year: { sdmx_code: "3", description: "% change from same month of previous year (annual inflation)" }
+      change_month: { sdmx_code: "2", description: "% change from previous month" }
+      index: { sdmx_code: "1", description: "Index numbers (monthly)" }
+      contribution_to_index: { sdmx_code: "4", description: "Contribution to total CPI" }
+  category:
+    sdmx_id: INDEX
+    description: CPI category (defaults to All groups)
+    default: "10001"
+    values:
+      all_groups: { sdmx_code: "10001", description: "All groups CPI" }
+      food: { sdmx_code: "20001", description: "Food and non-alcoholic beverages" }
+      alcohol_tobacco: { sdmx_code: "20002", description: "Alcohol and tobacco" }
+      clothing: { sdmx_code: "20003", description: "Clothing and footwear" }
+      housing: { sdmx_code: "20004", description: "Housing" }
+      furnishings: { sdmx_code: "20005", description: "Furnishings, household equipment and services" }
+      health: { sdmx_code: "20006", description: "Health" }
+      transport: { sdmx_code: "20007", description: "Transport" }
+      communication: { sdmx_code: "20008", description: "Communication" }
+      recreation: { sdmx_code: "20009", description: "Recreation and culture" }
+      education: { sdmx_code: "20010", description: "Education" }
+      insurance_financial: { sdmx_code: "20011", description: "Insurance and financial services" }
+  region:
+    sdmx_id: REGION
+    description: Capital city (or 'australia' for the weighted average)
+    default: "50"
+    values:
+      australia: { sdmx_code: "50", description: "Weighted average of eight capital cities" }
+      sydney: { sdmx_code: "1" }
+      melbourne: { sdmx_code: "2" }
+      brisbane: { sdmx_code: "3" }
+      adelaide: { sdmx_code: "4" }
+      perth: { sdmx_code: "5" }
+      hobart: { sdmx_code: "6" }
+      darwin: { sdmx_code: "7" }
+      canberra: { sdmx_code: "8" }
+  adjustment:
+    sdmx_id: TSEST
+    description: Time-series treatment (defaults to original — the official figure)
+    hidden: true
+    default: "10"
+  frequency:
+    sdmx_id: FREQ
+    description: ABS frequency code — monthly for this dataflow.
+    hidden: true
+    default: "M"

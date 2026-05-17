@@ -1,5 +1,122 @@
 # Changelog
 
+## [0.10.0] - 2026-05-17
+
+### BREAKING — `CPI` now returns quarterly periods (re-pointed to cat 6401.0)
+
+- **`CPI` is now the canonical quarterly Consumer Price Index** — what the
+  RBA, Treasury, AFR, and economists cite when they say "CPI" or
+  "inflation rate". Periods come back as `2025-Q1`, `2025-Q2`, …, fixing
+  every cross-source workflow that joins CPI to a quarterly series
+  (most notably the WPI × CPI real-wages calculation in ausdata-api's
+  `/v1/real-wages` endpoint, which was silently joining on empty period
+  overlap pre-0.10.0).
+
+  - Under the hood, curated `CPI` now indirects to ABS SDMX dataflow
+    `CPI_Q` (cat 6401.0). The previous `CPI` mapping returned monthly
+    indicator data (cat 6484.0) by default — which most customers
+    didn't realise.
+  - Default `measure=change_year` → annual CPI inflation, the headline
+    figure.
+  - Default `category=all_groups` → seasonally adjusted All Groups CPI
+    (INDEX=999901, TSEST=20) — the headline series ABS publishes
+    quarterly y/y % change for.
+  - **Customer-visible reductions** (intentional, see CPI_MONTHLY for
+    the full surface):
+    - Sub-categories (food, alcohol, clothing, housing, transport,
+      etc.) are NO LONGER available on `CPI` — ABS doesn't publish
+      quarterly y/y % change for the cat 6401.0 detailed-breakdown
+      series. They remain accessible via the new `CPI_MONTHLY`
+      dataset.
+    - Individual capital cities (sydney, melbourne, brisbane, …) are
+      NO LONGER available on `CPI`. CPI_Q publishes only the national
+      weighted average of eight capital cities at the headline level.
+      Per-city CPI moves to `CPI_MONTHLY`.
+    - `MEASURE=contribution_to_index` is no longer offered on the
+      quarterly headline (use the monthly indicator if you need it).
+    - New measures available on quarterly headline:
+      `category=trimmed_mean` (`999902`) and
+      `category=weighted_median` (`999903`) — the RBA's preferred core
+      inflation measures.
+
+### Added — `CPI_MONTHLY` curated dataset (preserves pre-0.10.0 customer surface)
+
+- **`CPI_MONTHLY`** — Monthly Consumer Price Index Indicator (cat 6484.0).
+  Maps to SDMX dataflow `CPI_M`. Full sub-category breakdown (food,
+  housing, transport, etc.) and per-city series. Returns monthly periods
+  (`2025-04`, `2025-05`, …) — the supplementary fast-cadence read on
+  inflation between official quarterly releases.
+- Existing customer code that called
+  `get_data("CPI", filters={"category": "housing"})` against pre-0.10.0
+  abs-mcp must migrate to `get_data("CPI_MONTHLY", filters={"category":
+  "housing"})` to preserve behaviour. Code that used the headline
+  All Groups annual change at quarterly cadence works without changes
+  beyond the period format flip.
+
+### Changed — `CuratedDataflow.sdmx_dataflow_id` indirection (internal)
+
+- New optional YAML field `sdmx_dataflow_id` decouples the user-facing
+  curated `id` from the underlying ABS SDMX dataflow. Defaults to `id`
+  for every existing curated dataset (no behavioural change), but lets
+  `CPI` → `CPI_Q` and `CPI_MONTHLY` → `CPI_M` cleanly. The catalogue
+  listing hides the indirection target and any legacy SDMX dataflow
+  that collides with a curated display id, so search results stay
+  unambiguous.
+
+### Fixed — Search ranking quality (canonical queries route correctly)
+
+Customer queries against the live 0.9.2 `search_datasets` were returning
+the wrong top-N for the most-asked topics: `retail` led with three Census
+postcode tables (`C21_G01_POA`, `C21_G02_POA`, `C21_G02_SA2`) instead of
+the active retail-spending dataset `HSI_M`, and `population` missed
+`ERP_Q` from the top results. Root cause: the single-haystack WRatio
+ranker let long Census API descriptions (~1,900 chars) racked up
+incidental token matches and outranked focused curated datasets whose
+keywords were dense but whose haystacks were short.
+
+- **High/low-signal pool split.** `search_in_memory` now scores two
+  pools per summary:
+    * high-signal = `id + name + curated.search_keywords` (concise,
+      intentional retrieval anchors), scored with `token_set_ratio`
+      so substring matches inside unrelated words don't count
+      (previously `WRatio('lending', 'Family Blending')` == 90 because
+      "lending" is a substring of "Blending");
+    * low-signal = API description, scored with `WRatio` for typo
+      tolerance, contribution capped at 50.
+  The cap is well below a clean token match (100), so a curated entry
+  with the right keyword reliably outranks any description-only hit.
+- **Deprecation penalty.** Datasets whose `update_frequency` starts
+  with `ceased` (currently only `RT`) take a `-30` adjustment, sized so
+  the active replacement (`HSI_M`) wins ties on shared retail keywords
+  but the deprecated entry still ranks above non-curated SDMX entries.
+- **Score every summary**, no top-N truncation per pool. The previous
+  `process.extract(limit=80)` could silently drop a focused curated
+  entry (HSI_M for 'retail') from the low pool when dozens of census
+  descriptions scored higher on the raw query, leaving its description
+  contribution stuck at zero. Full-catalogue scoring (~1,200 dataflows
+  × 2 fuzz calls per query) stays under a few milliseconds.
+- **Keyword nudges** (YAML-only):
+    * `HSI_M`: added `retail, retail trade, retail spending, household
+      retail, monthly retail` — customers ask for "retail" by name and
+      HSI_M is the explicit ABS-blessed RT replacement.
+    * `ERP_Q`: added `population quarterly, population latest` so it
+      surfaces alongside the annual ASGS dataset for `population`
+      queries.
+- **Canonical-query test suite** in `tests/test_catalog.py` pins
+  top-N rankings for `inflation`, `unemployment`, `wages`, `retail`,
+  `population`, `GDP`, `lending`. Regression guard against future
+  ranker changes silently breaking customer-facing routing.
+
+Known carry-over: `house prices` still has no canonical curated answer
+(top hits are `PPI_FD` / `CPI`). Curating a Residential Property Price
+Index dataset is intentionally deferred — not in scope for 0.10.0.
+
+### Coordination
+
+- ausdata-api `/v1/real-wages` composer: bump abs-mcp floor to
+  `>=0.10.0` AFTER this lands and re-verify the WPI × CPI period join
+  on quarterly periods.
+
 ## [0.9.2] - 2026-05-16
 
 ### Added — PPI_FD + C21_G01_POA (extends macro + property/retail/health workflows)

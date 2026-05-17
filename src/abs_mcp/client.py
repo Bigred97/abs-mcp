@@ -113,12 +113,17 @@ class ABSClient:
                     f"~{age_min} minute(s) ago"
                 )
                 return payload
-            # Genuinely no cache to fall back to — preserve original behaviour
+            # Genuinely no cache to fall back to — preserve original behaviour.
+            # NOTE: do NOT embed the full upstream URL in the error text. The
+            # message bubbles up through ValueError chains to REST callers (and
+            # any non-SDMX-fluent client); the raw URL leaks the internal SDMX
+            # key shape (e.g. ".10001.10..M") and the data.api.abs.gov.au host.
+            # Status code is kept — it's transport-agnostic and informative.
             if isinstance(e, httpx.HTTPStatusError):
                 raise ABSAPIError(
-                    f"ABS API returned {e.response.status_code} for {url}"
+                    f"ABS API returned {e.response.status_code}"
                 ) from e
-            raise ABSAPIError(f"ABS API request failed: {e}") from e
+            raise ABSAPIError(f"ABS API request failed ({type(e).__name__})") from e
         await self.cache.set(url, resp.content, kind=kind)
         return resp.content
 
@@ -131,7 +136,7 @@ class ABSClient:
         except Exception as e:
             # Callers catch ABSAPIError; anything else escapes the contract.
             # Happens on schema drift or an HTML error page slipping past status checks.
-            raise ABSAPIError(f"Failed to parse SDMX response from {url}: {e}") from e
+            raise ABSAPIError(f"Failed to parse SDMX response ({type(e).__name__})") from e
         if not isinstance(msg, expected):
             raise ABSAPIError(
                 f"ABS API returned a {type(msg).__name__} where {expected.__name__} was expected"

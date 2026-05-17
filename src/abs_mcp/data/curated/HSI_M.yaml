@@ -21,7 +21,7 @@ description: |
   Reference period: typically released ~6 weeks after month-end.
 update_frequency: monthly
 source_url: https://www.abs.gov.au/statistics/economy/finance/monthly-household-spending-indicator
-search_keywords: [household spending, monthly spending, hsi, mhsi, consumer spending, retail spending replacement, consumer sentiment, hospitality spending, recreation spending, transport spending, post retail trade, cost of living, household consumption]
+search_keywords: [household spending, monthly spending, hsi, mhsi, consumer spending, retail, retail trade, retail spending, household retail, monthly retail, retail spending replacement, consumer sentiment, hospitality spending, recreation spending, transport spending, post retail trade, cost of living, household consumption]
 dimensions:
   measure:
     sdmx_id: MEASURE

@@ -17,9 +17,15 @@ plus the cross-sister discipline.
 | PyPI package | `abs-mcp` |
 | GitHub | https://github.com/Bigred97/abs-mcp |
 
-## Curated datasets (16)
+## Curated datasets (17)
 
-LF · CPI · WPI · **PPI_FD** · JV · AWE · ANA_AGG · BA_GCCSA · LEND_HOUSING · ERP_Q · ABS_ANNUAL_ERP_ASGS2021 · **C21_G01_POA** · C21_G02_SA2 · C21_G02_POA · RT (historical, ceased Jul 2025) · HSI_M (live RT replacement)
+LF · **CPI** (quarterly, cat 6401.0, headline inflation) · **CPI_MONTHLY** (cat 6484.0, monthly indicator with sub-categories + cities) · WPI · PPI_FD · JV · AWE · ANA_AGG · BA_GCCSA · LEND_HOUSING · ERP_Q · ABS_ANNUAL_ERP_ASGS2021 · C21_G01_POA · C21_G02_SA2 · C21_G02_POA · RT (historical, ceased Jul 2025) · HSI_M (live RT replacement)
+
+CPI ↔ CPI_MONTHLY: the curated `CPI` dataset uses `sdmx_dataflow_id: CPI_Q`
+indirection — customer-facing `CPI` resolves to ABS's quarterly cat 6401.0
+product (so periods join WPI, ANA_AGG, PPI_FD on the quarterly grid).
+Customers who want the monthly indicator (sub-category breakdown, per-city
+series, faster cadence) call `CPI_MONTHLY` which maps to SDMX `CPI_M`.
 
 ## Repo-specific module set
 
