@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.11.3] - 2026-05-18
+
+### Added — SA4 granularity to `C21_G02_SA2` (Census G02 income/age/rent)
+
+Customer-sim flagged "SA4-level household income" as a coverage gap.
+The C21_G02 SDMX flow already supported SA4 — just wasn't exposed
+in the curated YAML's `region_type` values. Added it.
+
+Customers can now query `{region_type: sa4, measure: median_personal_income_weekly,
+state: nsw}` and get ~30 NSW SA4 regions with their median weekly
+personal income. The same pattern works for any G02 measure (rent,
+mortgage, family/household income, household size).
+
+Live verification (NSW SA4 income, 2021 Census):
+- Sydney - Eastern Suburbs: $1,296/week
+- Sydney - City and Inner South: $1,174/week
+- Sydney - Baulkham Hills: $988/week
+- Sydney - Blacktown: $833/week
+- Central Coast: $727/week
+
+No backward-compat impact — defaults still resolve to SA2.
+195 tests pass.
+
 ## [0.11.2] - 2026-05-18
 
 ### Added — `ABS_ANNUAL_ERP_ASGS2021` now exposes `age` × `sex` dimensions

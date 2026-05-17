@@ -79,7 +79,8 @@ dimensions:
     description: Geographic granularity (defaults to SA2)
     values:
       sa2: { sdmx_code: "SA2", description: "Statistical Area Level 2 (~2,400 regions; default)" }
-      sa3: { sdmx_code: "SA3", description: "Statistical Area Level 3" }
+      sa3: { sdmx_code: "SA3", description: "Statistical Area Level 3 (~340 regions)" }
+      sa4: { sdmx_code: "SA4", description: "Statistical Area Level 4 (~88 regions — useful for SA4-income commercial planning queries)" }
       gccsa: { sdmx_code: "GCCSA", description: "Greater Capital City Statistical Areas" }
       states: { sdmx_code: "STE", description: "States and Territories" }
       australia: { sdmx_code: "AUS" }
