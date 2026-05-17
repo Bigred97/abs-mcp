@@ -1,5 +1,37 @@
 # Changelog
 
+## [0.11.2] - 2026-05-18
+
+### Added — `ABS_ANNUAL_ERP_ASGS2021` now exposes `age` × `sex` dimensions
+
+Customer-sim flagged "population by age × sex × state" as a coverage
+gap (catalogue 3235.0). The data was always available — ABS publishes
+it via the `ERP_ASGS2021` SDMX dataflow — but the curated wrapper
+mapped to the simpler `ABS_ANNUAL_ERP_ASGS2021` flow which only
+exposed region/region_type.
+
+Repointed the curated dataset's `sdmx_dataflow_id` to `ERP_ASGS2021`
+and added two new dimensions:
+
+- **`sex`**: `persons` (default, all combined), `males`/`men`,
+  `females`/`women`. SDMX codelist CL_SEX.
+- **`age`**: `all_ages` (default, TOT), five-year bands as
+  `0_4`, `5_9`, …, `85_plus`, plus plain-English cohort shortcuts
+  (`children`, `school_age`, `teenagers`, `young_adults`, `retirees`,
+  `elderly`). SDMX codelist CL_ERP_AGE.
+
+Live verification:
+- `region=nsw, sex=females, age=25_29, period=2023` → 294,930 ✓
+- `region=nsw, period=2023` → 8,341,199 (NSW total) ✓
+- `region=australia, period=2023` → 26,652,777 (AU total) ✓
+
+Backward-compat: existing queries without `sex`/`age` filters return
+the same totals they did before (defaults apply Persons / All-ages).
+The `region` / `region_type` / `measure` / `frequency` dims are
+unchanged.
+
+195 tests pass.
+
 ## [0.11.1] - 2026-05-18
 
 ### Added — `DatasetSummary.relevance` populated by `search_datasets()`

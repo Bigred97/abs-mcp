@@ -1,11 +1,24 @@
 id: ABS_ANNUAL_ERP_ASGS2021
-name: Estimated Resident Population (annual, ASGS 2021)
+# Point at the richer ERP_ASGS2021 SDMX dataflow which exposes
+# age + sex breakdowns on top of region/region_type. Backward-compat:
+# existing region/region_type filters still work; sex defaults to
+# 'persons' (all sexes) and age to 'all_ages' (TOT) so a no-filter
+# query returns the same total population it did before.
+sdmx_dataflow_id: ERP_ASGS2021
+name: Estimated Resident Population (annual, ASGS 2021 — by age × sex × region)
 description: |
-  Annual Estimated Resident Population by state/territory and sub-state geographic regions.
-  Source: ABS Catalogue 3218.0. ASGS Edition 3 (2021).
+  Annual Estimated Resident Population broken down by age band, sex, and
+  state/territory or sub-state geographic region. Source: ABS Catalogues
+  3218.0 (regional) and 3235.0 (population by age, sex, and region of usual
+  residence). ASGS Edition 3 (2021).
+
+  Defaults to total population (all ages, all sexes); pass age=/sex= to
+  narrow to a specific cohort. Useful for headline cross-cohort queries
+  ("women aged 25-29 in Greater Sydney", "school-age children in QLD",
+  "elderly population in regional NSW").
 update_frequency: annual
-source_url: https://www.abs.gov.au/statistics/people/population/national-state-and-territory-population
-search_keywords: [population, residents, demographics, population estimates, erp, people, headcount, sa2 population, lga population]
+source_url: https://www.abs.gov.au/statistics/people/population
+search_keywords: [population, residents, demographics, population estimates, erp, people, headcount, sa2 population, lga population, age, sex, gender, men, women, cohort, age band, working age, elderly, children, school age, "3235"]
 dimensions:
   region:
     sdmx_id: ASGS_2021
@@ -49,3 +62,58 @@ dimensions:
     sdmx_id: FREQ
     hidden: true
     default: "A"
+  sex:
+    sdmx_id: SEX
+    description: |
+      Sex breakdown. Defaults to 'persons' (all sexes). Pass 'males'
+      or 'females' for cohort queries.
+    values:
+      persons: { sdmx_code: "3", description: "All sexes combined" }
+      males: { sdmx_code: "1" }
+      females: { sdmx_code: "2" }
+      men: { sdmx_code: "1" }
+      women: { sdmx_code: "2" }
+    # SDMX code, not curated key — apply_defaults uses this verbatim
+    default: "3"
+  age:
+    sdmx_id: AGE
+    description: |
+      Age band or single-year age. Defaults to 'all_ages' (TOT). Five-year
+      bands use the SDMX codes A04 (0-4), A59 (5-9), A10 (10-14), ...,
+      A85 (85+). Single-year ages are bare integers as strings ('0',
+      '1', ..., '100', '100PL'). Plain-English shortcuts cover the
+      common cohort queries.
+    permissive: true
+    values:
+      all_ages: { sdmx_code: "TOT" }
+      total: { sdmx_code: "TOT" }
+      # Five-year bands — ABS canonical labels
+      "0_4": { sdmx_code: "A04" }
+      "5_9": { sdmx_code: "A59" }
+      "10_14": { sdmx_code: "A10" }
+      "15_19": { sdmx_code: "A15" }
+      "20_24": { sdmx_code: "A20" }
+      "25_29": { sdmx_code: "A25" }
+      "30_34": { sdmx_code: "A30" }
+      "35_39": { sdmx_code: "A35" }
+      "40_44": { sdmx_code: "A40" }
+      "45_49": { sdmx_code: "A45" }
+      "50_54": { sdmx_code: "A50" }
+      "55_59": { sdmx_code: "A55" }
+      "60_64": { sdmx_code: "A60" }
+      "65_69": { sdmx_code: "A65" }
+      "70_74": { sdmx_code: "A70" }
+      "75_79": { sdmx_code: "A75" }
+      "80_84": { sdmx_code: "A80" }
+      "85_plus": { sdmx_code: "A85" }
+      # Common cohort shortcuts — defaults to the closest single 5-yr band
+      # (callers wanting multi-band totals should pass a list)
+      children: { sdmx_code: "A04", description: "0-4 (preschool age band)" }
+      school_age: { sdmx_code: "A59", description: "5-9 (primary school start)" }
+      teenagers: { sdmx_code: "A15", description: "15-19" }
+      young_adults: { sdmx_code: "A20", description: "20-24" }
+      working_age_start: { sdmx_code: "A15", description: "15-19 (start of working-age conventional definition)" }
+      retirees: { sdmx_code: "A65", description: "65-69 (typical retirement age band)" }
+      elderly: { sdmx_code: "A75", description: "75-79" }
+    # SDMX code for 'All ages' aggregate
+    default: "TOT"
