@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.11.8] - 2026-05-18
+
+### Added — `ABS_NOM_VISA_CY` curated (Net Overseas Migration by visa subclass)
+
+Customer-sim flagged `abs.ABS_NOM_VISA_CY` as opaque — `latest()` returned
+one of 5,814 rows (visa × direction × region × frequency combinations)
+with no obvious headline number, so customers asking for "2022 NOM"
+got `80710` (a specific visa subcategory) instead of the ~518k national
+NOM they expected.
+
+Added curated YAML:
+- `latest_defaults` narrows to TOTAL visa × Australia × annual
+- `measure` filter exposes 16 visa categories with plain-English keys
+  (`total`, `permanent_skill`, `temporary_student`, etc.)
+- `migrationtype` has `arrivals` + `departures` (the only values
+  populated — Net is NOT a published series; customers compute net =
+  arrivals - departures client-side)
+- `region` accepts state codes via aus-identity
+- `freq` is auto-managed (Annual only)
+
+`latest()` now returns 2 rows by default — total arrivals (2022:
+646,110) and total departures (2022: 223,880) for Australia.
+Computed net = 422,230 for 2022 calendar year. Description documents
+that the published ~518k figure is the 2022-23 FISCAL year NOM (a
+different cadence not in this dataflow; see ABS Cat 3101.0 ERP).
+
+195 unit tests pass.
+
 ## [0.11.7] - 2026-05-18
 
 ### Fixed — CI lint failures (E402 in test_catalog.py + unused import)

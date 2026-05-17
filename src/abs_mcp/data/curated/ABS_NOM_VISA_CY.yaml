@@ -1,0 +1,103 @@
+id: ABS_NOM_VISA_CY
+name: Net Overseas Migration by Visa Subclass (Annual)
+description: |
+  Annual Net Overseas Migration (NOM) broken down by visa subclass —
+  arrivals, departures, and net flows by visa category. ABS cat 3412.0
+  Migration, Australia.
+
+  Visa categories include:
+  - Total — sum across all visa subclasses (the headline NOM figure)
+  - Permanent visa: Skill / Family / Special Eligibility & humanitarian / Other
+  - Temporary visa: Student / Skilled / Visitor / Working Holiday / Other / Total
+  - New Zealand Citizen (subclass 444)
+  - Australian Citizen (returnees / departures)
+
+  Defaults to TOTAL visa, national, both arrivals AND departures
+  (calendar year). Customers narrow to a specific visa category or
+  region for deeper queries.
+
+  **Net Overseas Migration is NOT a published series here.** The ABS
+  publishes arrivals and departures separately in this dataflow;
+  compute net = arrivals - departures yourself. For 2022 (calendar
+  year), arrivals were 646,110 and departures were ~152k → net NOM
+  ~494k. For the published 2022-23 fiscal-year NOM (~518k), see
+  ABS Cat 3101.0 National Estimated Resident Population (uses the
+  same NOM totals but on a fiscal-year grid).
+
+  Source: ABS Cat 3412.0 Migration, Australia (calendar year).
+
+update_frequency: annual
+search_keywords:
+  - migration
+  - net overseas migration
+  - nom
+  - visa
+  - immigration
+  - permanent visa
+  - temporary visa
+  - skilled migration
+  - student visa
+  - working holiday
+  - new zealand citizen
+  - migration peak
+  - housing affordability migration
+  - cat 3412
+# latest() with no filters would return 5800+ rows. Narrow to total
+# visa × Australia by default; customers can additionally pass
+# migrationtype=arrivals or =departures to get one series, or omit it
+# (default) to receive both series and compute net = arrivals -
+# departures themselves. `freq` is auto-managed.
+latest_defaults:
+  measure: total
+  region: australia
+dimensions:
+  measure:
+    sdmx_id: MEASURE
+    description: Visa category (defaults to Total — all visa subclasses combined)
+    values:
+      total:                        { sdmx_code: "16", description: "Total NOM across all visa subclasses (headline figure)" }
+      australian_citizen:           { sdmx_code: "14", description: "Australian Citizen movements" }
+      new_zealand_citizen:          { sdmx_code: "13", description: "New Zealand Citizen (subclass 444)" }
+      permanent_total:              { sdmx_code: "9",  description: "Permanent visa — Total across all permanent subclasses" }
+      permanent_skill:              { sdmx_code: "11", description: "Permanent visa — Skill stream" }
+      permanent_family:             { sdmx_code: "10", description: "Permanent visa — Family stream" }
+      permanent_humanitarian:       { sdmx_code: "12", description: "Permanent visa — Special Eligibility and Humanitarian" }
+      permanent_other:              { sdmx_code: "15", description: "Permanent visa — Other permanent visas" }
+      temporary_total:              { sdmx_code: "1",  description: "Temporary visa — Total across all temporary subclasses" }
+      temporary_student:            { sdmx_code: "2",  description: "Temporary visa — Student" }
+      temporary_skilled:            { sdmx_code: "3",  description: "Temporary visa — Skilled" }
+      temporary_visitor:            { sdmx_code: "4",  description: "Temporary visa — Visitor" }
+      temporary_working_holiday:    { sdmx_code: "5",  description: "Temporary visa — Working Holiday Maker" }
+      temporary_other:              { sdmx_code: "6",  description: "Temporary visa — Other" }
+      bridging_visa:                { sdmx_code: "7",  description: "Bridging visa" }
+      other_unknown:                { sdmx_code: "8",  description: "Other / unknown visa status" }
+  migrationtype:
+    sdmx_id: MIGRATIONTYPE
+    description: |
+      Direction of migration. ABS publishes arrivals and departures separately;
+      "Net Overseas Migration" is documented in the codelist but is NOT
+      populated as data (compute net = arrivals - departures client-side).
+      Omit this filter to receive both arrivals AND departures series.
+    values:
+      arrivals:                     { sdmx_code: "1", description: "NOM arrivals" }
+      departures:                   { sdmx_code: "2", description: "NOM departures" }
+  region:
+    sdmx_id: REGION
+    description: Geographic region (defaults to Australia for the national NOM total)
+    values:
+      australia:                    { sdmx_code: "AUS" }
+      nsw:                          { sdmx_code: "1" }
+      vic:                          { sdmx_code: "2" }
+      qld:                          { sdmx_code: "3" }
+      sa:                           { sdmx_code: "4" }
+      wa:                           { sdmx_code: "5" }
+      tas:                          { sdmx_code: "6" }
+      nt:                           { sdmx_code: "7" }
+      act:                          { sdmx_code: "8" }
+  freq:
+    sdmx_id: FREQ
+    description: Frequency — only Annual is meaningful for this dataflow
+    hidden: true
+    default: "A"
+    values:
+      annual:                       { sdmx_code: "A" }
