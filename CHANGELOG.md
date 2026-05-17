@@ -1,5 +1,36 @@
 # Changelog
 
+## [0.10.3] - 2026-05-17
+
+### Performance — in-process parsed-message LRU
+
+The byte-cache layer (`Cache.get` keyed by URL) already skipped network
+on warm calls, but every warm call still re-parsed the SDMX-XML
+(1-3s on large dataflows like CPI / Census / ANA_AGG). The customer-sim
+flagged `ABS_ANNUAL_ERP_ASGS2` at 7s cold parse, with ~3s of that being
+the parse cost on every subsequent call after the byte cache warmed.
+
+Added a small bounded LRU (max 16 entries) inside `ABSClient` keyed by
+(url, expected_message_type). Warm calls skip both the cache decompress
+AND the SDMX-XML re-parse — `~3s` → `~5ms`. The 16-entry cap keeps the
+parsed object graph (multi-MB per DataMessage / StructureMessage)
+bounded.
+
+Cold-cold (no byte cache yet) is unchanged — still pays ABS API network
++ initial parse. The fix is for the "byte cache warm, parsed cache
+cold" path which is the typical case after a worker restart that has
+been serving traffic for >15 minutes (the latest-kind TTL).
+
+### Internal
+
+- Added `_parsed_cache: OrderedDict` + `_parsed_cache_lock` on
+  `ABSClient`. Bounded LRU with `_PARSED_CACHE_MAX_ENTRIES = 16`.
+- New `reset_parsed_cache_for_tests()` method for test hygiene.
+- 3 regression tests in `test_client.py`:
+  `test_parsed_cache_skips_re_parse_on_warm_hit`,
+  `test_parsed_cache_invalidates_per_url`,
+  `test_reset_parsed_cache_for_tests_clears_lru`.
+
 ## [0.10.2] - 2026-05-17
 
 ### Improved — transport-agnostic Field descriptions

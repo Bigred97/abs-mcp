@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import time
+from collections import OrderedDict
 from contextvars import ContextVar
 from io import BytesIO
 from typing import Any, TypeVar
@@ -64,6 +65,14 @@ class ABSAPIError(Exception):
     """Raised when the ABS API returns a non-2xx response."""
 
 
+# Max number of parsed SDMX messages to keep in-process. Each parsed
+# DataMessage / StructureMessage can be several MB of Python object graph,
+# so cap aggressively. 16 entries is enough to comfortably cover one
+# request's chain (one StructureMessage + several DataMessages) plus the
+# top handful of warm dataflows on repeat queries.
+_PARSED_CACHE_MAX_ENTRIES = 16
+
+
 class ABSClient:
     def __init__(
         self,
@@ -78,6 +87,15 @@ class ABSClient:
             transport=transport,
             headers={"User-Agent": "abs-mcp/0.1"},
         )
+        # In-process parsed-message LRU. _fetch_bytes already caches the
+        # raw XML at byte level, but every warm call re-parses (1-3s on
+        # large dataflows like CPI / Census / ANA_AGG). Memoising the
+        # parsed DataMessage / StructureMessage means the warm path goes
+        # from "byte cache hit + 1-3s parse" to "dict lookup + return".
+        # Keyed by (url, expected-type-name) so identical URLs requested
+        # as different SDMX shapes don't collide. Bounded LRU.
+        self._parsed_cache: OrderedDict[tuple[str, str], Any] = OrderedDict()
+        self._parsed_cache_lock = asyncio.Lock()
 
     async def aclose(self) -> None:
         await self._http.aclose()
@@ -131,6 +149,16 @@ class ABSClient:
     async def _fetch_parsed(
         self, url: str, kind: CacheKind, accept: str, expected: type[M]
     ) -> M:
+        # In-process memoisation: same URL + same expected type → return
+        # the previously parsed message directly. Skips both the cache.get
+        # decompress step AND the SDMX-XML re-parse (1-3s).
+        cache_key = (url, expected.__name__)
+        async with self._parsed_cache_lock:
+            cached_msg = self._parsed_cache.get(cache_key)
+            if cached_msg is not None:
+                self._parsed_cache.move_to_end(cache_key)
+                return cached_msg  # type: ignore[return-value]
+
         body = await self._fetch_bytes(url, kind, accept)
         try:
             # Run sync SDMX-XML parse off the event loop. Large dataflows
@@ -146,7 +174,18 @@ class ABSClient:
             raise ABSAPIError(
                 f"ABS API returned a {type(msg).__name__} where {expected.__name__} was expected"
             )
+
+        # Memoise the freshly parsed message for next-call reuse.
+        async with self._parsed_cache_lock:
+            self._parsed_cache[cache_key] = msg
+            self._parsed_cache.move_to_end(cache_key)
+            while len(self._parsed_cache) > _PARSED_CACHE_MAX_ENTRIES:
+                self._parsed_cache.popitem(last=False)
         return msg
+
+    def reset_parsed_cache_for_tests(self) -> None:
+        """Drop the in-process parsed-message LRU."""
+        self._parsed_cache.clear()
 
     async def get_dataflows(self) -> StructureMessage:
         url = f"{self.base_url}/dataflow/ABS/all/latest"

@@ -206,3 +206,114 @@ async def test_cache_get_stale_returns_payload_and_timestamp(db_path: Path) -> N
     # Non-existent key → None
     miss = await cache.get_stale("https://example.org/missing")
     assert miss is None
+
+
+async def test_parsed_cache_skips_re_parse_on_warm_hit(db_path: Path) -> None:
+    """In-process parsed-message LRU: byte cache hit STILL re-parses without
+    the parsed-cache; first this test confirms the cache works, then that
+    a second call doesn't even re-decompress / re-parse."""
+    fixture = (Path(__file__).parent / "fixtures" / "dataflows_min.xml").read_bytes()
+    parse_count = {"n": 0}
+
+    real_read_sdmx = __import__("sdmx").read_sdmx
+
+    def counting_read_sdmx(*args, **kwargs):  # noqa: ANN001, ANN201
+        parse_count["n"] += 1
+        return real_read_sdmx(*args, **kwargs)
+
+    cache = Cache(db_path)
+    async with ABSClient(
+        cache=cache,
+        transport=_mock_transport({
+            "https://data.api.abs.gov.au/rest/dataflow/ABS/all/latest": httpx.Response(
+                200, content=fixture, headers={"content-type": "application/xml"},
+            )
+        }),
+    ) as client:
+        # Monkey-patch the sync read_sdmx the client uses via asyncio.to_thread
+        import abs_mcp.client as client_mod
+
+        original = client_mod.sdmx.read_sdmx
+        client_mod.sdmx.read_sdmx = counting_read_sdmx
+        try:
+            r1 = await client.get_dataflows()
+            r2 = await client.get_dataflows()
+            r3 = await client.get_dataflows()
+        finally:
+            client_mod.sdmx.read_sdmx = original
+
+    # Three calls but only one parse — the LRU short-circuited calls 2+3.
+    assert parse_count["n"] == 1
+    # Returned objects are the same in-memory reference (LRU hands out the
+    # cached instance directly, no re-parse).
+    assert r1 is r2 is r3
+
+
+async def test_parsed_cache_invalidates_per_url(db_path: Path) -> None:
+    """Different URLs get separate parsed-cache slots."""
+    fixture = (Path(__file__).parent / "fixtures" / "dataflows_min.xml").read_bytes()
+    parse_count = {"n": 0}
+    real_read_sdmx = __import__("sdmx").read_sdmx
+
+    def counting(*args, **kwargs):  # noqa: ANN001, ANN201
+        parse_count["n"] += 1
+        return real_read_sdmx(*args, **kwargs)
+
+    cache = Cache(db_path)
+    async with ABSClient(
+        cache=cache,
+        transport=_mock_transport({
+            "https://data.api.abs.gov.au/rest/dataflow/ABS/all/latest": httpx.Response(
+                200, content=fixture, headers={"content-type": "application/xml"},
+            ),
+            "https://data.api.abs.gov.au/rest/datastructure/ABS/LF?references=all": httpx.Response(
+                200, content=fixture, headers={"content-type": "application/xml"},
+            ),
+        }),
+    ) as client:
+        import abs_mcp.client as client_mod
+
+        original = client_mod.sdmx.read_sdmx
+        client_mod.sdmx.read_sdmx = counting
+        try:
+            await client.get_dataflows()
+            await client.get_datastructure("LF")
+        finally:
+            client_mod.sdmx.read_sdmx = original
+
+    # Two distinct URLs → two parses, no collision.
+    assert parse_count["n"] == 2
+
+
+async def test_reset_parsed_cache_for_tests_clears_lru(db_path: Path) -> None:
+    """Test helper drops cached entries (tests that expect cold parses)."""
+    fixture = (Path(__file__).parent / "fixtures" / "dataflows_min.xml").read_bytes()
+    parse_count = {"n": 0}
+    real_read_sdmx = __import__("sdmx").read_sdmx
+
+    def counting(*args, **kwargs):  # noqa: ANN001, ANN201
+        parse_count["n"] += 1
+        return real_read_sdmx(*args, **kwargs)
+
+    cache = Cache(db_path)
+    async with ABSClient(
+        cache=cache,
+        transport=_mock_transport({
+            "https://data.api.abs.gov.au/rest/dataflow/ABS/all/latest": httpx.Response(
+                200, content=fixture, headers={"content-type": "application/xml"},
+            )
+        }),
+    ) as client:
+        import abs_mcp.client as client_mod
+
+        original = client_mod.sdmx.read_sdmx
+        client_mod.sdmx.read_sdmx = counting
+        try:
+            await client.get_dataflows()
+            await client.get_dataflows()  # cache hit
+            client.reset_parsed_cache_for_tests()
+            await client.get_dataflows()  # second cold parse after reset
+        finally:
+            client_mod.sdmx.read_sdmx = original
+
+    assert parse_count["n"] == 2
