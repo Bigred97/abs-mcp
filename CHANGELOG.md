@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.10.2] - 2026-05-17
+
+### Improved — transport-agnostic Field descriptions
+
+Two `Field(description=...)` strings in `server.py`'s `top_n` tool
+referenced MCP-tool-name (`list_curated()`, `describe_dataset()`). The
+descriptions become part of the parameter schema, so customers hitting
+the REST gateway at `/v1/top-n` would see "Use list_curated() to
+enumerate" — confusing because they're not calling a Python function.
+Rewrote both to "Use the {endpoint or tool} to ..." — same intent, no
+transport-specific noise. Matches the ato 0.8.7 and rba 0.7.5 portfolio
+guard. No runtime behaviour change.
+
 ## [0.10.1] - 2026-05-17
 
 ### Fixed — event-loop blocking on sync SDMX-XML parse

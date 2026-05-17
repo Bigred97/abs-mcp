@@ -684,7 +684,7 @@ async def top_n(
         Field(
             description=(
                 "ABS dataflow ID. Must be a curated dataflow with a 'measure' "
-                "dimension. Use list_curated() to enumerate."
+                "dimension. Use the list-curated endpoint or list tool to enumerate."
             ),
             examples=["LF", "CPI", "ERP_Q", "BA_GCCSA", "WPI", "LEND_HOUSING"],
         ),
@@ -694,8 +694,8 @@ async def top_n(
         Field(
             description=(
                 "Plain-English measure key to rank by — one of the curated "
-                "measure values for this dataflow. Use describe_dataset() to "
-                "see available measures."
+                "measure values for this dataflow. Use the describe endpoint "
+                "or describe tool to see available measures."
             ),
             examples=[
                 "unemployment_rate",
