@@ -21,7 +21,6 @@ from __future__ import annotations
 
 import re
 from datetime import datetime, timedelta, timezone
-from typing import Any
 
 import httpx
 

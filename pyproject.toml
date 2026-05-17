@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "abs-mcp"
-version = "0.11.6"
+version = "0.11.7"
 description = "MCP server for the Australian Bureau of Statistics Data API. Hides SDMX behind plain-English tools, with curated mappings for Labour Force, CPI, ERP, Building Approvals, and Lending Indicators."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -71,4 +71,8 @@ pythonpath = ["src"]
 line-length = 100
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["E741", "F841", "F401"]
+# E402 — tests/test_catalog.py uses a deliberate mid-file
+# `import pytest as _pytest_for_ranker` to set up the canonical-query
+# ranking suite below an explanatory comment block. Intentional pattern,
+# not an error.
+"tests/*" = ["E741", "F841", "F401", "E402"]

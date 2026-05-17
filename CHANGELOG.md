@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.11.7] - 2026-05-18
+
+### Fixed — CI lint failures (E402 in test_catalog.py + unused import)
+
+0.11.6 release CI failed lint:
+- `from typing import Any` in `release_calendar.py` — pre-existing
+  unused import surfaced by the lint sweep, cleaned via `ruff --fix`.
+- E402 module-level imports below a comment block in
+  `tests/test_catalog.py` — these are deliberate scope-isolation
+  imports for the canonical-query ranking suite. Added `E402` to the
+  `tests/*` per-file-ignores list in pyproject.toml so the intentional
+  pattern stays valid without scattering `# noqa` comments.
+
+No runtime change vs 0.11.6.
+
 ## [0.11.6] - 2026-05-18
 
 ### Fixed — HSI_M and ABS_ANNUAL_ERP_ASGS2021 latest() now headline-narrow
