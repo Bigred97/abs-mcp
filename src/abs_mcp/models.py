@@ -24,6 +24,10 @@ class DatasetSummary(BaseModel):
     name: str
     description: str | None = None
     is_curated: bool = False
+    # 0-100 score from the two-pool ranker (token_set_ratio + capped WRatio +
+    # curated bonus - deprecation penalty). None when entry came from
+    # list_dataflows() / list_curated() rather than search_datasets().
+    relevance: float | None = None
 
 
 class CuratedFilterValue(BaseModel):

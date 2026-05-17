@@ -227,7 +227,17 @@ def search_in_memory(
     # match the high-signal pool over those riding the description-only
     # path), then combined desc.
     candidates.sort(key=lambda t: (-t[0], -t[1], -t[2]))
-    return [summaries[idx] for _adj, _h, _comb, idx in candidates[:limit]]
+    # Attach the adjusted score (token_set_ratio + capped WRatio +
+    # curated/deprecation bonuses) to each summary so direct-MCP callers
+    # can order their UI. The score can technically range above 100 from
+    # h(100) + low(50) + CURATED_BONUS(25); clamp to 100 since the
+    # gateway and most consumers expect a 0-100 scale.
+    return [
+        summaries[idx].model_copy(
+            update={"relevance": round(max(0.0, min(float(adj), 100.0)), 1)}
+        )
+        for adj, _h, _comb, idx in candidates[:limit]
+    ]
 
 
 async def search(

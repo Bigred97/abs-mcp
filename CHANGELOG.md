@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.11.1] - 2026-05-18
+
+### Added — `DatasetSummary.relevance` populated by `search_datasets()`
+
+`search_datasets()` results now carry their RapidFuzz score on the
+`relevance` field (0-100, rounded to 1dp). Previously the score was
+computed internally for sort order but discarded before returning,
+so direct-MCP callers (Claude Code etc.) had no way to order results
+without re-running the fuzzy match themselves. The ausdata-api
+gateway already re-ranks across sources, so its consumers see no
+change.
+
+The score is the two-pool ranker's `adjusted` value (token_set_ratio
+on id/name/keywords + capped WRatio on description + curated bonus
+- deprecation penalty), clamped to [0, 100].
+
+`relevance: None` when the entry came from `list_curated()` rather
+than a fuzzy search.
+
 ## [0.11.0] - 2026-05-17
 
 ### Added — `release_calendar(days_ahead)` tool
