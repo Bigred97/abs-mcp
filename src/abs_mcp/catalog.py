@@ -227,17 +227,26 @@ def search_in_memory(
     # match the high-signal pool over those riding the description-only
     # path), then combined desc.
     candidates.sort(key=lambda t: (-t[0], -t[1], -t[2]))
-    # Attach the adjusted score (token_set_ratio + capped WRatio +
-    # curated/deprecation bonuses) to each summary so direct-MCP callers
-    # can order their UI. The score can technically range above 100 from
-    # h(100) + low(50) + CURATED_BONUS(25); clamp to 100 since the
-    # gateway and most consumers expect a 0-100 scale.
-    return [
-        summaries[idx].model_copy(
-            update={"relevance": round(max(0.0, min(float(adj), 100.0)), 1)}
-        )
-        for adj, _h, _comb, idx in candidates[:limit]
-    ]
+    # Normalise relevance so the leader caps at 100 and others scale
+    # PROPORTIONALLY rather than all clamping to 100. Without this,
+    # high-scoring non-curated dataflows (Census tables that contain
+    # query tokens in their name) end up tied at 100 with the curated
+    # winner — customers can't distinguish "best match" from "noise that
+    # happened to clamp to 100". With proportional scaling, the leader
+    # stays at its raw adjusted score (capped at 100) and everyone else
+    # scales relative to the leader's raw score.
+    out: list[DatasetSummary] = []
+    top_pool = candidates[:limit]
+    if top_pool:
+        leader_adj = top_pool[0][0]
+        # Leader's displayed relevance — clamp the leader itself to 100
+        # so the customer-facing scale stays in [0, 100], but scale
+        # others against the un-clamped leader raw to preserve ordering.
+        scale_ref = max(leader_adj, 100.0)
+        for adj, _h, _comb, idx in top_pool:
+            rel = round(max(0.0, (adj / scale_ref) * 100.0), 1)
+            out.append(summaries[idx].model_copy(update={"relevance": rel}))
+    return out
 
 
 async def search(

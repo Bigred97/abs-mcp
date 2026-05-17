@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.11.4] - 2026-05-18
+
+### Improved — proportional relevance scaling (no more ties at 100)
+
+Customer-sim reported non-curated dataflows like `C21_G57_CED`
+(Census family-income table) scoring rel=100 for unrelated queries
+('labour force unemployment'). Root cause: the ranker's raw score
+can exceed 100 (high=100 + low=50 + CURATED_BONUS=25 = 175), then
+clamped to 100 — wiping the differences between the actual winner
+and noise hits that also clamped.
+
+Now the leader's raw score sets the scale: leader caps at 100, other
+results scale proportionally to (raw / leader_raw) * 100. So a leader
+at raw=175 stays at 100; a follower at raw=122 shows as 70 instead of
+also clamping to 100.
+
+Live verified:
+- 'labour force unemployment' → LF rel=100, C21_G57_CED rel=70.1
+  (was both tied at 100)
+- 'cpi inflation' → CPI_MONTHLY rel=100, CPI rel=89.9 (graduated)
+- 'housing prices' → LEND_HOUSING rel=100, BA_GCCSA rel=85.9
+
+Sort order unchanged — only the displayed relevance value differs.
+
+195 tests pass.
+
 ## [0.11.3] - 2026-05-18
 
 ### Added — SA4 granularity to `C21_G02_SA2` (Census G02 income/age/rent)
