@@ -21,6 +21,15 @@ description: |
   Reference period: typically released ~6 weeks after month-end.
 update_frequency: monthly
 source_url: https://www.abs.gov.au/statistics/economy/finance/monthly-household-spending-indicator
+# Without filters latest() returns ~378 rows (one per measure × category
+# × region × price_adjustment combo). Default to the headline
+# household-spending-in-Australia-current-price number; customers
+# narrow to a specific slice for deeper queries.
+latest_defaults:
+  measure: household_spending
+  category: total
+  region: australia
+  price_adjustment: current_prices
 search_keywords: [household spending, monthly spending, hsi, mhsi, consumer spending, retail, retail trade, retail spending, household retail, monthly retail, retail spending replacement, consumer sentiment, hospitality spending, recreation spending, transport spending, post retail trade, cost of living, household consumption]
 dimensions:
   measure:

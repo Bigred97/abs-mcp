@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.11.6] - 2026-05-18
+
+### Fixed — HSI_M and ABS_ANNUAL_ERP_ASGS2021 latest() now headline-narrow
+
+Continuation of the 0.11.5 size audit:
+- `latest('HSI_M')` returned 378 rows / 82 KB (one row per measure ×
+  category × region × price_adjustment combination). Now returns 1 row:
+  Australia total household spending, current prices, headline measure.
+- `latest('ABS_ANNUAL_ERP_ASGS2021')` returned 2,909 rows / 475 KB (all
+  ASGS regions). Now returns 1 row: Australia total population, all
+  ages, both sexes.
+
+Both `latest_defaults` blocks are documented in their YAMLs and are
+overridable by passing explicit filters. C21_G02_SA2 and C21_G02_POA
+already had similar defaults from earlier work.
+
+195 unit tests pass.
+
 ## [0.11.5] - 2026-05-18
 
 ### Fixed — C21_G01_POA latest() no longer dumps 47 MB

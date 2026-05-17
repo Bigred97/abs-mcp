@@ -18,6 +18,12 @@ description: |
   "elderly population in regional NSW").
 update_frequency: annual
 source_url: https://www.abs.gov.au/statistics/people/population
+# Without filters, latest() would return ~2,900 rows (all regions ×
+# all dimension combinations for the latest year). Default to Australia
+# total — customers narrow to their region of interest for cohort
+# queries.
+latest_defaults:
+  region: australia
 search_keywords: [population, residents, demographics, population estimates, erp, people, headcount, sa2 population, lga population, age, sex, gender, men, women, cohort, age band, working age, elderly, children, school age, "3235"]
 dimensions:
   region:
