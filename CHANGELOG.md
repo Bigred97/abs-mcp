@@ -1,5 +1,55 @@
 # Changelog
 
+## [0.11.0] - 2026-05-17
+
+### Added — `release_calendar(days_ahead)` tool
+
+New tool exposes the official ABS release schedule
+(https://www.abs.gov.au/release-calendar/future-releases-calendar) as a
+structured feed. Built for the ausdata-api gateway's upcoming webhook
+product: it polls this every 5 min and POSTs to subscribers when a
+release crosses the publish boundary.
+
+Per-entry shape (shared with `rba-mcp.release_calendar`):
+
+```
+release_at:       ISO-8601 with Sydney offset, "2026-04-30T11:30:00+10:00"
+title:            "Consumer Price Index, Australia"
+event_type:       "data_release" (ABS releases are all data, never policy)
+dataset_id:       curated abs-mcp ID if mapped ("CPI"), else null
+publication_id:   ABS catalogue number ("6401.0"), null when uncatalogued
+source_url:       click-through URL on abs.gov.au
+reference_period: "March 2026" / "Q1 2026" — useful for gateway dedup
+```
+
+### Performance — `latest()` cache TTL 15 min → 2 h
+
+ABS releases happen at 11:30 AEST on weekdays; between publish
+boundaries the latest observation doesn't change, so the 15-min TTL
+was burning network for no freshness gain. The new `release_calendar`
+tool gives consumers a precise way to invalidate after a published
+embargo instead of polling. Bumped `latest()` TTL accordingly.
+
+### Internal
+
+- New `release_calendar.py` module — HTML scraper + title→catalogue
+  mapping table covering the 10 curated datasets plus 7 commonly-watched
+  non-curated catalogues (Retail Trade, International Trade in Goods,
+  Balance of Payments, GDP, ASNA, Estimated Resident Population,
+  Population Projections).
+- `ReleaseCalendarResponse` + `ReleaseEntry` Pydantic models in
+  `models.py` — uniform shape with `rba-mcp` for cross-source webhook
+  routing.
+- New cache kind `"calendar"` with 24h TTL — fresh enough to catch
+  rescheduled embargoes, cheap enough that gateway polling never hits
+  the live HTML.
+- Naive AEST/AEDT switch via month-based offset (first-Sunday boundary
+  in April / October — within an hour of correct at the changeover
+  Saturday; worth taking over a zoneinfo runtime dep).
+- 16 regression tests in `tests/test_release_calendar.py` covering
+  parser, DST switch, classifier, cache-fallback on 5xx, and tool
+  surface validation. 195 tests pass.
+
 ## [0.10.3] - 2026-05-17
 
 ### Performance — in-process parsed-message LRU

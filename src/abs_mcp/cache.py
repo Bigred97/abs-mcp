@@ -15,15 +15,26 @@ from typing import Literal
 
 import aiosqlite
 
-CacheKind = Literal["catalogue", "datastructure", "data", "latest"]
+CacheKind = Literal["catalogue", "datastructure", "data", "latest", "calendar"]
 
 DEFAULT_DB_PATH = Path.home() / ".abs-mcp" / "cache.db"
 
 TTL: dict[CacheKind, timedelta] = {
     "catalogue": timedelta(hours=24),
     "datastructure": timedelta(days=7),
+    # 2h "latest" matches the cadence at which ABS actually re-publishes
+    # series. ABS releases happen at 11:30 AEST on weekdays; between
+    # publish boundaries the latest observation doesn't change, so the
+    # old 15-min TTL was burning network for no freshness gain. The
+    # release_calendar tool (0.11.0) gives the gateway a precise way to
+    # invalidate after a published embargo instead of polling.
     "data": timedelta(hours=1),
-    "latest": timedelta(minutes=15),
+    "latest": timedelta(hours=2),
+    # ABS shifts published release dates a few times a year; 24h is the right
+    # cadence for the release-calendar scrape — fresh enough to catch a
+    # rescheduled embargo, cheap enough that the gateway's 5-min polling
+    # never hits the live HTML.
+    "calendar": timedelta(hours=24),
 }
 
 _SCHEMA = """

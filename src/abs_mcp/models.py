@@ -99,3 +99,80 @@ class DataResponse(BaseModel):
     # Set when `latest()` truncated a large response to a limit. Original
     # row count goes here so agents can detect + surface the cap.
     truncated_at: int | None = None
+
+
+class ReleaseEntry(BaseModel):
+    """One upcoming publication on the ABS release calendar.
+
+    Shared shape with `rba-mcp` so the ausdata-api webhook poller doesn't
+    need to branch per source.
+    """
+    release_at: datetime = Field(
+        description=(
+            "Publication time as an ISO-8601 timestamp with tz offset. ABS "
+            "publishes at 11:30 AEST (UTC+10) on weekdays — the offset moves "
+            "between +10:00 and +11:00 across DST."
+        )
+    )
+    title: str = Field(
+        description=(
+            "Publication title as the ABS labels it, e.g. 'Consumer Price "
+            "Index, Australia'. Combine with `reference_period` for the full "
+            "human-readable name."
+        )
+    )
+    event_type: str = Field(
+        default="data_release",
+        description=(
+            "One of 'data_release', 'policy_decision', 'statement', "
+            "'speech'. ABS releases are all 'data_release' — the field is "
+            "kept for shape parity with rba-mcp's release_calendar."
+        ),
+    )
+    dataset_id: str | None = Field(
+        default=None,
+        description=(
+            "Curated abs-mcp dataset ID if the publication maps to one "
+            "(e.g. 'CPI' for catalogue 6401.0), else null. Use this to "
+            "route webhook subscribers per dataset."
+        ),
+    )
+    publication_id: str | None = Field(
+        default=None,
+        description=(
+            "ABS catalogue number like '6401.0' — stable across releases, "
+            "useful for deduplication / external joins. Null when the "
+            "calendar entry doesn't reference a catalogued product."
+        ),
+    )
+    source_url: str = Field(
+        description=(
+            "Canonical click-through URL on abs.gov.au for the publication."
+        )
+    )
+    reference_period: str | None = Field(
+        default=None,
+        description=(
+            "The reporting period the release covers, as ABS labels it — "
+            "e.g. 'March 2026', 'Q1 2026', 'May 2026'. Used by the gateway "
+            "for diff/dedup against the previous poll."
+        ),
+    )
+
+
+class ReleaseCalendarResponse(BaseModel):
+    """Upcoming ABS publications over a rolling horizon.
+
+    Shape mirrors `rba-mcp.ReleaseCalendarResponse` so the gateway can
+    diff/route both sources through the same code path.
+    """
+    horizon_days: int
+    row_count: int
+    releases: list[ReleaseEntry] = Field(default_factory=list)
+    source: str = "Australian Bureau of Statistics"
+    source_url: str = "https://www.abs.gov.au/release-calendar"
+    attribution: str = _ABS_ATTRIBUTION
+    retrieved_at: datetime
+    server_version: str = Field(default_factory=_get_server_version)
+    stale: bool = False
+    stale_reason: str | None = None

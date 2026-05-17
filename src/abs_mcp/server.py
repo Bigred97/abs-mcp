@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import re
+from datetime import UTC, datetime
 from typing import Annotated, Any, Literal
 
 from fastmcp import FastMCP
@@ -16,12 +17,14 @@ from pydantic import Field
 from . import curated
 from .catalog import _ranker_context, describe_from_dsd, list_dataflows, search_in_memory
 from .client import ABSAPIError, ABSClient, get_stale_signal, reset_stale_signal
+from .release_calendar import fetch_release_calendar
 from .models import (
     CuratedFilter,
     CuratedFilterValue,
     DatasetDetail,
     DatasetSummary,
     DataResponse,
+    ReleaseCalendarResponse,
 )
 from .shaping import build_response
 
@@ -900,6 +903,85 @@ def list_curated() -> list[str]:
         Sorted list of dataflow IDs. Always 10 entries today.
     """
     return curated.list_ids()
+
+
+@mcp.tool
+async def release_calendar(
+    days_ahead: Annotated[
+        int,
+        Field(
+            ge=1,
+            le=365,
+            description=(
+                "Horizon in days. Returns ABS publications scheduled to "
+                "release between now and `now + days_ahead`. Default 30 "
+                "covers the typical monthly + quarterly cadence."
+            ),
+            examples=[7, 30, 90],
+        ),
+    ] = 30,
+) -> ReleaseCalendarResponse:
+    """Upcoming ABS publication schedule (data releases).
+
+    Scrapes the official ABS release calendar
+    (https://www.abs.gov.au/release-calendar/future-releases-calendar) and
+    returns each scheduled publication with its release timestamp, title,
+    reference period, and — when the title maps to a curated abs-mcp
+    dataset — the `dataset_id` an agent can plug into `get_data` or
+    `latest`. Curated mappings cover the 10 datasets in `list_curated()`
+    plus a handful of commonly-watched non-curated catalogues (Retail
+    Trade, International Trade in Goods, etc., where `dataset_id` stays
+    null but `publication_id` carries the ABS catalogue number).
+
+    `release_at` is returned with Sydney's local UTC offset (`+10:00` AEST
+    or `+11:00` AEDT) — what ABS publishes against. The DST switch is
+    naive (month-based), within an hour of correct at the changeover
+    boundary; downstream code should treat the offset as authoritative
+    rather than re-deriving local time.
+
+    Examples:
+        # Next 7 days
+        cal = await release_calendar(7)
+        for r in cal.releases:
+            print(r.release_at, r.title, r.dataset_id)
+
+        # Filter to curated datasets only
+        cal = await release_calendar(30)
+        curated_releases = [r for r in cal.releases if r.dataset_id]
+
+    When to use:
+        - Building a webhook / notification feed (ABS publishes at 11:30 AEST)
+        - "What's next from the ABS?" agent answers
+        - Pre-warming caches the morning of a known release
+
+    Returns:
+        `ReleaseCalendarResponse` — same envelope shape as `rba-mcp`'s
+        `release_calendar` for portfolio interop. Sorted ascending by
+        `release_at`. `stale=True` + `stale_reason` is set when the live
+        HTML scrape failed and a cached payload was served past TTL.
+    """
+    if not isinstance(days_ahead, int) or isinstance(days_ahead, bool):
+        raise ValueError(
+            f"days_ahead must be an int, got {type(days_ahead).__name__}. "
+            "Try days_ahead=30 for the typical monthly horizon."
+        )
+    if not (1 <= days_ahead <= 365):
+        raise ValueError(
+            f"days_ahead must be between 1 and 365, got {days_ahead}. "
+            "Use 7 (one week), 30 (default), or 90 (one quarter)."
+        )
+    client = await _get_client()
+    releases, stale, stale_reason = await fetch_release_calendar(
+        client._http, client.cache, days_ahead
+    )
+    return ReleaseCalendarResponse(
+        horizon_days=days_ahead,
+        row_count=len(releases),
+        releases=releases,
+        retrieved_at=datetime.now(UTC),
+        stale=stale,
+        stale_reason=stale_reason,
+    )
 
 
 def main() -> None:
