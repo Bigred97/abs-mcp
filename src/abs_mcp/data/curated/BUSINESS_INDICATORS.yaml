@@ -1,0 +1,132 @@
+id: BUSINESS_INDICATORS
+sdmx_dataflow_id: QBIS
+name: Quarterly Business Indicators (sales, profits, wages, inventories)
+description: |
+  Quarterly Business Indicators Survey — sales, inventories, wages, and
+  gross operating profits across the corporate and unincorporated sectors,
+  by ANZSIC industry. Source: ABS Catalogue 5676.0.
+
+  This is the "how is the corporate sector doing?" dataset:
+  - Sales: top-line revenue across industries
+  - Wages: total wage bill, complementary to AWE's per-employee view
+  - Gross Operating Profits: industry-level profit pool
+  - Inventories: stock build / drawdown signal
+
+  Pairs naturally with WPI (wage prices), CPI (inflation), ANA_AGG (GDP)
+  for full top-down macro analysis.
+
+  Customer query examples:
+  - "Mining gross operating profits, last 2 years"
+    → `get_data('BUSINESS_INDICATORS', filters={'measure': 'gross_operating_profits',
+       'industry': 'mining'}, start_period='2024-Q1')`
+  - "Quarterly sales growth — All Industries"
+    → `get_data('BUSINESS_INDICATORS', filters={'measure': 'sales_qoq_pct',
+       'industry': 'all'})`
+
+update_frequency: quarterly
+source_url: https://www.abs.gov.au/statistics/economy/business-indicators/business-indicators-australia
+search_keywords:
+  - business indicators
+  - corporate profits
+  - business profits
+  - gross operating profits
+  - business sales
+  - business inventories
+  - corporate earnings
+  - profitability
+  - inventories
+  - cat 5676
+  - "5676.0"
+  - qbis
+  - profit margin
+  - operating profit
+  - business sector
+# Default: All-industries quarterly sales, national, current-price SA.
+latest_defaults:
+  measure: sales
+  industry: all
+  region: australia
+dimensions:
+  measure:
+    sdmx_id: MEASURE
+    description: |
+      Indicator. M1-M10 are $-values + their QoQ % change. M11-M13 are
+      ratio measures (inventories/sales etc.). Defaults to sales.
+    default: "M1"
+    values:
+      sales:                    { sdmx_code: "M1",  description: "Sales ($m)" }
+      sales_qoq_pct:            { sdmx_code: "M2",  description: "Sales quarterly % change" }
+      inventories:              { sdmx_code: "M3",  description: "Inventories ($m)" }
+      inventories_qoq_pct:      { sdmx_code: "M4",  description: "Inventories quarterly % change" }
+      wages:                    { sdmx_code: "M5",  description: "Wages ($m, total wage bill)" }
+      wages_qoq_pct:            { sdmx_code: "M6",  description: "Wages quarterly % change" }
+      gross_operating_profits:  { sdmx_code: "M7",  description: "Gross Operating Profits ($m)" }
+      profits_qoq_pct:          { sdmx_code: "M8",  description: "Gross Operating Profits quarterly % change" }
+      profit_before_tax:        { sdmx_code: "M9",  description: "Profit before Income Tax ($m)" }
+      pre_tax_profit_qoq_pct:   { sdmx_code: "M10", description: "Profit before Tax quarterly % change" }
+      inventories_sales_ratio:  { sdmx_code: "M11", description: "Inventories-to-sales ratio" }
+      sales_wages_ratio:        { sdmx_code: "M12", description: "Sales-to-wages ratio" }
+      profit_margin:            { sdmx_code: "M13", description: "Gross operating profit-to-sales ratio (profit margin)" }
+  industry:
+    sdmx_id: INDUSTRY
+    description: ANZSIC industry division (defaults to all industries)
+    permissive: true
+    values:
+      all:                  { sdmx_code: "TOT" }
+      agriculture:          { sdmx_code: "A" }
+      mining:               { sdmx_code: "B" }
+      manufacturing:        { sdmx_code: "C" }
+      electricity_gas:      { sdmx_code: "D" }
+      construction:         { sdmx_code: "E" }
+      wholesale:            { sdmx_code: "F" }
+      retail_trade:         { sdmx_code: "G" }
+      accommodation_food:   { sdmx_code: "H" }
+      transport:            { sdmx_code: "I" }
+      info_media:           { sdmx_code: "J" }
+      financial_insurance:  { sdmx_code: "K" }
+      rental_realestate:    { sdmx_code: "L" }
+      professional_services: { sdmx_code: "M" }
+      admin_support:        { sdmx_code: "N" }
+      public_admin:         { sdmx_code: "O" }
+      education:            { sdmx_code: "P" }
+      health_care:          { sdmx_code: "Q" }
+      arts_recreation:      { sdmx_code: "R" }
+      other_services:       { sdmx_code: "S" }
+  scope:
+    sdmx_id: SCOPE
+    description: |
+      Sector scope (defaults to total business — corporate + unincorporated).
+    default: "TOT"
+    values:
+      total:        { sdmx_code: "TOT" }
+      corporate:    { sdmx_code: "2",   description: "Incorporated businesses only" }
+      unincorporated: { sdmx_code: "3", description: "Unincorporated businesses only" }
+  region:
+    sdmx_id: REGION
+    description: State or 'australia' for national totals
+    values:
+      australia: { sdmx_code: "AUS" }
+      nsw: { sdmx_code: "1" }
+      vic: { sdmx_code: "2" }
+      qld: { sdmx_code: "3" }
+      sa:  { sdmx_code: "4" }
+      wa:  { sdmx_code: "5" }
+      tas: { sdmx_code: "6" }
+      nt:  { sdmx_code: "7" }
+  price_adjustment:
+    sdmx_id: PRICE_ADJUSTMENT
+    description: Defaults to current prices (nominal)
+    hidden: true
+    default: "CP"
+  adjustment:
+    sdmx_id: TSEST
+    description: Defaults to seasonally adjusted
+    default: "20"
+    values:
+      seasonally_adjusted: { sdmx_code: "20" }
+      original:            { sdmx_code: "10" }
+      trend:               { sdmx_code: "30" }
+  frequency:
+    sdmx_id: FREQ
+    hidden: true
+    default: "Q"

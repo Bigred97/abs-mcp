@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.11.13] - 2026-05-18
+
+### Added — `BUSINESS_INDICATORS` curated dataset (QBIS cat 5676.0)
+
+Quarterly Business Indicators Survey — sales, inventories, wages,
+gross operating profits, and profit margins across ANZSIC industries
+× corporate/unincorporated/total scope × state. Defaults to All-industries
+quarterly sales, national, current-price SA.
+
+Pairs with WPI (wage prices), CPI (inflation), ANA_AGG (GDP) for
+top-down macro analysis. Customer query: "Corporate profits trend last
+2 years", "Inventories-to-sales ratio retail trade", etc.
+
+195 unit tests pass.
+
 ## [0.11.12] - 2026-05-18
 
 ### Added — `LF_AGE` and `ITGS` curated datasets

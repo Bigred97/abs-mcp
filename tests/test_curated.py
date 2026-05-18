@@ -17,6 +17,7 @@ def test_list_ids_returns_curated_dataflows():
         "LEND_HOUSING", "WPI", "JV", "ANA_AGG", "AWE", "ERP_Q",
         "C21_G02_SA2", "C21_G02_POA", "RT", "HSI_M",
         "PPI_FD", "C21_G01_POA", "ABS_NOM_VISA_CY", "RES_DWELL_ST", "ITGS",
+        "BUSINESS_INDICATORS",
     }
 
 
