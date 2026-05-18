@@ -1,0 +1,84 @@
+id: RES_DWELL_ST
+name: Residential Dwellings — Values, Mean Price, and Count by State (Quarterly)
+description: |
+  Quarterly snapshot of Australian residential housing stock — value of all
+  dwellings, count of dwellings, and mean price — by state/territory. ABS
+  Cat 6416.0 Residential Property Price Indexes, Australia (Table 4).
+
+  Use this for:
+  - **Housing affordability ratios** — divide mean dwelling price by
+    median household income to get a price-to-income ratio per state.
+  - **Wealth distribution** — total household dwelling stock is the
+    single largest household asset class in the National Accounts.
+  - **Property market sizing** — count of dwellings × mean price gives
+    each state's residential property market capitalisation.
+
+  Customer query examples:
+  - "What's the total value of all Australian housing?"
+    → `latest('RES_DWELL_ST')` returns total stock value at last quarter
+  - "Mean house price in Sydney"
+    → `latest('RES_DWELL_ST', {region: 'nsw', measure: 'mean_price'})`
+  - "How has total NSW dwelling stock grown over 5 years?"
+    → `get_data(..., filters={region: 'nsw', measure: 'value_all_sectors'},
+       start_period='2021-Q1')`
+
+  Data released ~6 weeks after each quarter end.
+
+update_frequency: quarterly
+source_url: https://www.abs.gov.au/statistics/economy/price-indexes-and-inflation/residential-property-price-indexes-eight-capital-cities
+search_keywords:
+  - dwelling value
+  - house price
+  - mean house price
+  - residential dwellings
+  - housing stock
+  - dwelling stock value
+  - housing market
+  - housing affordability
+  - property value
+  - australian housing
+  - house value
+  - dwelling price
+  - "cat 6416"
+  - "6416.0"
+  - housing wealth
+  - household assets
+# latest() with no filters would return ~50 rows (5 measures × 10 regions
+# × 1 quarter). Default to total dwelling stock value, national, for the
+# single headline "what's the total value of Australian housing?" answer.
+latest_defaults:
+  measure: value_all_sectors
+  region: australia
+dimensions:
+  measure:
+    sdmx_id: MEASURE
+    description: |
+      Headline measure (defaults to total dwelling stock value, all owners).
+      Note units differ: value measures are AUD millions; count is dwellings;
+      mean price is AUD per dwelling.
+    values:
+      value_all_sectors:    { sdmx_code: "1", description: "Value of dwelling stock — owned by all sectors (AUD millions)" }
+      value_households:     { sdmx_code: "2", description: "Value of dwelling stock — owned by households (AUD millions)" }
+      value_non_households: { sdmx_code: "3", description: "Value of dwelling stock — owned by non-households (AUD millions)" }
+      dwelling_count:       { sdmx_code: "4", description: "Number of residential dwellings" }
+      mean_price:           { sdmx_code: "5", description: "Mean price of residential dwellings (AUD per dwelling)" }
+  region:
+    sdmx_id: REGION
+    description: State / territory (defaults to whole-of-Australia)
+    values:
+      australia: { sdmx_code: "AUS" }
+      nsw:       { sdmx_code: "1" }
+      vic:       { sdmx_code: "2" }
+      qld:       { sdmx_code: "3" }
+      sa:        { sdmx_code: "4" }
+      wa:        { sdmx_code: "5" }
+      tas:       { sdmx_code: "6" }
+      nt:        { sdmx_code: "7" }
+      act:       { sdmx_code: "8" }
+  freq:
+    sdmx_id: FREQ
+    description: Frequency — only Quarterly is meaningful for this dataflow
+    hidden: true
+    default: "Q"
+    values:
+      quarterly: { sdmx_code: "Q" }

@@ -1,5 +1,32 @@
 # Changelog
 
+## [0.11.9] - 2026-05-18
+
+### Added — `RES_DWELL_ST` curated (Cat 6416.0 Residential Dwellings — Values, Mean Price, Count)
+
+Customer-sim flagged the housing-affordability use case as unreachable —
+ABS catalogue 6416.0 (Total Value of Dwellings, Mean Price, Count by
+state) wasn't exposed through any curated dataset. Resolved by curating
+the `RES_DWELL_ST` SDMX dataflow.
+
+Defaults to total dwelling stock value, national, latest quarter
+(currently $12.3 trillion @ 2025-Q4). Five measures:
+- `value_all_sectors` — total dwelling stock value (AUD millions)
+- `value_households` — household-owned dwelling stock
+- `value_non_households` — non-household-owned dwelling stock
+- `dwelling_count` — number of residential dwellings
+- `mean_price` — mean price of residential dwellings (AUD per dwelling)
+
+Per-state filter via `region` (accepts state codes via aus-identity).
+Quarterly cadence, ~6-week lag.
+
+Verification:
+- `latest('RES_DWELL_ST')` → $12.3T total Australian housing stock
+- `latest('RES_DWELL_ST', {region: 'nsw', measure: 'mean_price'})` →
+  NSW mean dwelling price $1,301,100
+
+195 unit tests pass.
+
 ## [0.11.8] - 2026-05-18
 
 ### Added — `ABS_NOM_VISA_CY` curated (Net Overseas Migration by visa subclass)
