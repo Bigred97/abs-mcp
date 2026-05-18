@@ -475,9 +475,47 @@ async def _get_data_impl(
         dim_hint = (
             f" filters: {user_dims}." if user_dims else " (no filters supplied)."
         )
+        # When the ABS API rejects on a 4xx (typically 404 for unknown
+        # dimension-code combinations or 422 for malformed query), include
+        # a period-format hint if the caller passed a period in a likely
+        # mistyped form (e.g. '2024Q1' missing the hyphen, '2024-01' on a
+        # quarterly dataflow).
+        err_str = str(e)
+        period_hint = ""
+        if "404" in err_str or "422" in err_str:
+            for label, p in (("start_period", start_period), ("end_period", end_period)):
+                if not p:
+                    continue
+                # Catch common mistypes and offer the canonical form.
+                if re.fullmatch(r"\d{4}Q[1-4]", p):
+                    period_hint += (
+                        f" {label}={p!r} likely needs a hyphen: try '{p[:4]}-{p[4:]}' "
+                        f"(quarterly format is 'YYYY-Q1' / 'YYYY-Q2' etc.)."
+                    )
+                elif re.fullmatch(r"\d{4}S[1-2]", p):
+                    period_hint += (
+                        f" {label}={p!r} likely needs a hyphen: try '{p[:4]}-{p[4:]}' "
+                        f"(half-yearly format is 'YYYY-S1' / 'YYYY-S2')."
+                    )
+                elif re.fullmatch(r"\d{6}", p):
+                    period_hint += (
+                        f" {label}={p!r} looks like 'YYYYMM' — monthly format requires a "
+                        f"hyphen: try '{p[:4]}-{p[4:]}'."
+                    )
+                elif re.fullmatch(r"\d{4}-\d{2}", p) and cd is not None and cd.id == dataset_id:
+                    # Caller passed monthly format. Check if the dataflow is
+                    # quarterly (CPI etc) — suggest quarterly format.
+                    if "quarterly" in (cd.description or "").lower() or cd.id.endswith("_Q"):
+                        q_hint = int(p[5:7])
+                        q_num = (q_hint - 1) // 3 + 1 if 1 <= q_hint <= 12 else None
+                        if q_num:
+                            period_hint += (
+                                f" {label}={p!r} is monthly but {dataset_id} is quarterly — "
+                                f"try '{p[:4]}-Q{q_num}'."
+                            )
         raise ValueError(
             f"Query failed for dataset '{dataset_id}' ({e})."
-            f"{dim_hint} "
+            f"{dim_hint}{period_hint} "
             "Use the describe endpoint or describe tool to see valid filter values "
             f"for dataset '{dataset_id}'."
         ) from e

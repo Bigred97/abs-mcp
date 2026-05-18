@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.11.10] - 2026-05-18
+
+### Improved — period-format hints on ABS 4xx errors
+
+When ABS rejects a query with 404/422 because the period is mistyped,
+the error now suggests the canonical ABS format instead of just echoing
+the upstream code. Common mistypes caught:
+
+- `2024Q1` (no hyphen) → "try '2024-Q1' (quarterly format)"
+- `2024S1` (no hyphen) → "try '2024-S1' (half-yearly format)"
+- `202403` (no hyphen) → "try '2024-03' (monthly format)"
+- `2024-01` against a quarterly dataflow (CPI etc) → "is monthly but
+  CPI is quarterly — try '2024-Q1'" (computes the matching quarter)
+
+Period-format guidance was already in the docstring but customers
+typing in chat hit the API rejection first; this surfaces the format
+at the point of error so the next call works.
+
+195 unit tests pass.
+
 ## [0.11.9] - 2026-05-18
 
 ### Added — `RES_DWELL_ST` curated (Cat 6416.0 Residential Dwellings — Values, Mean Price, Count)
