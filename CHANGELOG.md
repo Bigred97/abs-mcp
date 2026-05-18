@@ -1,5 +1,56 @@
 # Changelog
 
+## [0.11.14] - 2026-05-18
+
+### Added — `prewarm_curated()` + `abs-mcp --warmup` CLI for gateway startup
+
+Gateway integration reported an OOM cascade when pre-warming five new
+curated datasets (LF_AGE + ITGS + BUSINESS_INDICATORS + CPI_MONTHLY +
+RES_DWELL_ST) in parallel on a 512MB Fly worker — each cold SDMX parse
+peaks at 150-250MB transient, so 5 in parallel exceeds the worker's
+resident-memory ceiling.
+
+Added `abs_mcp.server.prewarm_curated()`:
+  - `dataset_ids=None` defaults to every curated dataset
+  - `max_concurrency=2` semaphore bounds parallel warms (default sized
+    for a 512MB worker; bump to 4-5 on larger workers)
+  - Per-dataset error catching — one failing dataflow doesn't abort the
+    rest
+  - Returns `dict[id, "ok" | "error: ..."]` for caller-side audit
+
+CLI equivalent for gateway init hooks (FastAPI lifespan, Fly machine
+init, etc.):
+```
+abs-mcp --warmup                              # warm all curated datasets, conc=2
+abs-mcp --warmup --warmup-concurrency 1       # strict sequential
+abs-mcp --warmup --warmup-only LF,CPI,WPI     # warm a subset
+```
+
+Exits 0 on success, 1 if any dataflow failed. Progress streamed to
+stderr so logs survive.
+
+### Improved — explicit error when CPI quarterly requested with `adjustment='original'`
+
+Customer-feedback flagged that `latest('CPI', filters={'adjustment':
+'original'})` hit a confusing ABS 404. Root cause: ABS's quarterly CPI
+SDMX product (CPI_Q) publishes Seasonally Adjusted only — Original
+(NSA) and Trend simply don't exist in the Data API for the quarterly
+release. The `adjustment` filter was un-hidden in 0.11.11 to advertise
+the dim, but ABS doesn't actually publish Original quarterly data.
+
+Pre-flight check now raises before hitting the ABS API with a clear
+methodology explanation:
+
+  > abs.CPI (quarterly, cat 6401.0) publishes the Seasonally Adjusted
+  > series only — `adjustment='original'` is not available in ABS's
+  > Data API for the quarterly product. For Original (NSA) or Trend
+  > values, query `CPI_MONTHLY` (cat 6484.0) which publishes all three
+  > time-series treatments at monthly cadence. Alternatively, omit the
+  > `adjustment` filter on CPI to get the SA headline (the figure RBA
+  > + Treasury cite as 'CPI').
+
+195 unit tests pass.
+
 ## [0.11.13] - 2026-05-18
 
 ### Added — `BUSINESS_INDICATORS` curated dataset (QBIS cat 5676.0)

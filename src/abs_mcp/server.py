@@ -153,6 +153,28 @@ async def _resolve_filters(
         return None, sdmx_filters, dict(user)
     sdmx_filters = curated.translate_filters(cd, user)
     sdmx_filters = curated.apply_defaults(cd, sdmx_filters)
+    # Pre-flight: ABS quarterly CPI (CPI_Q) publishes Seasonally Adjusted
+    # only — Original (NSA) and Trend rows simply don't exist in the
+    # Data API for the quarterly product. Without this check, a user
+    # filtering `CPI` with `adjustment=original` would hit a confusing
+    # 404 from ABS. Surface the methodology gap explicitly and point
+    # them at CPI_MONTHLY (which DOES publish Original / Trend).
+    if cd.id == "CPI" and "TSEST" in sdmx_filters:
+        tsest_values = sdmx_filters["TSEST"]
+        # SDMX code "20" = Seasonally Adjusted; anything else is Original/Trend/etc.
+        bad = [v for v in tsest_values if v != "20"]
+        if bad:
+            user_adjustment = user.get("adjustment", bad[0])
+            raise ValueError(
+                f"abs.CPI (quarterly, cat 6401.0) publishes the Seasonally "
+                f"Adjusted series only — `adjustment={user_adjustment!r}` "
+                f"is not available in ABS's Data API for the quarterly "
+                f"product. For Original (NSA) or Trend values, query "
+                f"`CPI_MONTHLY` (cat 6484.0) which publishes all three "
+                f"time-series treatments at monthly cadence. Alternatively, "
+                f"omit the `adjustment` filter on CPI to get the SA "
+                f"headline (the figure RBA + Treasury cite as 'CPI')."
+            )
     return cd, sdmx_filters, dict(user)
 
 
@@ -1022,7 +1044,144 @@ async def release_calendar(
     )
 
 
+async def prewarm_curated(
+    dataset_ids: list[str] | None = None,
+    *,
+    max_concurrency: int = 2,
+    log: Any = None,
+) -> dict[str, str]:
+    """Warm the SQLite + Parquet cache for curated datasets with bounded
+    concurrency. Designed for gateway / Fly-worker startup so the first
+    customer hit doesn't pay cold-fetch latency, WITHOUT the OOM cascade
+    that hits when 5+ SDMX parses run simultaneously on a 512MB worker.
+
+    Each cold ABS dataflow parse holds the raw XML response + the sdmx1
+    DSD + the pandas frame in memory simultaneously, peaking at
+    150-250MB for the larger curated dataflows (ERP, LF_AGE, ITGS,
+    BUSINESS_INDICATORS). Five-in-parallel exceeds a 512MB worker; two-
+    in-parallel stays under.
+
+    Parameters
+    ----------
+    dataset_ids:
+        Curated dataflow IDs to warm. Defaults to every curated dataset
+        (`curated.list_ids()`). Unknown IDs raise ValueError so misspelled
+        gateway configs fail loudly at startup.
+    max_concurrency:
+        Maximum number of dataflows to warm in parallel. Default 2 keeps
+        peak resident memory under ~500MB on Fly's 512MB worker. Pass 1
+        for strict sequential (safest, slowest), or higher on workers
+        with more memory.
+    log:
+        Optional callable accepting a single string for progress lines
+        (e.g. `print`). None silences progress.
+
+    Returns
+    -------
+    Dict mapping dataset_id → "ok" / error message. Errors are caught
+    per-dataset so one failure doesn't abort the rest (a misbehaving
+    dataflow shouldn't block startup of the other 20).
+
+    Use from a gateway startup hook (FastAPI lifespan, Fly machine init,
+    etc.) instead of fan-out calls to `latest()` per dataset.
+    """
+    if dataset_ids is None:
+        dataset_ids = curated.list_ids()
+    # Validate up-front — fail loud if a gateway-side pin is stale or
+    # has a typo, rather than silently warming a subset.
+    known = set(curated.list_ids())
+    unknown = [d for d in dataset_ids if d not in known]
+    if unknown:
+        raise ValueError(
+            f"prewarm_curated received unknown dataset IDs: {unknown}. "
+            f"Valid IDs: {sorted(known)}."
+        )
+
+    sem = asyncio.Semaphore(max(1, int(max_concurrency)))
+    results: dict[str, str] = {}
+
+    async def _warm_one(ds_id: str) -> None:
+        async with sem:
+            if log:
+                log(f"[abs-mcp prewarm] warming {ds_id}")
+            try:
+                # Use latest() with the curated dataset's own latest_defaults
+                # — this is the same path the gateway hits for warm
+                # cache. Pop the result; we only care about the cache fill.
+                cd = curated.get(ds_id)
+                filters: dict[str, Any] | None = None
+                if cd is not None and cd.latest_defaults:
+                    filters = dict(cd.latest_defaults)
+                await latest(dataset_id=ds_id, filters=filters)
+                results[ds_id] = "ok"
+                if log:
+                    log(f"[abs-mcp prewarm] done    {ds_id}")
+            except Exception as e:
+                # Catch every exception; warming is best-effort. Stash
+                # the error string so the caller can audit but don't
+                # propagate — a misbehaving dataflow shouldn't block the
+                # other 20 from warming.
+                msg = f"{type(e).__name__}: {e!s}"[:200]
+                results[ds_id] = f"error: {msg}"
+                if log:
+                    log(f"[abs-mcp prewarm] FAILED  {ds_id}: {msg}")
+
+    await asyncio.gather(*[_warm_one(d) for d in dataset_ids])
+    return results
+
+
 def main() -> None:
+    import argparse
+    import sys
+
+    parser = argparse.ArgumentParser(
+        prog="abs-mcp",
+        description="MCP server for the Australian Bureau of Statistics Data API.",
+    )
+    parser.add_argument(
+        "--warmup",
+        action="store_true",
+        help=(
+            "Warm the curated-dataset cache and exit, instead of starting the "
+            "MCP stdio server. Use from gateway startup hooks to avoid the "
+            "OOM cascade when multiple SDMX parses run in parallel on memory-"
+            "constrained workers. Honours --warmup-concurrency (default 2)."
+        ),
+    )
+    parser.add_argument(
+        "--warmup-concurrency",
+        type=int,
+        default=2,
+        help="Max parallel dataflow warms when --warmup is set (default 2).",
+    )
+    parser.add_argument(
+        "--warmup-only",
+        type=str,
+        default=None,
+        help=(
+            "Comma-separated curated dataset IDs to warm. Defaults to every "
+            "curated dataset. Example: --warmup-only LF,CPI,WPI"
+        ),
+    )
+    args = parser.parse_args()
+
+    if args.warmup:
+        ds_ids: list[str] | None = None
+        if args.warmup_only:
+            ds_ids = [s.strip() for s in args.warmup_only.split(",") if s.strip()]
+        results = asyncio.run(prewarm_curated(
+            ds_ids,
+            max_concurrency=args.warmup_concurrency,
+            log=lambda m: print(m, file=sys.stderr, flush=True),
+        ))
+        fails = {k: v for k, v in results.items() if not v.startswith("ok")}
+        if fails:
+            print(
+                f"[abs-mcp prewarm] {len(fails)} dataflow(s) failed: {sorted(fails)}",
+                file=sys.stderr,
+            )
+        sys.exit(1 if fails else 0)
+
     mcp.run(transport="stdio")
 
 
