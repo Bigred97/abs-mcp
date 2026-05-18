@@ -36,21 +36,29 @@ dimensions:
       contribution_to_index: { sdmx_code: "4", description: "Contribution to total CPI" }
   category:
     sdmx_id: INDEX
-    description: CPI category (defaults to All groups)
+    description: |
+      CPI category — top-level expenditure division (defaults to All
+      groups). Sub-categories (e.g. 'Bread and cereal products' inside
+      Food) are also queryable via raw INDEX codes; see ABS Cat 6484.0
+      documentation for the full hierarchy. Note: ABS uses
+      non-consecutive codes for the 11 divisions — Food/Clothing/Housing/
+      Furnishings/Transport/Alcohol are in the 20xxx block while
+      Health/Communication/Recreation/Education/Insurance use 115xxx
+      and 126xxx codes.
     default: "10001"
     values:
       all_groups: { sdmx_code: "10001", description: "All groups CPI" }
       food: { sdmx_code: "20001", description: "Food and non-alcoholic beverages" }
-      alcohol_tobacco: { sdmx_code: "20002", description: "Alcohol and tobacco" }
-      clothing: { sdmx_code: "20003", description: "Clothing and footwear" }
-      housing: { sdmx_code: "20004", description: "Housing" }
-      furnishings: { sdmx_code: "20005", description: "Furnishings, household equipment and services" }
-      health: { sdmx_code: "20006", description: "Health" }
-      transport: { sdmx_code: "20007", description: "Transport" }
-      communication: { sdmx_code: "20008", description: "Communication" }
-      recreation: { sdmx_code: "20009", description: "Recreation and culture" }
-      education: { sdmx_code: "20010", description: "Education" }
-      insurance_financial: { sdmx_code: "20011", description: "Insurance and financial services" }
+      clothing: { sdmx_code: "20002", description: "Clothing and footwear" }
+      housing: { sdmx_code: "20003", description: "Housing" }
+      furnishings: { sdmx_code: "20004", description: "Furnishings, household equipment and services" }
+      transport: { sdmx_code: "20005", description: "Transport" }
+      alcohol_tobacco: { sdmx_code: "20006", description: "Alcohol and tobacco" }
+      health: { sdmx_code: "115486", description: "Health" }
+      communication: { sdmx_code: "115488", description: "Communication" }
+      recreation: { sdmx_code: "115489", description: "Recreation and culture" }
+      education: { sdmx_code: "115493", description: "Education" }
+      insurance_financial: { sdmx_code: "126670", description: "Insurance and financial services" }
   region:
     sdmx_id: REGION
     description: Capital city (or 'australia' for the weighted average)
@@ -67,9 +75,15 @@ dimensions:
       canberra: { sdmx_code: "8" }
   adjustment:
     sdmx_id: TSEST
-    description: Time-series treatment (defaults to original — the official figure)
-    hidden: true
+    description: |
+      Time-series treatment (defaults to Original — the official ABS
+      monthly indicator series). Pass `seasonally_adjusted` for the SA
+      series, or `trend` for the trend series.
     default: "10"
+    values:
+      original: { sdmx_code: "10", description: "Original (NSA) — the official figure" }
+      seasonally_adjusted: { sdmx_code: "20", description: "Seasonally adjusted" }
+      trend: { sdmx_code: "30", description: "Trend" }
   frequency:
     sdmx_id: FREQ
     description: ABS frequency code — monthly for this dataflow.

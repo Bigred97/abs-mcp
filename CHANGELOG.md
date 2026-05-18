@@ -1,5 +1,46 @@
 # Changelog
 
+## [0.11.11] - 2026-05-18
+
+### Fixed — CPI_MONTHLY expenditure-group codes (5 wrong, 5 missing)
+
+Customer-sim flagged the CPI-by-expenditure-group workflow as not
+working: queries against `category` values 'transport', 'health',
+'communication', 'recreation', 'education', 'insurance_financial' all
+returned 0 rows or ABS 404s because the curated YAML mapped them to
+non-existent SDMX codes (20007-20011 don't exist in CPI_M; those
+divisions use 115xxx and 126xxx codes).
+
+Verified against the actual SDMX codelist (`CL_CPI_INDEX_17`) and
+re-mapped:
+
+  Division                                | OLD code | NEW code
+  ----------------------------------------|----------|---------
+  Food and non-alcoholic beverages        | 20001    | 20001 ✓
+  Clothing and footwear                   | 20003    | 20002 (was wrong)
+  Housing                                 | 20004    | 20003 (was wrong)
+  Furnishings, household equipment        | 20005    | 20004 (was wrong)
+  Transport                               | 20007    | 20005 (was wrong)
+  Alcohol and tobacco                     | 20002    | 20006 (was wrong)
+  Health                                  | 20006    | 115486 (was wrong + missing)
+  Communication                           | 20008    | 115488 (was missing)
+  Recreation and culture                  | 20009    | 115489 (was missing)
+  Education                               | 20010    | 115493 (was missing)
+  Insurance and financial services        | 20011    | 126670 (was missing)
+
+Verification: all 11 divisions now return data. Sep 2025 Original
+annual changes: Food 3.1%, Housing 5.6%, Health 4.1%, Education 5.3%,
+Insurance 2.6%, etc.
+
+### Improved — CPI / CPI_MONTHLY `adjustment` filter un-hidden
+
+Previously `adjustment` (Original / Seasonally Adjusted / Trend) was a
+hidden dim that customers couldn't request explicitly. Now visible with
+plain-English values. CPI (quarterly) only publishes SA — the YAML
+documents this and points to CPI_MONTHLY for Original (NSA) values.
+
+195 unit tests pass.
+
 ## [0.11.10] - 2026-05-18
 
 ### Improved — period-format hints on ABS 4xx errors

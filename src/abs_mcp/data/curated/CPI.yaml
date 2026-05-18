@@ -62,11 +62,18 @@ dimensions:
   adjustment:
     sdmx_id: TSEST
     description: |
-      Time-series treatment. Quarterly CPI publishes annual-change data only
-      for the seasonally adjusted (SA) series. Hidden so the headline
-      change_year query works without the user reasoning about TSEST.
-    hidden: true
+      Time-series treatment. ABS publishes the QUARTERLY CPI in the SA
+      (seasonally adjusted) series only — Original (NSA) time-series and
+      Trend are not provided for the quarterly dataflow. If you need
+      the Original (NSA) headline CPI, query CPI_MONTHLY (cat 6484.0)
+      which publishes monthly Original values for all-groups and
+      sub-categories. Customers comparing against RBA / Treasury commentary
+      should note RBA cites the SA series ('the 4.0% in Q1 2026' = SA).
     default: "20"
+    values:
+      seasonally_adjusted: { sdmx_code: "20", description: "Seasonally adjusted (default; the only series published for quarterly CPI)" }
+      original: { sdmx_code: "10", description: "Original (NSA) — not published for quarterly CPI; use CPI_MONTHLY for Original" }
+      trend: { sdmx_code: "30", description: "Trend — not published for quarterly CPI" }
   frequency:
     sdmx_id: FREQ
     description: ABS frequency code — quarterly for this dataflow.
