@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import re
+import threading
 from datetime import UTC, datetime
 from typing import Annotated, Any, Literal
 
@@ -47,29 +48,51 @@ _PERIOD_SAFE_PATTERN = re.compile(r"^[A-Za-z0-9\-]+$")
 
 mcp = FastMCP("abs-mcp")
 
-_client: ABSClient | None = None
-_client_lock = asyncio.Lock()
+# Per-thread client cache. We deliberately avoid a module-global singleton:
+# gateways like ausdata-api invoke us from worker threads with fresh asyncio
+# loops per call (`asyncio.run()` in a ThreadPoolExecutor worker). A
+# module-global client (and an `asyncio.Lock()` alongside it) binds to the
+# FIRST loop that creates it; subsequent calls from other threads then trip
+# httpx's internal asyncio resources with `RuntimeError: Event loop is
+# closed`. A thread-local cache gives each worker its own client bound to
+# its own loop while preserving the connection-pool win per-thread.
+_thread_local = threading.local()
 
 
 async def _get_client() -> ABSClient:
-    global _client
-    async with _client_lock:
-        if _client is None:
-            _client = ABSClient()
-        return _client
+    """Return the per-thread client, constructing it on first use.
+
+    Each worker thread gets its own ABSClient bound to its own event loop.
+    Required because gateways like ausdata-api invoke us from worker threads
+    with fresh asyncio loops per call (`asyncio.run()`); a module-global
+    client would bind to the first loop and fail on subsequent calls with
+    `RuntimeError: Event loop is closed`.
+    """
+    client = getattr(_thread_local, "client", None)
+    if client is None:
+        client = ABSClient()
+        _thread_local.client = client
+    return client
 
 
 async def reset_client_for_tests() -> None:
-    """Drop the cached client. The server reuses one ABSClient across all tool
-    calls; tests that span multiple event loops must clear it between loops or
-    httpx will trip on a closed loop."""
-    global _client
-    if _client is not None:
+    """Drop the current thread's cached client.
+
+    The server keeps one ABSClient per worker thread (see `_get_client`).
+    Tests that span multiple event loops on the same thread must clear it
+    between loops or httpx will trip on a closed loop. Resets ONLY the
+    current thread's client; other threads are untouched.
+    """
+    client = getattr(_thread_local, "client", None)
+    if client is not None:
         try:
-            await _client.aclose()
+            await client.aclose()
         except Exception:
             pass
-        _client = None
+        try:
+            del _thread_local.client
+        except AttributeError:
+            pass
 
 
 def _abs_url(dataset_id: str) -> str:

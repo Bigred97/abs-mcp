@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.11.15] — 2026-05-19
+
+### Fixed
+
+- **Per-thread `_client` cache** (P0 prod bug, observed on ausdata-api):
+  module-global `_client` bound to the FIRST event loop and tripped
+  `RuntimeError: Event loop is closed` when called from a multi-loop
+  host that wraps the MCP and runs `asyncio.run(_get_data_impl(...))`
+  in a worker thread per request. Cache moved to `threading.local()`
+  so each worker thread gets its own client bound to its own loop.
+  `reset_client_for_tests()` now only clears the calling thread.
+
 ## [0.11.14] - 2026-05-18
 
 ### Added — `prewarm_curated()` + `abs-mcp --warmup` CLI for gateway startup
