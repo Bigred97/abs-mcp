@@ -13,10 +13,10 @@ def reset_registry():
 def test_list_ids_returns_curated_dataflows():
     ids = curated.list_ids()
     assert set(ids) == {
-        "LF", "CPI", "CPI_MONTHLY", "ABS_ANNUAL_ERP_ASGS2021", "BA_GCCSA",
+        "LF", "LF_AGE", "CPI", "CPI_MONTHLY", "ABS_ANNUAL_ERP_ASGS2021", "BA_GCCSA",
         "LEND_HOUSING", "WPI", "JV", "ANA_AGG", "AWE", "ERP_Q",
         "C21_G02_SA2", "C21_G02_POA", "RT", "HSI_M",
-        "PPI_FD", "C21_G01_POA", "ABS_NOM_VISA_CY", "RES_DWELL_ST",
+        "PPI_FD", "C21_G01_POA", "ABS_NOM_VISA_CY", "RES_DWELL_ST", "ITGS",
     }
 
 

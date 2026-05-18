@@ -1,0 +1,112 @@
+id: LF_AGE
+sdmx_dataflow_id: LF_AGES
+name: Labour Force by Age Group
+description: |
+  Monthly labour-force participation, employment, and unemployment by age
+  band (15-19, 20-24, 25-34, ..., 65+) × sex × state. Use this for
+  youth-unemployment-by-state analysis, age-cohort participation trends,
+  and demographic-cut workforce projections. Source: ABS Catalogue 6202.0
+  (Labour Force, Detailed — Table 1).
+
+  The headline LF dataset publishes age=Total only — this dataset adds the
+  age cut customers want for distributional / cohort analysis.
+
+  Customer query examples:
+  - "Youth unemployment rate in QLD"
+    → `latest('LF_AGE', filters={'measure': 'unemployment_rate', 'age': '15_24',
+       'region': 'qld', 'sex': 'persons'})`
+  - "55+ participation rate trend (national)"
+    → `get_data('LF_AGE', filters={'measure': 'participation_rate',
+       'age': '55_64', 'region': 'australia', 'sex': 'persons'})`
+update_frequency: monthly
+source_url: https://www.abs.gov.au/statistics/labour/employment-and-unemployment/labour-force-australia-detailed
+search_keywords:
+  - youth unemployment
+  - labour force by age
+  - employment by age
+  - participation rate by age
+  - workforce participation
+  - cohort labour force
+  - over 55 employment
+  - 15 24 unemployment
+  - over 65 working
+  - labour force detailed
+# latest() with no filters would return many rows (8 measures × 10 ages
+# × 3 sexes × state). Default to national employment-to-population ratio,
+# 15-64 working-age, persons.
+latest_defaults:
+  measure: employment_to_pop_ratio
+  age: working_age
+  sex: persons
+  region: australia
+dimensions:
+  measure:
+    sdmx_id: MEASURE
+    description: Labour-force indicator (defaults to employment-to-population ratio)
+    values:
+      employed_persons:            { sdmx_code: "M3", description: "Employed persons" }
+      employed_full_time:          { sdmx_code: "M1", description: "Employed - full-time" }
+      employed_part_time:          { sdmx_code: "M2", description: "Employed - part-time" }
+      unemployed_persons:          { sdmx_code: "M6", description: "Unemployed persons" }
+      labour_force:                { sdmx_code: "M9", description: "Total labour force" }
+      not_in_labour_force:         { sdmx_code: "M10", description: "Persons not in the labour force" }
+      participation_rate:          { sdmx_code: "M12", description: "Labour force participation rate (%)" }
+      unemployment_rate:           { sdmx_code: "M13", description: "Unemployment rate (%)" }
+      employment_to_pop_ratio:     { sdmx_code: "M16", description: "Employment to population ratio (%)" }
+      hours_worked:                { sdmx_code: "M18", description: "Monthly hours worked in all jobs (total)" }
+      underemployment_rate:        { sdmx_code: "M23", description: "Underemployment rate (proportion of labour force)" }
+      underutilisation_rate:       { sdmx_code: "M24", description: "Underutilisation rate" }
+  sex:
+    sdmx_id: SEX
+    description: Sex (defaults to persons)
+    values:
+      persons: { sdmx_code: "3" }
+      male:    { sdmx_code: "1" }
+      female:  { sdmx_code: "2" }
+  age:
+    sdmx_id: AGE
+    description: |
+      Age band. Defaults to 'working_age' (15-64). 5-year bands cover
+      15-19 through 65+; single-year bands (15, 16, 17, ...) also exist
+      via the raw codelist but are noisy for monthly LF.
+    values:
+      total:        { sdmx_code: "1599", description: "Total (all ages, 15+)" }
+      working_age:  { sdmx_code: "1564", description: "15-64 working-age population" }
+      "15_24":      { sdmx_code: "1524", description: "15-24 (youth)" }
+      "15_19":      { sdmx_code: "1519", description: "15-19" }
+      "20_24":      { sdmx_code: "2024", description: "20-24" }
+      "25_34":      { sdmx_code: "2534", description: "25-34" }
+      "25_29":      { sdmx_code: "2529", description: "25-29" }
+      "30_34":      { sdmx_code: "3034", description: "30-34" }
+      "35_44":      { sdmx_code: "3544", description: "35-44" }
+      "35_39":      { sdmx_code: "3539", description: "35-39" }
+      "40_44":      { sdmx_code: "4044", description: "40-44" }
+      "45_54":      { sdmx_code: "4554", description: "45-54" }
+      "45_49":      { sdmx_code: "4549", description: "45-49" }
+      "50_54":      { sdmx_code: "5054", description: "50-54" }
+      "55_64":      { sdmx_code: "5564", description: "55-64" }
+      "65_plus":    { sdmx_code: "65", description: "65 and over" }
+      youth:        { sdmx_code: "1524", description: "15-24 (synonym for 15_24)" }
+      seniors:      { sdmx_code: "65", description: "65 and over (synonym for 65_plus)" }
+  region:
+    sdmx_id: REGION
+    description: State or territory (defaults to national)
+    values:
+      australia: { sdmx_code: "AUS" }
+      nsw: { sdmx_code: "1" }
+      vic: { sdmx_code: "2" }
+      qld: { sdmx_code: "3" }
+      sa:  { sdmx_code: "4" }
+      wa:  { sdmx_code: "5" }
+      tas: { sdmx_code: "6" }
+      nt:  { sdmx_code: "7" }
+      act: { sdmx_code: "8" }
+  adjustment:
+    sdmx_id: TSEST
+    description: Time-series treatment (defaults to seasonally adjusted)
+    hidden: true
+    default: "20"
+  frequency:
+    sdmx_id: FREQ
+    hidden: true
+    default: "M"

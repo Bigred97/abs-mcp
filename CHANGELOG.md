@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.11.12] - 2026-05-18
+
+### Added — `LF_AGE` and `ITGS` curated datasets
+
+Two new datasets unblock customer-feedback queries that were previously
+unreachable:
+
+`LF_AGE` — Labour Force by Age Group (cat 6202.0, LF_AGES dataflow).
+Adds 13 age bands (`youth` / `15_24`, `25_34`, …, `55_64`, `65_plus`,
+plus 5-year detail) to participation rate, unemployment rate,
+employment-to-pop ratio, hours worked, underemployment rate. Plain-
+English aliases include `youth` and `seniors`. Verification: national
+youth (15-24) unemployment rate = 8.89% @ 2026-03.
+
+`ITGS` — International Trade in Goods (cat 5368.0). Monthly merchandise
+trade by commodity category. Plain-English measure aliases for
+`balance_on_goods` (the headline trade-balance figure),
+`total_goods_exports`, `total_goods_imports`, plus rural / metal-ore /
+meat / cereal / wool commodity export categories. Defaults to national
+balance, current prices, seasonally adjusted. Verification: March 2026
+trade balance = -$1.84B; metal ores exports = $12.85B.
+
+195 unit tests pass.
+
 ## [0.11.11] - 2026-05-18
 
 ### Fixed — CPI_MONTHLY expenditure-group codes (5 wrong, 5 missing)

@@ -1,0 +1,110 @@
+id: ITGS
+name: International Trade in Goods (Monthly)
+description: |
+  Monthly Australian international trade in GOODS — exports (credits),
+  imports (debits), and trade balance by commodity category. Source:
+  ABS Catalogue 5368.0 International Trade in Goods.
+
+  The headline `balance_on_goods` series is the trade-balance number
+  monthly economic commentary cites. Sub-categories (rural goods, metal
+  ores, iron ore, coal, etc.) break down both export and import flows
+  into ANZSIC / SITC-aligned commodity classes.
+
+  Use this for:
+  - **Trade balance time series** — surplus/deficit by month, headline
+    figure used in current-account reporting
+  - **Commodity-export tracking** — iron ore exports, coal exports,
+    LNG exports value over time
+  - **Import-mix analysis** — capital goods vs consumer goods, durables
+    decomposition
+  - **AUD-driver decomposition** — terms of trade analysis pairs ITGS
+    exports against ABS prices
+
+  Customer query examples:
+  - "Monthly trade balance, last 12 months"
+    → `get_data('ITGS', filters={'data_item': 'balance_on_goods',
+       'region': 'australia'}, start_period='2024-04')`
+  - "Total goods exports latest"
+    → `latest('ITGS', filters={'data_item': 'total_goods_exports'})`
+  - "Metal ores exports trend"
+    → `get_data('ITGS', filters={'data_item': 'metal_ores_exports'})`
+
+update_frequency: monthly
+source_url: https://www.abs.gov.au/statistics/economy/international-trade/international-trade-goods
+search_keywords:
+  - trade balance
+  - international trade
+  - exports
+  - imports
+  - goods exports
+  - goods imports
+  - merchandise trade
+  - trade in goods
+  - iron ore exports
+  - coal exports
+  - lng exports
+  - rural exports
+  - metal ores
+  - balance of trade
+  - cat 5368
+  - "5368.0"
+  - export volumes
+  - import volumes
+# Default returned when caller omits filters. Balance on goods, national,
+# current prices, seasonally adjusted — the canonical "trade balance" number.
+latest_defaults:
+  data_item: balance_on_goods
+  region: australia
+dimensions:
+  measure:
+    sdmx_id: MEASURE
+    description: Measure (defaults to current-prices dollar value)
+    default: "M1"
+    values:
+      current_prices:        { sdmx_code: "M1", description: "Current Prices (AUD millions)" }
+      change_month:          { sdmx_code: "M2", description: "Percentage change from previous month" }
+  data_item:
+    sdmx_id: DATA_ITEM
+    description: |
+      Trade item — Credit = exports, Debit = imports. ABS publishes 1000s
+      of fine-grained categories; the plain-English aliases below cover
+      the headline + most-cited commodity categories.
+    permissive: true
+    values:
+      balance_on_goods:        { sdmx_code: "170",  description: "Balance on goods (exports - imports)" }
+      total_goods_exports:     { sdmx_code: "1000", description: "Total goods exports (Credit)" }
+      total_goods_imports:     { sdmx_code: "2000", description: "Total goods imports (Debit)" }
+      general_merchandise_exp: { sdmx_code: "1050", description: "General merchandise exports" }
+      general_merchandise_imp: { sdmx_code: "2050", description: "General merchandise imports" }
+      rural_goods_exports:     { sdmx_code: "1100", description: "Rural goods exports" }
+      meat_exports:            { sdmx_code: "1150", description: "Meat and meat preparations exports" }
+      cereal_exports:          { sdmx_code: "1200", description: "Cereal grains and cereal preparations exports" }
+      wool_exports:            { sdmx_code: "1250", description: "Wool and sheepskins exports" }
+      non_rural_exports:       { sdmx_code: "1350", description: "Non-rural goods exports" }
+      metal_ores_exports:      { sdmx_code: "1400", description: "Metal ores and minerals exports (incl iron ore)" }
+  region:
+    sdmx_id: REGION
+    description: State or 'australia' for national totals (defaults to australia)
+    values:
+      australia: { sdmx_code: "AUS" }
+      nsw: { sdmx_code: "1" }
+      vic: { sdmx_code: "2" }
+      qld: { sdmx_code: "3" }
+      sa:  { sdmx_code: "4" }
+      wa:  { sdmx_code: "5" }
+      tas: { sdmx_code: "6" }
+      nt:  { sdmx_code: "7" }
+      act: { sdmx_code: "8" }
+  adjustment:
+    sdmx_id: TSEST
+    description: Time-series treatment (defaults to seasonally adjusted)
+    default: "20"
+    values:
+      seasonally_adjusted: { sdmx_code: "20" }
+      original:            { sdmx_code: "10" }
+      trend:               { sdmx_code: "30" }
+  frequency:
+    sdmx_id: FREQ
+    description: ABS frequency — monthly
+    hidden: true
+    default: "M"
