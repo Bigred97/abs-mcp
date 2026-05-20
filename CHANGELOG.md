@@ -2,6 +2,12 @@
 
 ## 0.13.1 (2026-05-20)
 
+### Added
+- **BA_LGA2024** curated dataset — council-level (Local Government Area) building approvals, ~570 councils, monthly. Resolves to ABS's current `BA_LGA2025` SDMX dataflow (the standalone `BA_LGA2024` dataflow froze at 2025-06). Far more granular than `BA_GCCSA` (8 capital cities). Serves suburb/council-level housing-supply analysis.
+
+
+## 0.13.1 (2026-05-20)
+
 ### Added — BA_LGA2024 (council / LGA-level building approvals)
 
 - **New curated dataset `BA_LGA2024`** — building approvals at the **council
