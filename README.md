@@ -1,5 +1,7 @@
 # abs-mcp
 
+mcp-name: io.ausdata/abs-mcp
+
 [![PyPI](https://img.shields.io/pypi/v/abs-mcp.svg)](https://pypi.org/project/abs-mcp/)
 [![Python](https://img.shields.io/pypi/pyversions/abs-mcp.svg)](https://pypi.org/project/abs-mcp/)
 [![License](https://img.shields.io/pypi/l/abs-mcp.svg)](https://github.com/Bigred97/abs-mcp/blob/main/LICENSE)

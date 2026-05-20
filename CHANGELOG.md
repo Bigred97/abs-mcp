@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.13.3 (2026-05-21)
+
+### Added
+
+- Add MCP Registry ownership marker (`mcp-name: io.ausdata/abs-mcp`) to the
+  README so the server can be listed under the verified `io.ausdata` namespace.
+
 ## 0.13.2 (2026-05-20)
 
 ### Fixed — BA_LGA2024 no-filter default
