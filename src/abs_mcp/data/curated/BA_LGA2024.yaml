@@ -1,0 +1,92 @@
+id: BA_LGA2024
+# Council-level (Local Government Area) building approvals. The customer-facing
+# ID stays `BA_LGA2024` (the well-known catalogue name property economists ask
+# for) but resolves to ABS's current `BA_LGA2025` SDMX dataflow — same DSD,
+# 579 LGA codes, current data — so the series stays live. The standalone
+# BA_LGA2024 dataflow froze at 2025-06; BA_LGA2025 carries the current monthly
+# series (latest 2026-03 as of 2026-05). Same indirection pattern as
+# CPI -> CPI_Q and BUILDING_APPROVALS -> BA_GCCSA. Do NOT revert to the frozen
+# BA_LGA2024 dataflow.
+sdmx_dataflow_id: BA_LGA2025
+name: Building Approvals by Local Government Area (council level)
+description: |
+  Monthly building approvals at the council (Local Government Area) level —
+  far more granular than BA_GCCSA's 8-capital-city geography. Breakdowns by
+  sector, work type, and building type for ~570 Australian councils.
+  Source: ABS Catalogue 8731.0 (Building Approvals, Australia).
+
+  Defaults to number of dwelling units approved, total residential, private
+  sector, total work, Australia. Pass region= an LGA code (e.g. "10050" for
+  Albury, "21450" for Greater Geelong) to narrow to a specific council. LGA
+  codes are 4–5 digit ASGS LGA 2025 codes — see describe for the common ones,
+  or pass any LGA code through (permissive).
+update_frequency: monthly
+source_url: https://www.abs.gov.au/statistics/industry/building-and-construction/building-approvals-australia
+# Without a region filter, latest() would dump ~570 LGAs. Default to the
+# Australia total — callers narrow to their council of interest.
+latest_defaults:
+  region: AUS
+search_keywords: [building approvals, council building approvals, lga building approvals, dwellings approved, housing supply, construction, new homes, building permits, residential approvals, dwelling units, local government area, council level]
+dimensions:
+  measure:
+    sdmx_id: MEASURE
+    description: What is being measured (defaults to number of dwelling units approved)
+    default: "1"
+    values:
+      dwelling_units: { sdmx_code: "1", description: "Number of dwelling units approved" }
+      value_of_jobs: { sdmx_code: "2", description: "Value of building jobs ($)" }
+      jobs_50k_plus: { sdmx_code: "3", description: "Number of building jobs valued $50k+" }
+  building_type:
+    sdmx_id: BUILDING_TYPE
+    description: Type of building (defaults to total residential)
+    default: "100"
+    values:
+      total_residential: { sdmx_code: "100" }
+      total_dwellings: { sdmx_code: "100" }
+      houses: { sdmx_code: "110" }
+      townhouses: { sdmx_code: "120", description: "Semi-detached, row, terrace, townhouses (total)" }
+      apartments: { sdmx_code: "130", description: "Apartments (total)" }
+      other_residential: { sdmx_code: "150" }
+  sector:
+    sdmx_id: SECTOR
+    description: Owning sector (defaults to private — public-only series have spotty coverage at this geography)
+    default: "1"
+    values:
+      private: { sdmx_code: "1" }
+      public: { sdmx_code: "5" }
+      all_sectors: { sdmx_code: "9" }
+  region:
+    sdmx_id: REGION
+    description: |
+      Local Government Area (council). Defaults to 'AUS' (Australia total).
+      Pass an ASGS LGA 2025 code for a specific council — 579 codes available.
+      Common examples below; any valid LGA code passes through (permissive).
+    permissive: true
+    default: "AUS"
+    values:
+      australia: { sdmx_code: "AUS" }
+      nsw: { sdmx_code: "1" }
+      vic: { sdmx_code: "2" }
+      qld: { sdmx_code: "3" }
+      sa:  { sdmx_code: "4" }
+      wa:  { sdmx_code: "5" }
+      tas: { sdmx_code: "6" }
+      nt:  { sdmx_code: "7" }
+      act: { sdmx_code: "8" }
+      albury: { sdmx_code: "10050" }
+      greater_geelong: { sdmx_code: "22750" }
+      brisbane: { sdmx_code: "31000" }
+      gold_coast: { sdmx_code: "33430" }
+  region_type:
+    sdmx_id: REGION_TYPE
+    description: Geographic granularity — fixed to Local Government Areas for this dataset.
+    hidden: true
+    default: "LGA2025"
+  work_type:
+    sdmx_id: WORK_TYPE
+    hidden: true
+    default: "TOT"
+  frequency:
+    sdmx_id: FREQ
+    hidden: true
+    default: "M"

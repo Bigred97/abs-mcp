@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.13.1 (2026-05-20)
+
+### Added — BA_LGA2024 (council / LGA-level building approvals)
+
+- **New curated dataset `BA_LGA2024`** — building approvals at the **council
+  (Local Government Area) level**, monthly, covering ~570 Australian councils.
+  Far more granular than `BA_GCCSA` (which stops at the 8 capital cities +
+  states). Pass `region=` an ASGS LGA code (e.g. `"10050"` Albury, `"22750"`
+  Greater Geelong) for council-by-council approvals, or use a named shortcut.
+  Region is `permissive: true` so any of the ~570 LGA codes passes through
+  without enumeration (same pattern as `ABS_ANNUAL_ERP_ASGS2021`). Defaults to
+  number of dwelling units approved, total residential, private sector, total
+  work, Australia.
+- **Currency note:** the customer-facing ID stays `BA_LGA2024` (the catalogue
+  name property economists ask for) but resolves via `sdmx_dataflow_id:
+  BA_LGA2025` indirection to ABS's current LGA dataflow. The standalone
+  `BA_LGA2024` SDMX dataflow froze at 2025-06; `BA_LGA2025` carries the live
+  monthly series. Verified current against the live ABS API: Albury (LGA 10050)
+  total-residential approvals **2026-03 = 39** dwelling units. Same
+  alias-indirection pattern as `CPI → CPI_Q` and `BUILDING_APPROVALS → BA_GCCSA`.
+
 ## 0.13.0 (2026-05-20)
 
 ### Added — BUILDING_ACTIVITY (dwelling completions)

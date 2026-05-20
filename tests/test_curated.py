@@ -18,7 +18,42 @@ def test_list_ids_returns_curated_dataflows():
         "C21_G02_SA2", "C21_G02_POA", "RT", "HSI_M",
         "PPI_FD", "C21_G01_POA", "ABS_NOM_VISA_CY", "RES_DWELL_ST", "ITGS",
         "BUSINESS_INDICATORS", "NOM", "BUILDING_APPROVALS", "BUILDING_ACTIVITY",
+        "BA_LGA2024",
     }
+
+
+def test_ba_lga2024_indirects_to_current_lga_dataflow():
+    """`BA_LGA2024` is the customer-facing council-level building-approvals ID;
+    it resolves to ABS's current BA_LGA2025 SDMX dataflow (the standalone
+    BA_LGA2024 dataflow froze at 2025-06)."""
+    cd = curated.get("BA_LGA2024")
+    assert cd is not None
+    assert cd.id == "BA_LGA2024"
+    assert cd.sdmx_dataflow_id == "BA_LGA2025"
+    assert cd.sdmx_id == "BA_LGA2025"
+
+
+def test_ba_lga2024_council_level_defaults():
+    cd = curated.get("BA_LGA2024")
+    sdmx = curated.apply_defaults(cd, {})
+    assert sdmx["MEASURE"] == ["1"]          # number of dwelling units
+    assert sdmx["BUILDING_TYPE"] == ["100"]   # total residential
+    assert sdmx["SECTOR"] == ["1"]            # private
+    assert sdmx["REGION"] == ["AUS"]
+    assert sdmx["REGION_TYPE"] == ["LGA2025"]  # council-level geography
+    assert sdmx["WORK_TYPE"] == ["TOT"]
+    assert sdmx["FREQ"] == ["M"]
+
+
+def test_ba_lga2024_region_is_permissive_for_lga_codes():
+    """Region is permissive so any of the ~570 ASGS LGA codes passes through
+    without enumerating them all (same pattern as ABS_ANNUAL_ERP_ASGS2021)."""
+    cd = curated.get("BA_LGA2024")
+    assert cd.dimensions["region"].permissive is True
+    # named shortcut resolves
+    assert curated.translate_filters(cd, {"region": "albury"}) == {"REGION": ["10050"]}
+    # raw LGA code passes through unchanged (Greater Geelong)
+    assert curated.translate_filters(cd, {"region": "22750"}) == {"REGION": ["22750"]}
 
 
 def test_building_activity_loads_dwelling_completions_defaults():

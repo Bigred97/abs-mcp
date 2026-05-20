@@ -9,6 +9,8 @@
 
 **Ask Claude about the Australian economy and get real, current numbers** — not "I don't have access to that data." This MCP server gives Claude (and other MCP clients like Cursor) live access to the [ABS Data API](https://data.api.abs.gov.au/), with curated mappings for the 10 most-asked Australian economic indicators.
 
+> **Hosted access?** For cross-source queries, webhooks, an always-on REST API, and a uniform response envelope across all 9 sources, see **[ausdata.io](https://ausdata.io)** — free tier available (500 calls/mo, no card).
+
 ![abs-mcp answering "What's the unemployment rate in NSW?" in Claude Desktop](docs/demo.png)
 
 Behind the scenes it wraps SDMX 2.1, but you never see SDMX codes — just plain-English filters like `region: "nsw"` and `measure: "unemployment_rate"`. Five tools, ten curated dataflows (Labour Force, CPI, Wage Price Index, Job Vacancies, Average Weekly Earnings, GDP / National Accounts, quarterly + annual Estimated Resident Population, Building Approvals, Lending Indicators), and 1,200+ other ABS dataflows accessible via raw codes.
@@ -118,6 +120,7 @@ For these curated dataflows, `filters` accepts plain-English values (e.g. `"regi
 - **ERP_Q** — Quarterly Estimated Resident Population, by state/sex/age
 - **BUILDING_APPROVALS** — Building Approvals (cat 8731.0), monthly by state/capital region, building type (houses / townhouses / apartments / total dwellings / non-residential) and measure (number / value). The property-economist "Building Index" series.
 - **BA_GCCSA** — Building Approvals, monthly by state/capital region and building type (raw GCCSA dimension surface; `BUILDING_APPROVALS` is the cleaner alias)
+- **BA_LGA2024** — Building Approvals at the **council (Local Government Area) level**, monthly, ~570 councils — far more granular than BA_GCCSA's 8-capital geography. Pass `region=` an LGA code (e.g. `"10050"` Albury, `"22750"` Greater Geelong) for council-by-council approvals. Resolves to ABS's current `BA_LGA2025` SDMX dataflow so the series stays live.
 - **BUILDING_ACTIVITY** — Building Activity (cat 8752.0), quarterly dwelling units **completed** / commenced / under construction plus value of work, by state and building type. The trailing-reality counterpart to `BUILDING_APPROVALS` — pair the two for approvals-vs-completions, and add `NOM` for the supply-vs-migration story.
 - **NOM** — Net Overseas Migration (cat 3412.0), financial-year arrivals/departures/**net** by state and age. The dominant rents-vs-migration series; publishes the headline net figure to the latest FY.
 - **ABS_NOM_VISA_CY** — NOM by visa subclass (calendar year, student / skilled / working holiday / permanent streams)

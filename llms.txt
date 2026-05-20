@@ -18,7 +18,7 @@ abs-mcp is the Australian Bureau of Statistics (ABS) member of the Australian Pu
 - describe_dataset(dataset_id): Plain-English dimensions, filter values, source URL; surfaces hidden defaults (age 15+, seasonally adjusted, etc.)
 - get_data(dataset_id, filters, start_period, end_period, format): Filtered historical query; supports list filters for multi-state / multi-measure comparisons; format='records'|'series'|'csv'
 - latest(dataset_id, filters): Most recent observation, wraps get_data with lastNObservations=1; 15-minute cache TTL
-- list_curated(): Enumerate curated dataflow IDs (LF, CPI [quarterly cat 6401.0], CPI_MONTHLY [monthly indicator via CPI dataflow FREQ=M, current to 2026-03], WPI, PPI_FD, JV, AWE, ANA_AGG, BUILDING_APPROVALS [cat 8731.0], BA_GCCSA, BUILDING_ACTIVITY [cat 8752.0 quarterly dwelling completions/commencements/under-construction], NOM [cat 3412.0 financial-year net overseas migration], ABS_NOM_VISA_CY [NOM by visa subclass], LEND_HOUSING, ERP_Q, ABS_ANNUAL_ERP_ASGS2021, HSI_M, RT, C21_G01_POA, C21_G02_POA, C21_G02_SA2)
+- list_curated(): Enumerate curated dataflow IDs (LF, CPI [quarterly cat 6401.0], CPI_MONTHLY [monthly indicator via CPI dataflow FREQ=M, current to 2026-03], WPI, PPI_FD, JV, AWE, ANA_AGG, BUILDING_APPROVALS [cat 8731.0], BA_GCCSA, BA_LGA2024 [council/LGA-level building approvals, monthly, ~570 councils, current via BA_LGA2025 dataflow], BUILDING_ACTIVITY [cat 8752.0 quarterly dwelling completions/commencements/under-construction], NOM [cat 3412.0 financial-year net overseas migration], ABS_NOM_VISA_CY [NOM by visa subclass], LEND_HOUSING, ERP_Q, ABS_ANNUAL_ERP_ASGS2021, HSI_M, RT, C21_G01_POA, C21_G02_POA, C21_G02_SA2)
 
 ## Example queries
 
