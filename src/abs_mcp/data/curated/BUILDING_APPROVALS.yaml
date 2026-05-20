@@ -1,0 +1,120 @@
+id: BUILDING_APPROVALS
+sdmx_dataflow_id: BA_GCCSA
+name: Building Approvals
+description: |
+  Monthly building approvals by state and Greater Capital City region, broken
+  down by building type (houses / townhouses / apartments / total dwellings /
+  non-residential) and measure (number of dwelling units, or value of work).
+  Source: ABS Building Approvals, Australia (cat 8731.0), SDMX dataflow
+  BA_GCCSA.
+
+  This is the spine of the property-economist "Building Index" — the recurring
+  "are we approving enough dwellings to house the migration intake?" chart.
+  Pair it with the `NOM` dataset for the approvals-vs-migration narrative.
+
+  Defaults to the headline number: number of dwelling units approved, total
+  residential, private sector, Australia. Override:
+  - `building_type=houses` / `apartments` / `townhouses` / `total_dwellings`
+    / `non_residential`
+  - `measure=value` for the dollar value of building work
+  - `region=greater_sydney` etc. for capital-city splits
+  - `sector=all_sectors` (recommended for non-residential, whose private-only
+    series can be sparse)
+
+  Periods are monthly (e.g. 2026-02, 2026-03). State-level series are published
+  Original (not seasonally adjusted) at this geography.
+update_frequency: monthly
+source_url: https://www.abs.gov.au/statistics/industry/building-and-construction/building-approvals-australia
+search_keywords:
+  - building approvals
+  - dwellings approved
+  - housing supply
+  - construction
+  - new homes
+  - building permits
+  - residential approvals
+  - dwelling units
+  - building index
+  - houses approved
+  - apartments approved
+  - non-residential approvals
+  - value of building work
+  - cat 8731
+  - approvals vs migration
+dimensions:
+  measure:
+    sdmx_id: MEASURE
+    description: What is being measured (defaults to number of dwelling units approved)
+    default: "1"
+    values:
+      dwelling_units: { sdmx_code: "1", description: "Number of dwelling units approved" }
+      value:          { sdmx_code: "2", description: "Value of building jobs ($, thousands)" }
+      jobs_50k_plus:  { sdmx_code: "3", description: "Number of building jobs valued $50,000 or more" }
+  building_type:
+    sdmx_id: BUILDING_TYPE
+    description: |
+      Type of building (defaults to total residential dwellings). For the
+      property "Building Index" use houses vs apartments vs townhouses; use
+      non_residential for commercial/industrial/other-non-residential work.
+    default: "100"
+    values:
+      total_dwellings:    { sdmx_code: "100", description: "Total residential dwellings" }
+      total_residential:  { sdmx_code: "100", description: "Total residential dwellings (alias of total_dwellings)" }
+      houses:             { sdmx_code: "110", description: "Houses (detached)" }
+      townhouses:         { sdmx_code: "120", description: "Semi-detached, row, terrace, townhouses — total" }
+      apartments:         { sdmx_code: "130", description: "Apartments — total (including those attached to a house)" }
+      other_residential:  { sdmx_code: "150", description: "Total other residential" }
+      non_residential:    { sdmx_code: "700", description: "Total non-residential (commercial + industrial + other)" }
+      commercial:         { sdmx_code: "200", description: "Commercial buildings — total" }
+      industrial:         { sdmx_code: "300", description: "Industrial buildings — total" }
+  sector:
+    sdmx_id: SECTOR
+    description: |
+      Owning sector (defaults to private). Use all_sectors for non-residential
+      and total figures — private-only series can be sparse at this geography.
+    default: "1"
+    values:
+      private:     { sdmx_code: "1" }
+      public:      { sdmx_code: "5" }
+      all_sectors: { sdmx_code: "9" }
+  region:
+    sdmx_id: REGION
+    description: State or Greater Capital City Statistical Area (defaults to Australia)
+    default: "AUS"
+    values:
+      australia: { sdmx_code: "AUS" }
+      nsw: { sdmx_code: "1" }
+      vic: { sdmx_code: "2" }
+      qld: { sdmx_code: "3" }
+      sa:  { sdmx_code: "4" }
+      wa:  { sdmx_code: "5" }
+      tas: { sdmx_code: "6" }
+      nt:  { sdmx_code: "7" }
+      act: { sdmx_code: "8" }
+      greater_sydney:    { sdmx_code: "1GSYD" }
+      rest_of_nsw:       { sdmx_code: "1RNSW" }
+      greater_melbourne: { sdmx_code: "2GMEL" }
+      rest_of_vic:       { sdmx_code: "2RVIC" }
+      greater_brisbane:  { sdmx_code: "3GBRI" }
+      rest_of_qld:       { sdmx_code: "3RQLD" }
+      greater_adelaide:  { sdmx_code: "4GADE" }
+  value_band:
+    sdmx_id: VALUE
+    description: Value band of jobs — defaults to Total (all bands).
+    hidden: true
+    default: "1"
+  work_type:
+    sdmx_id: WORK_TYPE
+    description: Type of work — defaults to Total work.
+    hidden: true
+    default: "TOT"
+  adjustment:
+    sdmx_id: TSEST
+    description: BA_GCCSA's series are published Original (TSEST=10) at this geography; SA aren't broken out.
+    hidden: true
+    default: "10"
+  frequency:
+    sdmx_id: FREQ
+    description: ABS frequency code — monthly for this dataflow.
+    hidden: true
+    default: "M"

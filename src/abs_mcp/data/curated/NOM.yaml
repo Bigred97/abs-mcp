@@ -1,0 +1,91 @@
+id: NOM
+sdmx_dataflow_id: NOM_FY
+name: Net Overseas Migration (financial year)
+description: |
+  Net Overseas Migration (NOM) — arrivals, departures, and the published NET
+  flow, by state/territory, age, and sex, on a financial-year grid (year
+  ending 30 June). Source: ABS Net Overseas Migration (cat 3412.0 Migration,
+  Australia), SDMX dataflow NOM_FY.
+
+  Unlike the older `ABS_NOM_VISA_CY` visa-subclass series (which only
+  publishes arrivals and departures and stops at 2022), this dataset
+  publishes the headline NET figure directly and runs to the most recent
+  financial year (FY2025 = year ending 30 June 2025). It is the canonical
+  series for "is the migration intake outrunning housing supply?" — the
+  dominant rents/immigration chart of 2024-26.
+
+  Defaults to NET migration, all ages, persons, Australia. Pass
+  `direction=arrivals` or `direction=departures` for the gross flows, or
+  `region=nsw` etc. for a state. For the visa-subclass breakdown (student,
+  skilled, working holiday, permanent skill/family) use the companion
+  `ABS_NOM_VISA_CY` dataset; for calendar-year periods use the raw `NOM_CY`
+  dataflow via search/describe.
+
+  Periods are annual (e.g. 2025 = financial year ending 30 June 2025).
+update_frequency: annual
+source_url: https://www.abs.gov.au/statistics/people/population/overseas-migration
+search_keywords:
+  - net overseas migration
+  - nom
+  - migration
+  - immigration
+  - net migration
+  - migration intake
+  - arrivals
+  - departures
+  - population growth migration
+  - rents migration
+  - housing migration
+  - migration vs housing
+  - cat 3412
+  - migration australia
+dimensions:
+  direction:
+    sdmx_id: MEASURE
+    description: |
+      Direction of migration flow (defaults to Net Overseas Migration — the
+      headline figure). 'net' = arrivals minus departures; use 'arrivals' or
+      'departures' for the gross flows.
+    default: "3"
+    values:
+      net:        { sdmx_code: "3", description: "Net Overseas Migration (arrivals minus departures) — the headline figure" }
+      arrivals:   { sdmx_code: "1", description: "NOM arrivals" }
+      departures: { sdmx_code: "2", description: "NOM departures" }
+  region:
+    sdmx_id: REGION
+    description: State or territory (defaults to Australia for the national NOM total)
+    default: "AUS"
+    values:
+      australia: { sdmx_code: "AUS" }
+      nsw: { sdmx_code: "1" }
+      vic: { sdmx_code: "2" }
+      qld: { sdmx_code: "3" }
+      sa:  { sdmx_code: "4" }
+      wa:  { sdmx_code: "5" }
+      tas: { sdmx_code: "6" }
+      nt:  { sdmx_code: "7" }
+      act: { sdmx_code: "8" }
+      other_territories: { sdmx_code: "9" }
+  age:
+    sdmx_id: AGE
+    description: |
+      Age band — defaults to All ages (the headline total). 5-year bands are
+      queryable via the raw SDMX codes (e.g. A20 = 20-24, A25 = 25-29, A30 =
+      30-34); see ABS cat 3412.0 for the full age codelist. Hidden by default
+      so the headline NOM number stays clean.
+    hidden: true
+    default: "TOT"
+  sex:
+    sdmx_id: SEX
+    description: Sex (defaults to Persons — both sexes combined)
+    hidden: true
+    default: "3"
+    values:
+      persons: { sdmx_code: "3" }
+      males:   { sdmx_code: "1" }
+      females: { sdmx_code: "2" }
+  frequency:
+    sdmx_id: FREQ
+    description: ABS frequency code — annual (financial year) for this dataflow.
+    hidden: true
+    default: "A"

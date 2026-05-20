@@ -17,7 +17,7 @@ def test_list_ids_returns_curated_dataflows():
         "LEND_HOUSING", "WPI", "JV", "ANA_AGG", "AWE", "ERP_Q",
         "C21_G02_SA2", "C21_G02_POA", "RT", "HSI_M",
         "PPI_FD", "C21_G01_POA", "ABS_NOM_VISA_CY", "RES_DWELL_ST", "ITGS",
-        "BUSINESS_INDICATORS",
+        "BUSINESS_INDICATORS", "NOM", "BUILDING_APPROVALS",
     }
 
 
@@ -476,3 +476,82 @@ def test_hidden_dim_filter_message_points_to_describe_dataset():
     lf = curated.get("LF")
     with pytest.raises(ValueError, match=r"describe endpoint or describe tool.*'LF'"):
         curated.translate_filters(lf, {"age": "15-19"})
+
+
+# ---- 0.12.0: NOM (current financial-year NOM) + BUILDING_APPROVALS ----
+
+
+def test_nom_indirects_to_nom_fy_sdmx_dataflow():
+    """The user-facing `NOM` dataset resolves to the SDMX `NOM_FY` dataflow,
+    which publishes the headline NET figure directly and runs to the latest
+    financial year (unlike the stale visa-subclass `ABS_NOM_VISA_CY`)."""
+    cd = curated.get("NOM")
+    assert cd is not None
+    assert cd.id == "NOM"
+    assert cd.sdmx_dataflow_id == "NOM_FY"
+    assert cd.sdmx_id == "NOM_FY"
+
+
+def test_nom_headline_defaults_to_net_persons_all_ages_australia():
+    cd = curated.get("NOM")
+    sdmx = curated.apply_defaults(cd, {})
+    assert sdmx["MEASURE"] == ["3"]   # Net Overseas Migration
+    assert sdmx["REGION"] == ["AUS"]
+    assert sdmx["AGE"] == ["TOT"]
+    assert sdmx["SEX"] == ["3"]        # Persons
+    assert sdmx["FREQ"] == ["A"]
+
+
+def test_nom_direction_translates_arrivals_departures_net():
+    cd = curated.get("NOM")
+    assert curated.translate_filters(cd, {"direction": "net"}) == {"MEASURE": ["3"]}
+    assert curated.translate_filters(cd, {"direction": "arrivals"}) == {"MEASURE": ["1"]}
+    assert curated.translate_filters(cd, {"direction": "departures"}) == {"MEASURE": ["2"]}
+
+
+def test_nom_region_translates_state_name():
+    cd = curated.get("NOM")
+    assert curated.translate_filters(cd, {"region": "Victoria"}) == {"REGION": ["2"]}
+
+
+def test_nom_sex_is_hidden_and_defaults_persons():
+    cd = curated.get("NOM")
+    assert cd.dimensions["sex"].hidden is True
+    assert cd.dimensions["sex"].default == "3"
+
+
+def test_building_approvals_indirects_to_ba_gccsa():
+    """`BUILDING_APPROVALS` is the clean user-facing name for the BA_GCCSA
+    dataflow with the property-economist building-type breakdown."""
+    cd = curated.get("BUILDING_APPROVALS")
+    assert cd is not None
+    assert cd.id == "BUILDING_APPROVALS"
+    assert cd.sdmx_dataflow_id == "BA_GCCSA"
+    assert cd.sdmx_id == "BA_GCCSA"
+
+
+def test_building_approvals_headline_defaults():
+    cd = curated.get("BUILDING_APPROVALS")
+    sdmx = curated.apply_defaults(cd, {})
+    assert sdmx["MEASURE"] == ["1"]         # number of dwelling units
+    assert sdmx["BUILDING_TYPE"] == ["100"]  # total residential
+    assert sdmx["SECTOR"] == ["1"]           # private
+    assert sdmx["REGION"] == ["AUS"]
+    assert sdmx["TSEST"] == ["10"]           # original (no SA at this geography)
+    assert sdmx["FREQ"] == ["M"]
+
+
+def test_building_approvals_building_type_translation():
+    cd = curated.get("BUILDING_APPROVALS")
+    assert curated.translate_filters(cd, {"building_type": "houses"}) == {"BUILDING_TYPE": ["110"]}
+    assert curated.translate_filters(cd, {"building_type": "apartments"}) == {"BUILDING_TYPE": ["130"]}
+    assert curated.translate_filters(cd, {"building_type": "townhouses"}) == {"BUILDING_TYPE": ["120"]}
+    assert curated.translate_filters(cd, {"building_type": "non_residential"}) == {"BUILDING_TYPE": ["700"]}
+    assert curated.translate_filters(cd, {"building_type": "total_dwellings"}) == {"BUILDING_TYPE": ["100"]}
+
+
+def test_building_approvals_measure_and_region_translation():
+    cd = curated.get("BUILDING_APPROVALS")
+    assert curated.translate_filters(cd, {"measure": "value"}) == {"MEASURE": ["2"]}
+    assert curated.translate_filters(cd, {"region": "greater_sydney"}) == {"REGION": ["1GSYD"]}
+    assert curated.translate_filters(cd, {"sector": "all_sectors"}) == {"SECTOR": ["9"]}

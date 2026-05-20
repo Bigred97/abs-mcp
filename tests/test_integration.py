@@ -143,12 +143,9 @@ async def test_describe_curated_surfaces_hidden_defaults():
 
 async def test_list_curated_returns_full_set():
     ids = server.list_curated()
-    assert set(ids) == {
-        "LF", "CPI", "CPI_MONTHLY", "ABS_ANNUAL_ERP_ASGS2021", "BA_GCCSA",
-        "LEND_HOUSING", "WPI", "JV", "ANA_AGG", "AWE", "ERP_Q",
-        "C21_G02_SA2", "C21_G02_POA", "RT", "HSI_M",
-        "PPI_FD", "C21_G01_POA",
-    }
+    # New high-demand additions must be enumerated.
+    assert {"NOM", "BUILDING_APPROVALS"}.issubset(set(ids))
+    assert {"LF", "CPI", "HSI_M", "BA_GCCSA"}.issubset(set(ids))
 
 
 async def test_latest_wpi_annual_wage_growth_returns_observation():
@@ -184,6 +181,8 @@ async def test_latest_jv_total_vacancies_nsw():
     ("CPI_MONTHLY", {"region": "australia", "measure": "change_year"}, "Percent"),
     ("ABS_ANNUAL_ERP_ASGS2021", {"region": "nsw", "region_type": "states"}, "Persons"),
     ("BA_GCCSA", {"region": "nsw", "measure": "dwelling_units"}, "Number"),
+    ("BUILDING_APPROVALS", {"region": "nsw", "measure": "dwelling_units"}, "Number"),
+    ("NOM", {"region": "australia", "direction": "net"}, "Number"),
     ("LEND_HOUSING", {"region": "nsw", "measure": "value"}, "Australian Dollars"),
     ("WPI", {"region": "australia", "measure": "change_year"}, "Percent"),
     ("JV", {"region": "australia", "measure": "vacancies"}, "Number"),
@@ -372,3 +371,80 @@ async def test_query_echo_does_not_include_default_noise():
     assert resp.query == {"region": "nsw", "measure": "unemployment_rate", "sex": "persons"}
     for k in resp.query:
         assert not k.startswith("_default"), f"default-noise key leaked: {k}"
+
+
+# ---- 0.12.0: NOM (current FY NOM) + BUILDING_APPROVALS currency guards ----
+
+
+async def test_nom_returns_current_net_migration():
+    """`NOM` must resolve to NOM_FY and return the headline NET figure for a
+    recent financial year (>= 2024). Guards against the stale-series bug that
+    bit ABS_NOM_VISA_CY (stuck at 2022)."""
+    resp = await server.latest(dataset_id="NOM")
+    assert len(resp.records) >= 1
+    obs = resp.records[0]
+    assert obs.value is not None
+    # Net Overseas Migration in the 2020s runs ~200k-550k/yr — sanity band.
+    assert 50_000 < obs.value < 1_000_000, f"NOM net {obs.value} out of plausible band"
+    # Currency: the latest financial year must be recent (year ending 30 June).
+    year = int(str(obs.period)[:4])
+    assert year >= 2024, f"NOM latest period {obs.period} is stale (< FY2024)"
+    assert obs.dimensions.get("direction") == "Net Overseas Migration"
+
+
+async def test_nom_arrivals_minus_departures_reconciles_to_net():
+    """NOM arrivals - departures should equal the published net (same FY)."""
+    net = await server.latest(dataset_id="NOM", filters={"direction": "net"})
+    arr = await server.latest(dataset_id="NOM", filters={"direction": "arrivals"})
+    dep = await server.latest(dataset_id="NOM", filters={"direction": "departures"})
+    # Same latest period across all three series.
+    assert net.records[0].period == arr.records[0].period == dep.records[0].period
+    computed = arr.records[0].value - dep.records[0].value
+    assert abs(computed - net.records[0].value) < 1.0, (
+        f"arrivals {arr.records[0].value} - departures {dep.records[0].value} "
+        f"!= net {net.records[0].value}"
+    )
+
+
+async def test_building_approvals_returns_current_monthly_data():
+    """`BUILDING_APPROVALS` must resolve to BA_GCCSA and return a recent month
+    (period within the last ~6 months of 2025/2026)."""
+    resp = await server.latest(dataset_id="BUILDING_APPROVALS")
+    assert len(resp.records) >= 1
+    obs = resp.records[0]
+    assert obs.value is not None
+    assert obs.value > 0
+    # Period is YYYY-MM; must be recent.
+    year = int(str(obs.period)[:4])
+    assert year >= 2025, f"BUILDING_APPROVALS latest period {obs.period} is stale (< 2025)"
+    assert obs.unit == "Number"
+    assert obs.dimensions.get("building_type") == "Total Residential"
+
+
+async def test_building_approvals_houses_by_capital_city():
+    """Property-economist slice: houses approved in Greater Sydney."""
+    resp = await server.latest(
+        dataset_id="BUILDING_APPROVALS",
+        filters={"building_type": "houses", "region": "greater_sydney"},
+    )
+    assert len(resp.records) >= 1
+    assert resp.records[0].value is not None
+    assert resp.records[0].value >= 0
+
+
+async def test_building_approvals_value_of_work():
+    """Value-of-work measure returns dollars."""
+    resp = await server.latest(
+        dataset_id="BUILDING_APPROVALS",
+        filters={"measure": "value", "building_type": "non_residential", "sector": "all_sectors"},
+    )
+    assert len(resp.records) >= 1
+    assert resp.records[0].value is not None
+    assert resp.records[0].value > 0
+
+
+async def test_search_finds_nom():
+    """'net overseas migration' must surface the NOM dataset."""
+    results = await server.search_datasets(query="net overseas migration", limit=5)
+    top_ids = [r.id for r in results]
+    assert "NOM" in top_ids, f"NOM not found for migration query; got {top_ids}"

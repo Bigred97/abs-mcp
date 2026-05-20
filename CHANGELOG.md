@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.12.0 (2026-05-20)
+
+### Added
+- **BUILDING_APPROVALS** — ABS Building Approvals (cat 8731.0, SDMX `BA_GCCSA`).
+  Monthly dwelling approvals by state/Greater Capital City × building type ×
+  measure. The spine of the property-economist "Building Index" narrative.
+  Latest period verified current (2026-03).
+- **NOM** — ABS Net Overseas Migration (cat 3412.0, SDMX `NOM_FY`). Arrivals,
+  departures, and the published NET flow by state × age × sex, financial-year
+  grid. Publishes the headline NET figure directly and runs to FY2025 — the
+  canonical migration-vs-housing series. (The older `ABS_NOM_VISA_CY` visa
+  series remains for the visa-subclass breakdown.)
+
+Both map to the highest-evidenced unmet AU-data demand (housing supply vs
+migration). Household Spending is already served by the existing `HSI_M`
+(Monthly Household Spending Indicator, verified current 2026-03).
+
+
 ## [0.11.15] — 2026-05-19
 
 ### Fixed
