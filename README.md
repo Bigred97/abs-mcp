@@ -118,6 +118,7 @@ For these curated dataflows, `filters` accepts plain-English values (e.g. `"regi
 - **ERP_Q** — Quarterly Estimated Resident Population, by state/sex/age
 - **BUILDING_APPROVALS** — Building Approvals (cat 8731.0), monthly by state/capital region, building type (houses / townhouses / apartments / total dwellings / non-residential) and measure (number / value). The property-economist "Building Index" series.
 - **BA_GCCSA** — Building Approvals, monthly by state/capital region and building type (raw GCCSA dimension surface; `BUILDING_APPROVALS` is the cleaner alias)
+- **BUILDING_ACTIVITY** — Building Activity (cat 8752.0), quarterly dwelling units **completed** / commenced / under construction plus value of work, by state and building type. The trailing-reality counterpart to `BUILDING_APPROVALS` — pair the two for approvals-vs-completions, and add `NOM` for the supply-vs-migration story.
 - **NOM** — Net Overseas Migration (cat 3412.0), financial-year arrivals/departures/**net** by state and age. The dominant rents-vs-migration series; publishes the headline net figure to the latest FY.
 - **ABS_NOM_VISA_CY** — NOM by visa subclass (calendar year, student / skilled / working holiday / permanent streams)
 - **LEND_HOUSING** — Lending Indicators, quarterly new housing loan commitments by purpose, lender, and state
@@ -186,6 +187,7 @@ ABS uses different period formats per dataflow. Pass `start_period` / `end_perio
 | Dataflows | Frequency | Format | Example |
 |---|---|---|---|
 | LF, BA_GCCSA, BUILDING_APPROVALS | Monthly | `YYYY-MM` | `"2026-03"` |
+| BUILDING_ACTIVITY | Quarterly | `YYYY-Qn` | `"2025-Q4"` |
 | CPI, WPI, PPI_FD, JV, ANA_AGG, LEND_HOUSING, ERP_Q | Quarterly | `YYYY-Q*` | `"2025-Q4"` |
 | CPI_MONTHLY, HSI_M | Monthly | `YYYY-MM` | `"2025-12"` |
 | AWE | Half-yearly | `YYYY-S*` | `"2025-S2"` |

@@ -1,0 +1,130 @@
+id: BUILDING_ACTIVITY
+sdmx_dataflow_id: BUILDING_ACTIVITY
+name: Building Activity
+description: |
+  Quarterly building activity — what is actually being built, completed, and
+  under construction (as opposed to merely approved). Sourced from ABS Building
+  Activity, Australia (cat 8752.0), SDMX dataflow BUILDING_ACTIVITY.
+
+  Where BUILDING_APPROVALS is the leading indicator (a council green-lights a
+  dwelling), BUILDING_ACTIVITY is the trailing reality: dwelling units
+  commenced, completed, and under construction, plus the dollar value of work
+  done / commenced / completed. This completes the housing-supply story —
+  approvals (pipeline) → completions (delivered stock).
+
+  Defaults to the headline number: number of dwelling units completed, total
+  residential, all sectors, Australia, current price, original series. Override:
+  - `measure=dwelling_commencements` / `dwelling_under_construction`
+  - `measure=value_work_done` / `value_work_completed` / `value_work_commenced`
+    for the dollar value of building work ($, thousands)
+  - `building_type=houses` / `apartments` / `townhouses` / `non_residential`
+  - `region=nsw` etc. for state splits
+  - `sector=private` / `public` (defaults to all_sectors)
+
+  Periods are quarterly (e.g. 2025-Q3, 2025-Q4). Pair with BUILDING_APPROVALS
+  for the approvals-vs-completions narrative and NOM for the
+  supply-vs-migration story.
+update_frequency: quarterly
+source_url: https://www.abs.gov.au/statistics/industry/building-and-construction/building-activity-australia
+search_keywords:
+  - building activity
+  - dwelling completions
+  - dwellings completed
+  - dwelling commencements
+  - dwellings commenced
+  - dwellings under construction
+  - housing supply
+  - housing completions
+  - homes built
+  - construction activity
+  - value of work done
+  - completions vs approvals
+  - cat 8752
+dimensions:
+  measure:
+    sdmx_id: MEASURE
+    description: |
+      What is being measured (defaults to number of dwelling units completed —
+      the headline "homes actually built" figure). Value measures are in
+      $ thousands; dwelling measures are counts.
+    default: "M7"
+    values:
+      dwelling_completions:        { sdmx_code: "M7", description: "Number of dwelling units completed" }
+      dwelling_commencements:      { sdmx_code: "M6", description: "Number of dwelling units commenced" }
+      dwelling_under_construction: { sdmx_code: "M8", description: "Number of dwelling units under construction" }
+      value_work_done:            { sdmx_code: "M1", description: "Value of work done during quarter ($, thousands)" }
+      value_work_yet_to_be_done:  { sdmx_code: "M2", description: "Value of work yet to be done ($, thousands)" }
+      value_work_commenced:       { sdmx_code: "M3", description: "Value of work commenced ($, thousands)" }
+      value_work_completed:       { sdmx_code: "M4", description: "Value of work completed ($, thousands)" }
+      value_work_under_construction: { sdmx_code: "M5", description: "Value of work under construction ($, thousands)" }
+  region:
+    sdmx_id: REGION
+    description: State or territory (defaults to Australia)
+    default: "AUS"
+    values:
+      australia: { sdmx_code: "AUS" }
+      nsw: { sdmx_code: "1" }
+      vic: { sdmx_code: "2" }
+      qld: { sdmx_code: "3" }
+      sa:  { sdmx_code: "4" }
+      wa:  { sdmx_code: "5" }
+      tas: { sdmx_code: "6" }
+      nt:  { sdmx_code: "7" }
+      act: { sdmx_code: "8" }
+      other_territories: { sdmx_code: "9" }
+  building_type:
+    sdmx_id: TYPE_BLDG
+    description: |
+      Type of building (defaults to total residential dwellings). Use houses vs
+      apartments vs townhouses for the residential mix; use non_residential for
+      commercial/industrial/other-non-residential work.
+    default: "100"
+    values:
+      total_dwellings:    { sdmx_code: "100", description: "Total residential dwellings" }
+      total_residential:  { sdmx_code: "100", description: "Total residential dwellings (alias of total_dwellings)" }
+      houses:             { sdmx_code: "110", description: "Houses (detached)" }
+      townhouses:         { sdmx_code: "120", description: "Semi-detached, row, terrace, townhouses — total" }
+      apartments:         { sdmx_code: "130", description: "Flats, units or apartments — total (including those attached to a house)" }
+      other_residential:  { sdmx_code: "150", description: "Total other residential" }
+      all_buildings:      { sdmx_code: "TOT", description: "All buildings (residential + non-residential)" }
+      non_residential:    { sdmx_code: "700", description: "Total non-residential (commercial + industrial + other)" }
+      commercial:         { sdmx_code: "200", description: "Commercial buildings — total" }
+      industrial:         { sdmx_code: "300", description: "Industrial buildings — total" }
+  sector:
+    sdmx_id: SECTOR_OWN
+    description: Owning sector (defaults to all sectors)
+    default: "9"
+    values:
+      all_sectors: { sdmx_code: "9" }
+      private:     { sdmx_code: "1" }
+      public:      { sdmx_code: "5" }
+  price_basis:
+    sdmx_id: PRICE_ADJ
+    description: |
+      Price basis for value measures (defaults to current price). Ignored for
+      dwelling-count measures. Use chain_volume for real (volume) terms.
+    default: "CUR"
+    values:
+      current_price: { sdmx_code: "CUR", description: "Current price" }
+      chain_volume:  { sdmx_code: "CVM", description: "Chain volume measures (real)" }
+      deflator:      { sdmx_code: "IPD", description: "Implicit price deflator" }
+  work_type:
+    sdmx_id: BLD_WORK_TYPE
+    description: Type of building work — defaults to Total work.
+    hidden: true
+    default: "TOT"
+  adjustment:
+    sdmx_id: TSEST
+    description: |
+      Time-series treatment (defaults to Original). Pass seasonally_adjusted
+      for the SA series or trend for the trend series.
+    default: "10"
+    values:
+      original: { sdmx_code: "10", description: "Original (NSA) — the official figure" }
+      seasonally_adjusted: { sdmx_code: "20", description: "Seasonally adjusted" }
+      trend: { sdmx_code: "30", description: "Trend" }
+  frequency:
+    sdmx_id: FREQ
+    description: ABS frequency code — quarterly for this dataflow.
+    hidden: true
+    default: "Q"

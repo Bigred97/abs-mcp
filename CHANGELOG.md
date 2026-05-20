@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.13.0 (2026-05-20)
+
+### Added — BUILDING_ACTIVITY (dwelling completions)
+
+- **New curated dataset `BUILDING_ACTIVITY`** (ABS cat 8752.0, SDMX dataflow
+  `BUILDING_ACTIVITY`). Where `BUILDING_APPROVALS` is the leading indicator
+  (dwellings green-lit), `BUILDING_ACTIVITY` is the trailing reality:
+  dwelling units **completed**, commenced, and under construction, plus the
+  dollar value of work done / commenced / completed. Completes the
+  housing-supply story — approvals (pipeline) → completions (delivered stock).
+  Defaults to number of dwelling units completed, total residential, all
+  sectors, Australia, current price, original series. Verified current against
+  the live ABS API: **2025-Q4 = 47,802** total-residential dwelling completions.
+  Quarterly cadence. Pairs with `BUILDING_APPROVALS` for the
+  approvals-vs-completions narrative and `NOM` for supply-vs-migration.
+
+### Confirmed — CPI_MONTHLY currency fix (ships the 0.12.1 re-point)
+
+- The 0.12.1 re-point of `CPI_MONTHLY` from the frozen `CPI_M` dataflow
+  (stuck at 2025-09) to the live `CPI` dataflow (FREQ=M) was never published
+  to PyPI. This release ships it. Re-verified against the live ABS API: the
+  default key (`MEASURE=3`, `INDEX=10001`, `TSEST=10`, `REGION=50`, `FREQ=M`)
+  now returns **2026-03 = 4.6%** annual (2026-02 = 3.7%, 2026-01 = 3.8%).
+  The old `CPI_M` dataflow remains frozen at 2025-09 (re-confirmed). Added a
+  BUILDING_ACTIVITY currency-guard live test alongside the existing
+  CPI_MONTHLY guard.
+
 ## 0.12.1 (2026-05-20)
 
 ### Fixed — data-currency + integrity audit (two stale/broken datasets)

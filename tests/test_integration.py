@@ -92,6 +92,28 @@ async def test_cpi_monthly_is_current_not_frozen():
     )
 
 
+async def test_building_activity_is_current_dwelling_completions():
+    """Currency guard: BUILDING_ACTIVITY (cat 8752.0) must return a RECENT
+    quarter of dwelling completions, not a stale endpoint. Quarterly data
+    publishes with a lag, so we tolerate up to 3 quarters (~9 months) behind
+    today but catch a multi-year freeze. Also asserts a plausible positive
+    completion count (national quarterly completions run ~35k-50k)."""
+    from datetime import UTC, datetime
+
+    resp = await server.latest(dataset_id="BUILDING_ACTIVITY")
+    assert resp.records, "BUILDING_ACTIVITY returned no records"
+    period = resp.period.get("end")
+    assert period and "-Q" in period, f"expected quarterly period, got {period!r}"
+    py, pq = int(period[:4]), int(period.split("-Q")[1])
+    now = datetime.now(UTC)
+    now_q = (now.month - 1) // 3 + 1
+    quarters_behind = (now.year - py) * 4 + (now_q - pq)
+    assert quarters_behind <= 3, (
+        f"BUILDING_ACTIVITY latest period {period} is {quarters_behind} quarters "
+        f"behind today ({now.year}-Q{now_q}) — looks frozen/stale."
+    )
+
+
 async def test_describe_non_curated_dataflow_returns_translated_metadata():
     """Brief-required: a non-curated dataflow returns valid translated metadata."""
     # Pick a dataflow that exists but isn't in our curated set.
@@ -172,7 +194,7 @@ async def test_describe_curated_surfaces_hidden_defaults():
 async def test_list_curated_returns_full_set():
     ids = server.list_curated()
     # New high-demand additions must be enumerated.
-    assert {"NOM", "BUILDING_APPROVALS"}.issubset(set(ids))
+    assert {"NOM", "BUILDING_APPROVALS", "BUILDING_ACTIVITY"}.issubset(set(ids))
     assert {"LF", "CPI", "HSI_M", "BA_GCCSA"}.issubset(set(ids))
 
 

@@ -17,8 +17,59 @@ def test_list_ids_returns_curated_dataflows():
         "LEND_HOUSING", "WPI", "JV", "ANA_AGG", "AWE", "ERP_Q",
         "C21_G02_SA2", "C21_G02_POA", "RT", "HSI_M",
         "PPI_FD", "C21_G01_POA", "ABS_NOM_VISA_CY", "RES_DWELL_ST", "ITGS",
-        "BUSINESS_INDICATORS", "NOM", "BUILDING_APPROVALS",
+        "BUSINESS_INDICATORS", "NOM", "BUILDING_APPROVALS", "BUILDING_ACTIVITY",
     }
+
+
+def test_building_activity_loads_dwelling_completions_defaults():
+    """BUILDING_ACTIVITY defaults to dwelling completions, total residential,
+    all sectors, Australia, quarterly — the headline 'homes actually built'
+    figure that pairs with BUILDING_APPROVALS for the supply story."""
+    cd = curated.get("BUILDING_ACTIVITY")
+    assert cd is not None
+    assert cd.id == "BUILDING_ACTIVITY"
+    assert cd.sdmx_dataflow_id == "BUILDING_ACTIVITY"
+    assert cd.dimensions["measure"].default == "M7"  # Dwelling units completed
+    assert cd.dimensions["measure"].values["dwelling_completions"].sdmx_code == "M7"
+    assert cd.dimensions["building_type"].default == "100"  # Total residential
+    assert cd.dimensions["sector"].default == "9"  # All sectors
+    assert cd.dimensions["region"].default == "AUS"
+    assert cd.dimensions["frequency"].default == "Q"
+    assert cd.dimensions["frequency"].hidden is True
+
+
+def test_building_activity_filter_translation_completions():
+    """Plain-English filters for dwelling completions translate to the live
+    SDMX codes verified against the ABS API (M7.AUS.CUR.TOT.9.100.10.Q
+    returns 2025-Q4 = 47,802 total-residential completions)."""
+    cd = curated.get("BUILDING_ACTIVITY")
+    out = curated.translate_filters(
+        cd,
+        {
+            "measure": "dwelling_completions",
+            "region": "nsw",
+            "building_type": "apartments",
+            "sector": "private",
+        },
+    )
+    assert out["MEASURE"] == ["M7"]
+    assert out["REGION"] == ["1"]
+    assert out["TYPE_BLDG"] == ["130"]
+    assert out["SECTOR_OWN"] == ["1"]
+
+
+def test_building_activity_defaults_inject_hidden_dims():
+    cd = curated.get("BUILDING_ACTIVITY")
+    out = curated.translate_filters(cd, {})
+    out = curated.apply_defaults(cd, out)
+    assert out["MEASURE"] == ["M7"]
+    assert out["REGION"] == ["AUS"]
+    assert out["TYPE_BLDG"] == ["100"]
+    assert out["SECTOR_OWN"] == ["9"]
+    assert out["PRICE_ADJ"] == ["CUR"]
+    assert out["BLD_WORK_TYPE"] == ["TOT"]
+    assert out["TSEST"] == ["10"]
+    assert out["FREQ"] == ["Q"]
 
 
 def test_cpi_indirects_to_quarterly_sdmx_dataflow():

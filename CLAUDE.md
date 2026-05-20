@@ -17,15 +17,24 @@ plus the cross-sister discipline.
 | PyPI package | `abs-mcp` |
 | GitHub | https://github.com/Bigred97/abs-mcp |
 
-## Curated datasets (17)
+## Curated datasets
 
-LF · **CPI** (quarterly, cat 6401.0, headline inflation) · **CPI_MONTHLY** (cat 6484.0, monthly indicator with sub-categories + cities) · WPI · PPI_FD · JV · AWE · ANA_AGG · BA_GCCSA · LEND_HOUSING · ERP_Q · ABS_ANNUAL_ERP_ASGS2021 · C21_G01_POA · C21_G02_SA2 · C21_G02_POA · RT (historical, ceased Jul 2025) · HSI_M (live RT replacement)
+LF · **CPI** (quarterly, cat 6401.0, headline inflation) · **CPI_MONTHLY** (monthly indicator with sub-categories + cities) · WPI · PPI_FD · JV · AWE · ANA_AGG · BA_GCCSA · BUILDING_APPROVALS · **BUILDING_ACTIVITY** (cat 8752.0, quarterly dwelling completions/commencements) · NOM · ABS_NOM_VISA_CY · LEND_HOUSING · ERP_Q · ABS_ANNUAL_ERP_ASGS2021 · C21_G01_POA · C21_G02_SA2 · C21_G02_POA · RT (historical, ceased Jul 2025) · HSI_M (live RT replacement)
 
 CPI ↔ CPI_MONTHLY: the curated `CPI` dataset uses `sdmx_dataflow_id: CPI_Q`
 indirection — customer-facing `CPI` resolves to ABS's quarterly cat 6401.0
 product (so periods join WPI, ANA_AGG, PPI_FD on the quarterly grid).
 Customers who want the monthly indicator (sub-category breakdown, per-city
-series, faster cadence) call `CPI_MONTHLY` which maps to SDMX `CPI_M`.
+series, faster cadence) call `CPI_MONTHLY` which maps to the SDMX `CPI`
+dataflow keyed by FREQ=M. NOTE (2026): the old standalone `CPI_M` indicator
+dataflow (cat 6484.0) FROZE at 2025-09 when ABS relaunched the complete
+monthly CPI inside the main `CPI` dataflow; CPI_MONTHLY was re-pointed at
+`CPI` (FREQ=M) in 0.12.1/0.13.0 so it stays current. Do NOT revert to `CPI_M`.
+
+BUILDING_APPROVALS (leading, monthly, cat 8731.0) ↔ BUILDING_ACTIVITY
+(trailing, quarterly, cat 8752.0): approvals are the pipeline, activity is
+the delivered stock (completions). Pair both + NOM for the housing
+supply-vs-migration story.
 
 ## Repo-specific module set
 
