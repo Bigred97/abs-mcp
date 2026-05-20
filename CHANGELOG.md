@@ -1,10 +1,17 @@
 # Changelog
 
-## 0.13.1 (2026-05-20)
+## 0.13.2 (2026-05-20)
 
-### Added
-- **BA_LGA2024** curated dataset — council-level (Local Government Area) building approvals, ~570 councils, monthly. Resolves to ABS's current `BA_LGA2025` SDMX dataflow (the standalone `BA_LGA2024` dataflow froze at 2025-06). Far more granular than `BA_GCCSA` (8 capital cities). Serves suburb/council-level housing-supply analysis.
+### Fixed — BA_LGA2024 no-filter default
 
+- BA_LGA2024 defaulted `region` to the Australia total (`AUS`) paired with the
+  council geography (`REGION_TYPE=LGA2025`), but the AUS/state aggregates live
+  under `REGION_TYPE=AUS` in the source dataflow — so a no-filter
+  `get_data`/`latest` call built a mismatched SDMX key and the ABS API returned
+  404. Default `region` is now **Brisbane (LGA 31000)**, the highest-volume
+  council, so a no-filter call returns real council data. This is a
+  council-level dataset; for state / national totals use `BUILDING_APPROVALS`
+  (BA_GCCSA). Verified: Brisbane total-residential approvals 2026-03 = 768.
 
 ## 0.13.1 (2026-05-20)
 
@@ -14,18 +21,15 @@
   (Local Government Area) level**, monthly, covering ~570 Australian councils.
   Far more granular than `BA_GCCSA` (which stops at the 8 capital cities +
   states). Pass `region=` an ASGS LGA code (e.g. `"10050"` Albury, `"22750"`
-  Greater Geelong) for council-by-council approvals, or use a named shortcut.
+  Greater Geelong, `"31000"` Brisbane) for council-by-council approvals, or use
+  a named shortcut.
   Region is `permissive: true` so any of the ~570 LGA codes passes through
-  without enumeration (same pattern as `ABS_ANNUAL_ERP_ASGS2021`). Defaults to
-  number of dwelling units approved, total residential, private sector, total
-  work, Australia.
-- **Currency note:** the customer-facing ID stays `BA_LGA2024` (the catalogue
-  name property economists ask for) but resolves via `sdmx_dataflow_id:
-  BA_LGA2025` indirection to ABS's current LGA dataflow. The standalone
-  `BA_LGA2024` SDMX dataflow froze at 2025-06; `BA_LGA2025` carries the live
-  monthly series. Verified current against the live ABS API: Albury (LGA 10050)
-  total-residential approvals **2026-03 = 39** dwelling units. Same
-  alias-indirection pattern as `CPI → CPI_Q` and `BUILDING_APPROVALS → BA_GCCSA`.
+  without enumeration (same pattern as `ABS_ANNUAL_ERP_ASGS2021`).
+  Resolves via `sdmx_dataflow_id: BA_LGA2025` indirection to ABS's current LGA
+  dataflow (the standalone `BA_LGA2024` dataflow froze at 2025-06; `BA_LGA2025`
+  carries the live monthly series — latest 2026-03). Same alias-indirection
+  pattern as `CPI → CPI_Q` and `BUILDING_APPROVALS → BA_GCCSA`. Verified current
+  against the live ABS API: Albury (LGA 10050) 2026-03 = 39 dwelling units.
 
 ## 0.13.0 (2026-05-20)
 

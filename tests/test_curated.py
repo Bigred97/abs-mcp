@@ -39,7 +39,7 @@ def test_ba_lga2024_council_level_defaults():
     assert sdmx["MEASURE"] == ["1"]          # number of dwelling units
     assert sdmx["BUILDING_TYPE"] == ["100"]   # total residential
     assert sdmx["SECTOR"] == ["1"]            # private
-    assert sdmx["REGION"] == ["AUS"]
+    assert sdmx["REGION"] == ["31000"]        # Brisbane (highest-volume council)
     assert sdmx["REGION_TYPE"] == ["LGA2025"]  # council-level geography
     assert sdmx["WORK_TYPE"] == ["TOT"]
     assert sdmx["FREQ"] == ["M"]

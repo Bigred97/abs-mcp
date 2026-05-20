@@ -22,10 +22,15 @@ description: |
   or pass any LGA code through (permissive).
 update_frequency: monthly
 source_url: https://www.abs.gov.au/statistics/industry/building-and-construction/building-approvals-australia
-# Without a region filter, latest() would dump ~570 LGAs. Default to the
-# Australia total — callers narrow to their council of interest.
+# This dataset is council-level by design: every region row is keyed to
+# REGION_TYPE=LGA2025, and the national/state aggregates live in a DIFFERENT
+# dataflow geography (REGION_TYPE=AUS/STE returns 404 against an LGA region
+# code). So we DON'T default to the Australia total — a no-filter call defaults
+# to Brisbane (LGA 31000), the highest-volume council, so the headline response
+# is real council data. Callers pass region=<lga_code> to pick their council;
+# for the national total use BA_GCCSA / BUILDING_APPROVALS instead.
 latest_defaults:
-  region: AUS
+  region: brisbane
 search_keywords: [building approvals, council building approvals, lga building approvals, dwellings approved, housing supply, construction, new homes, building permits, residential approvals, dwelling units, local government area, council level]
 dimensions:
   measure:
@@ -58,21 +63,15 @@ dimensions:
   region:
     sdmx_id: REGION
     description: |
-      Local Government Area (council). Defaults to 'AUS' (Australia total).
-      Pass an ASGS LGA 2025 code for a specific council — 579 codes available.
-      Common examples below; any valid LGA code passes through (permissive).
+      Local Government Area (council). This dataset is council-level only —
+      pass an ASGS LGA 2025 code (e.g. "10050" Albury, "22750" Greater Geelong,
+      "31000" Brisbane). 579 LGA codes available; any valid LGA code passes
+      through (permissive). Defaults to Brisbane (31000). For state / national
+      totals use BUILDING_APPROVALS (BA_GCCSA) instead — those aggregates are
+      not exposed at LGA geography here.
     permissive: true
-    default: "AUS"
+    default: "31000"
     values:
-      australia: { sdmx_code: "AUS" }
-      nsw: { sdmx_code: "1" }
-      vic: { sdmx_code: "2" }
-      qld: { sdmx_code: "3" }
-      sa:  { sdmx_code: "4" }
-      wa:  { sdmx_code: "5" }
-      tas: { sdmx_code: "6" }
-      nt:  { sdmx_code: "7" }
-      act: { sdmx_code: "8" }
       albury: { sdmx_code: "10050" }
       greater_geelong: { sdmx_code: "22750" }
       brisbane: { sdmx_code: "31000" }
