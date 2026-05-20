@@ -62,9 +62,11 @@ async def test_list_dataflows_indirection_remaps_sdmx_target(tmp_path: Path) -> 
     assert by_id["CPI"].is_curated is True
     # SDMX `CPI_Q` was remapped to display id `CPI` — no raw CPI_Q entry
     assert "CPI_Q" not in by_id
-    # CPI_MONTHLY also indirects (to SDMX CPI_M) → display id surfaces once
+    # CPI_MONTHLY indirects to SDMX `CPI` (FREQ=M) → display id surfaces once
     assert ids.count("CPI_MONTHLY") == 1
     assert by_id["CPI_MONTHLY"].is_curated is True
+    # The legacy `CPI_M` indicator dataflow is frozen/superseded — suppressed
+    # from the catalogue so customers can't query its stale 2025-09 data.
     assert "CPI_M" not in by_id
 
 

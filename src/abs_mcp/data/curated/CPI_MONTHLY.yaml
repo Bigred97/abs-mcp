@@ -1,12 +1,18 @@
 id: CPI_MONTHLY
-sdmx_dataflow_id: CPI_M
+sdmx_dataflow_id: CPI
 name: Monthly Consumer Price Index Indicator
 description: |
-  Monthly Consumer Price Index Indicator — the supplementary monthly product
-  ABS introduced in 2022 to give a more frequent read on inflation between
-  the official quarterly CPI releases. Source: ABS Catalogue 6484.0.
+  Monthly Consumer Price Index — the monthly read on inflation. Sourced
+  from the ABS `CPI` dataflow (the consolidated CPI product) filtered to
+  monthly frequency (FREQ=M). Source: ABS Catalogue 6401.0.
 
-  Periods are monthly (e.g. 2025-04, 2025-05). For the canonical quarterly
+  NOTE (2026 transition): ABS originally published the monthly indicator
+  under a separate `CPI_M` dataflow (cat 6484.0). That dataflow froze at
+  2025-09 when ABS moved to a complete monthly CPI. The live monthly
+  series now lives in the main `CPI` dataflow keyed by FREQ=M, which this
+  dataset points at — so it stays current (2026-03 onward) automatically.
+
+  Periods are monthly (e.g. 2026-02, 2026-03). For the canonical quarterly
   CPI that economists, the RBA, and Treasury cite when they say "CPI" or
   "inflation rate", use the CPI dataset.
 

@@ -1,5 +1,44 @@
 # Changelog
 
+## 0.12.1 (2026-05-20)
+
+### Fixed — data-currency + integrity audit (two stale/broken datasets)
+
+A systematic cross-check of every curated dataflow against the live ABS
+Data API surfaced two datasets serving stale or no data:
+
+- **CPI_MONTHLY was frozen at 2025-09.** ABS retired the standalone
+  `CPI_M` "Monthly CPI Indicator" dataflow (cat 6484.0) when it moved to
+  a complete monthly CPI inside the main `CPI` dataflow (keyed by
+  FREQ=M). `CPI_M` stopped updating at September 2025, so `CPI_MONTHLY`
+  was returning a ~6-month-stale 3.5% instead of the current figure.
+  Re-pointed `CPI_MONTHLY` at the `CPI` dataflow → now returns
+  **2026-03 = 4.6%**, matching the ABS published headline exactly
+  (transport +8.9%, also verified). Region/TSEST/FREQ defaults were
+  already correct (50 / 10 / M), so this was a one-line dataflow re-point.
+
+- **BUSINESS_INDICATORS returned 404 on every call.** Two key-construction
+  bugs: (1) `price_adjustment` defaulted to `"CP"`, but QBIS only accepts
+  `CUR` / `CVM` / `IPD`; (2) the default query asked for Sales (M1) at the
+  all-industries `TOT` level, which ABS does not publish (summing sales
+  across industries double-counts). Fixed the price-adjustment code and
+  switched the default measure to gross_operating_profits (M7), which
+  does carry a national total. Now returns **2025-Q4** national GOP
+  ($148.99B); sales-by-industry (e.g. mining $109.98B) verified against
+  source. Added `chain_volume` / `deflator` as queryable real-terms options.
+
+### Changed — suppress superseded SDMX dataflows from the catalogue
+
+Added `_SUPERSEDED_SDMX_DATAFLOWS` (currently `{CPI_M}`) so the frozen
+monthly-indicator dataflow no longer surfaces in `search_datasets` —
+customers can't accidentally query its stale 2025-09 data.
+
+### Added — currency guard test
+
+`test_cpi_monthly_is_current_not_frozen` (live) asserts CPI_MONTHLY's
+latest period is within ~6 months of today, so a future re-freeze or
+bad re-point fails CI instead of silently shipping stale inflation data.
+
 ## 0.12.0 (2026-05-20)
 
 ### Added

@@ -33,13 +33,17 @@ def test_cpi_indirects_to_quarterly_sdmx_dataflow():
 
 
 def test_cpi_monthly_indirects_to_monthly_indicator_sdmx_dataflow():
-    """`CPI_MONTHLY` preserves customer access to the monthly indicator
-    (cat 6484.0) via its own SDMX dataflow `CPI_M`."""
+    """`CPI_MONTHLY` resolves to the live monthly CPI series.
+
+    ABS froze the old `CPI_M` indicator dataflow (cat 6484.0) at 2025-09
+    when it moved to a complete monthly CPI inside the main `CPI` dataflow
+    (keyed by FREQ=M). `CPI_MONTHLY` now indirects to `CPI` so it stays
+    current (2026-03 onward) instead of serving the stale frozen series."""
     cd = curated.get("CPI_MONTHLY")
     assert cd is not None
     assert cd.id == "CPI_MONTHLY"
-    assert cd.sdmx_dataflow_id == "CPI_M"
-    assert cd.sdmx_id == "CPI_M"
+    assert cd.sdmx_dataflow_id == "CPI"
+    assert cd.sdmx_id == "CPI"
 
 
 def test_sister_curated_without_indirection_falls_back_to_id():

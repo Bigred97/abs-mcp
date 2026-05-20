@@ -41,9 +41,14 @@ search_keywords:
   - profit margin
   - operating profit
   - business sector
-# Default: All-industries quarterly sales, national, current-price SA.
+# Default: All-industries gross operating profits, national, current-price SA.
+# NOTE: Sales (M1) is NOT published as a whole-economy total — ABS only
+# breaks it out by industry (summing sales across industries double-counts
+# intermediate transactions). So the out-of-box default uses
+# gross_operating_profits (M7), which DOES carry a national 'TOT' aggregate.
+# For sales, pass a specific industry, e.g. filters={'measure':'sales','industry':'mining'}.
 latest_defaults:
-  measure: sales
+  measure: gross_operating_profits
   industry: all
   region: australia
 dimensions:
@@ -115,9 +120,12 @@ dimensions:
       nt:  { sdmx_code: "7" }
   price_adjustment:
     sdmx_id: PRICE_ADJUSTMENT
-    description: Defaults to current prices (nominal)
-    hidden: true
-    default: "CP"
+    description: Defaults to current prices (nominal). Chain volume = real (inflation-adjusted).
+    default: "CUR"
+    values:
+      current_prices: { sdmx_code: "CUR", description: "Current prices (nominal $)" }
+      chain_volume:   { sdmx_code: "CVM", description: "Chain volume measures (real, inflation-adjusted)" }
+      deflator:       { sdmx_code: "IPD", description: "Implicit price deflator" }
   adjustment:
     sdmx_id: TSEST
     description: Defaults to seasonally adjusted

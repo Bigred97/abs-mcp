@@ -23,6 +23,16 @@ ABS_DETAIL_URL = "https://explore.data.abs.gov.au/?fs[0]=Topic&pg=0&fc=Topic&snb
 ABS_HOMEPAGE = "https://www.abs.gov.au/"
 TIME_PERIOD = "TIME_PERIOD"
 
+# SDMX dataflows that ABS has frozen / superseded but still leaves in the
+# registry. We suppress them from the catalogue so customers can't
+# accidentally query stale data. Each entry documents what replaced it.
+#   - CPI_M: the old "Monthly CPI Indicator" (cat 6484.0). Froze at 2025-09
+#     when ABS moved to a complete monthly CPI inside the main `CPI`
+#     dataflow (FREQ=M). The curated `CPI_MONTHLY` dataset now points at
+#     `CPI`; raw `CPI_M` would otherwise surface here as an uncurated
+#     dataflow serving stale 2025-09 data.
+_SUPERSEDED_SDMX_DATAFLOWS = frozenset({"CPI_M"})
+
 
 def description_text(item) -> str | None:
     desc = getattr(item, "description", None)
@@ -69,6 +79,10 @@ async def list_dataflows(
     summaries: list[DatasetSummary] = []
     emitted: set[str] = set()
     for df in msg.dataflow.values():
+        # Suppress frozen/superseded SDMX dataflows so customers can't
+        # accidentally query stale data (e.g. CPI_M, frozen at 2025-09).
+        if df.id in _SUPERSEDED_SDMX_DATAFLOWS and df.id not in curated_by_sdmx:
+            continue
         # Drop SDMX entries whose id collides with a curated display id but
         # whose curated entry points elsewhere — otherwise we'd emit two
         # summaries with the same id (one curated, one raw SDMX).

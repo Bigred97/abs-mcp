@@ -64,6 +64,34 @@ async def test_latest_cpi_returns_one_observation():
     assert sample.value is not None
 
 
+async def test_cpi_monthly_is_current_not_frozen():
+    """Currency guard: CPI_MONTHLY must return a RECENT month, not the
+    frozen 2025-09 endpoint of the superseded CPI_M dataflow.
+
+    ABS froze the old `CPI_M` indicator at 2025-09 (cat 6484.0) when it
+    moved to a complete monthly CPI inside the main `CPI` dataflow. If a
+    future refactor or upstream change silently re-points CPI_MONTHLY back
+    at a frozen series, this test fails. We assert the latest period is
+    no older than ~6 months behind today — generous enough to tolerate
+    ABS's monthly publication lag, tight enough to catch a multi-year
+    freeze."""
+    from datetime import UTC, datetime
+
+    resp = await server.latest(dataset_id="CPI_MONTHLY")
+    assert resp.records, "CPI_MONTHLY returned no records"
+    period = resp.period.get("end")
+    assert period and len(period) >= 7, f"unexpected period shape: {period!r}"
+    py, pm = int(period[:4]), int(period[5:7])
+    now = datetime.now(UTC)
+    months_behind = (now.year - py) * 12 + (now.month - pm)
+    assert months_behind <= 6, (
+        f"CPI_MONTHLY latest period {period} is {months_behind} months behind "
+        f"today ({now:%Y-%m}) — the monthly series looks frozen/stale. The "
+        "old CPI_M indicator froze at 2025-09; verify CPI_MONTHLY still points "
+        "at the live `CPI` dataflow (FREQ=M)."
+    )
+
+
 async def test_describe_non_curated_dataflow_returns_translated_metadata():
     """Brief-required: a non-curated dataflow returns valid translated metadata."""
     # Pick a dataflow that exists but isn't in our curated set.
