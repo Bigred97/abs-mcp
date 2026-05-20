@@ -116,9 +116,12 @@ For these curated dataflows, `filters` accepts plain-English values (e.g. `"regi
 - **ANA_AGG** — National Accounts: GDP, GDP per capita, terms of trade, real income (Australia, quarterly)
 - **ABS_ANNUAL_ERP_ASGS2021** — Estimated Resident Population, annual by state and sub-state geography
 - **ERP_Q** — Quarterly Estimated Resident Population, by state/sex/age
-- **BA_GCCSA** — Building Approvals, monthly by state/capital region and building type
+- **BUILDING_APPROVALS** — Building Approvals (cat 8731.0), monthly by state/capital region, building type (houses / townhouses / apartments / total dwellings / non-residential) and measure (number / value). The property-economist "Building Index" series.
+- **BA_GCCSA** — Building Approvals, monthly by state/capital region and building type (raw GCCSA dimension surface; `BUILDING_APPROVALS` is the cleaner alias)
+- **NOM** — Net Overseas Migration (cat 3412.0), financial-year arrivals/departures/**net** by state and age. The dominant rents-vs-migration series; publishes the headline net figure to the latest FY.
+- **ABS_NOM_VISA_CY** — NOM by visa subclass (calendar year, student / skilled / working holiday / permanent streams)
 - **LEND_HOUSING** — Lending Indicators, quarterly new housing loan commitments by purpose, lender, and state
-- **HSI_M** — Monthly Household Spending Indicator (ABS-blessed retail-trade replacement)
+- **HSI_M** — Monthly Household Spending Indicator (ABS-blessed retail-trade replacement), COICOP category × discretionary × state
 - **RT** — Retail Trade (43-year historical series, ceased Jul 2025)
 - **C21_G01_POA / C21_G02_POA / C21_G02_SA2** — Census 2021 selected characteristics and medians by postcode / SA2
 
@@ -182,11 +185,11 @@ ABS uses different period formats per dataflow. Pass `start_period` / `end_perio
 
 | Dataflows | Frequency | Format | Example |
 |---|---|---|---|
-| LF, BA_GCCSA | Monthly | `YYYY-MM` | `"2026-03"` |
+| LF, BA_GCCSA, BUILDING_APPROVALS | Monthly | `YYYY-MM` | `"2026-03"` |
 | CPI, WPI, PPI_FD, JV, ANA_AGG, LEND_HOUSING, ERP_Q | Quarterly | `YYYY-Q*` | `"2025-Q4"` |
 | CPI_MONTHLY, HSI_M | Monthly | `YYYY-MM` | `"2025-12"` |
 | AWE | Half-yearly | `YYYY-S*` | `"2025-S2"` |
-| ABS_ANNUAL_ERP_ASGS2021 | Annual | `YYYY` | `"2025"` |
+| NOM (financial year), ABS_ANNUAL_ERP_ASGS2021 | Annual | `YYYY` | `"2025"` |
 
 ## Verifying your install
 
