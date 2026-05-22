@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.13.4 (2026-05-21)
+
+### Changed — enforce ASCENDING record ordering (portfolio convention)
+
+Per the new binding portfolio convention (see top-level CLAUDE.md),
+`DataResponse.records` are now guaranteed **ascending by period** (oldest
+first, newest last) so consumers can rely on `records[-1]` being the most
+recent observation. `build_response` stable-sorts the observation list by
+period; `to_csv` sorts its DataFrame by `TIME_PERIOD` to match.
+
+ABS SDMX parse order varied by dataflow — WPI arrived **newest-first** while
+CPI/LF/ANA_AGG arrived oldest-first, so abs was internally inconsistent. This
+makes every abs dataset chronological. ABS periods (YYYY / YYYY-MM / YYYY-Qn)
+sort lexicographically into chronological order; null-period rows (census /
+snapshot) sort last. Verified live: WPI now returns 2024-Q1 … 2026-Q1.
+
 ## 0.13.3 (2026-05-21)
 
 ### Added

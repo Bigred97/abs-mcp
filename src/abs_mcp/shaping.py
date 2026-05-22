@@ -180,6 +180,11 @@ def to_csv(msg: DataMessage) -> str:
         df = series.reset_index().rename(columns={series.name or 0: "value"})
     else:
         df = series
+    # Portfolio convention (../CLAUDE.md): rows ASCENDING by period so the
+    # CSV matches the records/series ordering. TIME_PERIOD is the SDMX time
+    # dimension; sort by it when present (stable, leaves other cols intact).
+    if isinstance(df, pd.DataFrame) and "TIME_PERIOD" in df.columns:
+        df = df.sort_values("TIME_PERIOD", kind="stable").reset_index(drop=True)
     return df.to_csv(index=False)
 
 
@@ -231,6 +236,14 @@ def build_response(
     # underlying is always the records list; csv/series derive their shape from it
     # without re-parsing the SDMX message a second time.
     underlying = to_records(msg, dsd_msg, lookup_id, curated=curated)
+    # Portfolio convention (../CLAUDE.md): records MUST be ASCENDING by period
+    # (oldest first, newest last) so consumers can rely on records[-1] being
+    # the most recent observation. SDMX parse order varies by dataflow (e.g.
+    # WPI arrived newest-first while CPI arrived oldest-first); this stable
+    # sort makes every abs dataset chronological. ABS periods (YYYY / YYYY-MM
+    # / YYYY-Qn) sort lexicographically into chronological order. Null-period
+    # rows (census/snapshot) sort last, preserving source order.
+    underlying.sort(key=lambda o: (o.period is None, o.period or ""))  # type: ignore[union-attr]
     records: list[Observation] | list[dict[str, Any]]
     if fmt == "csv":
         records = []

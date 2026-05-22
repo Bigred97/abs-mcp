@@ -89,6 +89,30 @@ def test_build_response_records_format_populates_period_bounds():
     assert resp.csv is None
 
 
+def test_build_response_records_ascending_by_period():
+    """Portfolio convention (../CLAUDE.md): records MUST be ascending by
+    period (oldest first, newest last) so consumers can rely on records[-1]
+    being the most recent observation. WPI previously arrived newest-first;
+    this guards every abs dataset against descending leaks."""
+    data_msg, dsd_msg = _load_lf_msgs()
+    lf = curated_mod.get("LF")
+    resp = build_response(
+        dataset_id="LF",
+        msg=data_msg,
+        dsd_msg=dsd_msg,
+        user_query={},
+        fmt="records",
+        abs_url="https://abs.gov.au/...",
+        curated=lf,
+    )
+    periods = [r.period for r in resp.records if r.period]
+    assert len(periods) >= 2, "need a multi-period series to test ordering"
+    assert periods == sorted(periods), (
+        f"records must be ascending by period; got {periods[:3]}...{periods[-3:]}"
+    )
+    assert periods[-1] == max(periods), "records[-1] must be the most recent period"
+
+
 def test_build_response_csv_format_returns_csv_string():
     data_msg, dsd_msg = _load_lf_msgs()
     lf = curated_mod.get("LF")
