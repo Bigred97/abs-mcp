@@ -577,6 +577,84 @@ async def _get_data_impl(
         end_period=end_period,
         sdmx_id=sdmx_id,
     )
+
+    # 0.13.3: CPI_MONTHLY historical-stitch. ABS rebuilt the monthly CPI in
+    # 2025: the new `CPI` dataflow with FREQ=M has data from ~2024-10
+    # onwards; the legacy `CPI_M` dataflow (cat 6484.0) has data
+    # 2017-09 → 2025-09 and is then frozen. The INDEX codelist is identical
+    # between the two (CL_CPI_INDEX_17 ≡ the new CPI INDEX block), so a
+    # transparent stitch is a clean record-level merge with NO code
+    # translation. Triggers only when:
+    #   * customer-facing dataset_id == "CPI_MONTHLY"
+    #   * start_period is set AND lexicographically <= "2025-09"
+    #   * records output is requested (CSV path skips for now)
+    # When triggered we issue a SECOND fetch against `CPI_M` over the same
+    # SDMX key with end_period clamped to "2025-09" and prepend its
+    # observations to the response so the customer sees one continuous
+    # series 2017-09 → today.
+    if (
+        dataset_id == "CPI_MONTHLY"
+        and start_period is not None
+        and str(start_period) <= "2025-09"
+        and fmt_norm == "records"
+    ):
+        legacy_end = min(str(end_period) if end_period else "2025-09", "2025-09")
+        try:
+            legacy_dsd = await client.get_datastructure("CPI_M")
+            legacy_msg = await client.get_data(
+                "CPI_M",
+                key=sdmx_key,
+                start_period=start_period,
+                end_period=legacy_end,
+                last_n=None,
+            )
+            legacy_resp = build_response(
+                dataset_id=dataset_id,
+                msg=legacy_msg,
+                dsd_msg=legacy_dsd,
+                user_query=user_query_echo,
+                fmt="records",
+                abs_url=cd.source_url if (cd and cd.source_url) else _abs_url(dataset_id),
+                curated=cd,
+                start_period=start_period,
+                end_period=legacy_end,
+                sdmx_id="CPI_M",
+            )
+            # Merge: legacy records (older) + primary records (newer),
+            # dedupe by period, sort ascending. Primary wins on period
+            # overlap (new dataflow has the canonical revisions).
+            primary_periods = {
+                r.period for r in resp.records if getattr(r, "period", None)
+            }
+            merged: list = list(legacy_resp.records or [])
+            merged = [
+                r for r in merged
+                if getattr(r, "period", None) not in primary_periods
+            ]
+            merged.extend(resp.records)
+            merged.sort(key=lambda r: (
+                getattr(r, "period", None) is None,
+                getattr(r, "period", "") or "",
+            ))
+            resp.records = merged
+            resp.row_count = len(merged)
+            # Update the response period range to span the stitched window.
+            if merged:
+                first_p = next(
+                    (r.period for r in merged if getattr(r, "period", None)), None
+                )
+                last_p = next(
+                    (r.period for r in reversed(merged) if getattr(r, "period", None)),
+                    None,
+                )
+                if first_p and last_p and resp.period is not None:
+                    resp.period.start = first_p
+                    resp.period.end = last_p
+        except Exception:
+            # Stitch is best-effort. If legacy fetch fails, return primary
+            # response unchanged with no error to the customer.
+            pass
+
     # If any fetch in the chain (DSD or data) served a stale-cache fallback
     # because the upstream API was unreachable, propagate it to the response.
     stale, reason = get_stale_signal()

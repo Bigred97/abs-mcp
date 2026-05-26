@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.13.5 (2026-05-26) — CPI_MONTHLY historical-stitch with legacy CPI_M
+
+### Added
+- `CPI_MONTHLY` queries that span pre-2025-09 periods now transparently
+  stitch the legacy ABS `CPI_M` dataflow (frozen 2025-09, but has data
+  back to 2017-09) with the new `CPI` dataflow at FREQ=M (data from
+  ~2024-10 onward). Stitch triggers when:
+  - `dataset_id == "CPI_MONTHLY"`,
+  - `start_period` is supplied and lexicographically `<= "2025-09"`,
+  - `format == "records"`.
+
+  The INDEX codelist is identical between the two dataflows (verified:
+  CL_CPI_INDEX_17 codes 10001 all_groups, 20001 food, 20003 housing,
+  etc. match the new CPI INDEX block 1:1), so the merge is a clean
+  record-level dedupe-and-sort with NO category code translation.
+
+  **Customer impact**: `/v1/inflation-decomposition` history mode and
+  any direct `/v1/data/abs/CPI_MONTHLY?start_period=2018-01` call now
+  return ~90 months of data instead of the latest ~12. Honest framing
+  in ausdata-api's OpenAPI description can drop the "~12 months cap"
+  caveat once the floor is bumped.
+
+  Stitch is best-effort: if the legacy `CPI_M` fetch fails for any
+  reason, the primary response is returned unchanged with no error
+  surfaced to the customer.
+
+### Internal
+- 213 / 213 tests passing.
+
 ## 0.13.4 (2026-05-21)
 
 ### Changed — enforce ASCENDING record ordering (portfolio convention)
