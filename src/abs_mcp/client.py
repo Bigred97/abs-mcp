@@ -191,8 +191,19 @@ class ABSClient:
         url = f"{self.base_url}/dataflow/ABS/all/latest"
         return await self._fetch_parsed(url, "catalogue", ACCEPT_STRUCTURE, StructureMessage)
 
-    async def get_datastructure(self, dataset_id: str) -> StructureMessage:
-        url = f"{self.base_url}/datastructure/ABS/{dataset_id}?references=all"
+    async def get_datastructure(
+        self, dataset_id: str, version: str | None = None
+    ) -> StructureMessage:
+        # 0.13.7: optional `version` lets SDMX pass-through callers pin the
+        # dataflow version (e.g. "1.0.0"). Default behaviour unchanged —
+        # ABS returns the latest version when no version is in the URL.
+        if version:
+            url = (
+                f"{self.base_url}/datastructure/ABS/{dataset_id}/{version}"
+                f"?references=all"
+            )
+        else:
+            url = f"{self.base_url}/datastructure/ABS/{dataset_id}?references=all"
         return await self._fetch_parsed(url, "datastructure", ACCEPT_STRUCTURE, StructureMessage)
 
     async def get_data(
@@ -202,6 +213,7 @@ class ABSClient:
         start_period: str | None = None,
         end_period: str | None = None,
         last_n: int | None = None,
+        version: str | None = None,
     ) -> DataMessage:
         # Defensive: `last_n` is internal (latest() hardcodes 1; the public
         # get_data tool doesn't expose it). The previous `if last_n:` falsy
@@ -221,6 +233,12 @@ class ABSClient:
         if last_n is not None:
             params.append(f"lastNObservations={last_n}")
         query = ("?" + "&".join(params)) if params else ""
-        url = f"{self.base_url}/data/ABS,{dataset_id}/{key}{query}"
+        # 0.13.7: optional `version` lets SDMX pass-through callers pin the
+        # dataflow version in the ABS,LF,1.0.0 format. Default unchanged —
+        # ABS picks the latest version when no version is in the URL.
+        flow_ref = (
+            f"ABS,{dataset_id},{version}" if version else f"ABS,{dataset_id}"
+        )
+        url = f"{self.base_url}/data/{flow_ref}/{key}{query}"
         kind: CacheKind = "latest" if last_n == 1 else "data"
         return await self._fetch_parsed(url, kind, ACCEPT_DATA, DataMessage)

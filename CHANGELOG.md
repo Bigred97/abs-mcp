@@ -1,5 +1,43 @@
 # Changelog
 
+## 0.13.7 (2026-05-28) — SDMX pass-through (raw key + structure version)
+
+### Added
+
+- **`_get_data_impl` accepts `raw_sdmx_key` + `structure_version` kwargs.**
+  When `raw_sdmx_key` is supplied, the curated-filter translation is
+  skipped and the key is forwarded verbatim to the ABS SDMX endpoint.
+  Lets SDMX-literate analysts paste a key copied from ABS Data
+  Explorer's Developer API tab without learning the renamed dimension
+  values.
+
+  `structure_version` (e.g. `"1.0.0"`) pins the dataflow version so a
+  pinned analysis does not break when ABS publishes a new structure
+  version. Threads through `get_datastructure` and `get_data` to the
+  ABS SDMX URL.
+
+  Constraint: when `raw_sdmx_key` is set, `filters` must be empty.
+  Mixing the two raises a `ValueError` with a clear hint.
+
+  Reported by Christian Klettner (Bizscisolve, 2026-05-28): "How I
+  would recommend the API work is in direct correlation to the ABS
+  data explorer... I should be able to use it in whole or part to
+  use your API to receive the JSON format described dataset."
+
+### Changed
+
+- `client.get_data` and `client.get_datastructure` accept an optional
+  `version` parameter that, when set, includes the version in the
+  `ABS,FLOW,VERSION` URL form.
+
+### Backwards compatibility
+
+Default behaviour is unchanged. Callers who do not pass
+`raw_sdmx_key` or `structure_version` see identical responses to
+0.13.6. All 213 unit tests pass.
+
+---
+
 ## 0.13.6 (2026-05-28) — `adjustment` user-facing on LF and LF_AGE
 
 ### Changed

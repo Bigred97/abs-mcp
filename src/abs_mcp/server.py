@@ -418,11 +418,48 @@ async def _get_data_impl(
     end_period: str | None,
     fmt: str,
     last_n: int | None = None,
+    raw_sdmx_key: str | None = None,
+    structure_version: str | None = None,
 ) -> DataResponse:
+    """Fetch data from ABS SDMX with optional pass-through mode.
+
+    0.13.7: SDMX pass-through (Christian Klettner / Bizscisolve request
+    2026-05-28). When `raw_sdmx_key` is supplied, skip the curated-filter
+    translation entirely and forward the key verbatim to the ABS SDMX
+    endpoint. This lets analysts who designed a query in ABS Data Explorer
+    paste the key directly without learning the renamed dimension values.
+
+    `structure_version` pins the dataflow version (e.g. "1.0.0") so a
+    pinned analysis does not break when ABS publishes a new structure
+    version. Default behaviour unchanged — ABS serves the latest version
+    when no `structure_version` is set.
+
+    Constraint: when `raw_sdmx_key` is set, `filters` must be None.
+    Mixing the two would be ambiguous about which translation applies.
+    """
     # Reset the graceful-degradation flag at the start of each tool call so
     # we only report staleness introduced by THIS call's fetches.
     reset_stale_signal()
     dataset_id = _normalize_dataset_id(dataset_id)
+
+    # 0.13.7: validate the raw-key path early so we fail fast with a clear
+    # message rather than letting the SDMX server reject a malformed key.
+    if raw_sdmx_key is not None:
+        if filters:
+            raise ValueError(
+                "Cannot mix `raw_sdmx_key` and `filters`. The pass-through "
+                "mode uses the SDMX key verbatim; if you want curated "
+                "filters, omit `raw_sdmx_key`. If you want pass-through, "
+                "drop the filters and put dimension values in the key."
+            )
+        if not isinstance(raw_sdmx_key, str) or not raw_sdmx_key.strip():
+            raise ValueError(
+                f"raw_sdmx_key must be a non-empty string, got {raw_sdmx_key!r}. "
+                "Example shape: 'M13.3.1599.10.1+2.M' (dot-separated dimension "
+                "codes; `+` joins multiple values per dimension; empty positions "
+                "match all values for that dimension)."
+            )
+
     filters = _validate_filters(filters)
     if fmt is not None and not isinstance(fmt, str):
         raise ValueError(
@@ -461,7 +498,21 @@ async def _get_data_impl(
             "quarterly 'YYYY-Q*', half-yearly 'YYYY-S*', annual 'YYYY'."
         )
     client = await _get_client()
-    cd, sdmx_filters, user_query_echo = await _resolve_filters(dataset_id, filters)
+
+    # 0.13.7: pass-through mode skips curated-filter translation. In that
+    # mode we still need to fetch the DSD (for response shaping — labels,
+    # units) but we don't translate the user's input — the raw key
+    # flows straight through to ABS.
+    if raw_sdmx_key is not None:
+        cd = None
+        sdmx_filters = {}
+        user_query_echo = {"sdmx_key": raw_sdmx_key}
+        if structure_version:
+            user_query_echo["structure_version"] = structure_version
+    else:
+        cd, sdmx_filters, user_query_echo = await _resolve_filters(
+            dataset_id, filters
+        )
 
     # Curated dataflows may map their user-facing `id` to a different ABS SDMX
     # dataflow via `sdmx_dataflow_id` — e.g. curated `CPI` resolves to SDMX
@@ -471,7 +522,9 @@ async def _get_data_impl(
     sdmx_id = cd.sdmx_id if cd is not None else dataset_id
 
     try:
-        dsd_msg = await client.get_datastructure(sdmx_id)
+        dsd_msg = await client.get_datastructure(
+            sdmx_id, version=structure_version
+        )
     except ABSAPIError as e:
         raise ValueError(
             f"Dataset '{dataset_id}' not found ({e}). "
@@ -491,7 +544,7 @@ async def _get_data_impl(
     # build_sdmx_key silently drops keys not in dim_order, which previously
     # let a typoed dim name return unfiltered data while the response echoed
     # the typo. Curated path already validates inside translate_filters.
-    if cd is None and sdmx_filters:
+    if cd is None and sdmx_filters and raw_sdmx_key is None:
         valid_dims = [d for d in dim_order if d != "TIME_PERIOD"]
         unknown = [k for k in sdmx_filters if k not in dim_order]
         if unknown:
@@ -501,7 +554,13 @@ async def _get_data_impl(
                 f"Use the describe endpoint or describe tool to see filter shapes "
                 f"for dataset '{dataset_id}'."
             )
-    sdmx_key = curated.build_sdmx_key(dim_order, sdmx_filters) or "all"
+
+    # 0.13.7: in pass-through mode use the raw key verbatim. Otherwise
+    # build the key from translated filters as before.
+    if raw_sdmx_key is not None:
+        sdmx_key = raw_sdmx_key
+    else:
+        sdmx_key = curated.build_sdmx_key(dim_order, sdmx_filters) or "all"
 
     try:
         data_msg = await client.get_data(
@@ -510,6 +569,7 @@ async def _get_data_impl(
             start_period=start_period,
             end_period=end_period,
             last_n=last_n,
+            version=structure_version,
         )
     except ABSAPIError as e:
         # Don't leak the internal SDMX key (e.g. ".10001.10..M") or the upstream
