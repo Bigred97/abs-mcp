@@ -103,9 +103,12 @@ dimensions:
       act: { sdmx_code: "8" }
   adjustment:
     sdmx_id: TSEST
-    description: Time-series treatment (defaults to seasonally adjusted)
-    hidden: true
+    description: Time-series treatment. Omit for seasonally adjusted (the default).
     default: "20"
+    values:
+      original: { sdmx_code: "10", description: "Original (unadjusted)" }
+      seasonally_adjusted: { sdmx_code: "20", description: "Seasonally adjusted" }
+      trend: { sdmx_code: "30", description: "Trend" }
   frequency:
     sdmx_id: FREQ
     hidden: true

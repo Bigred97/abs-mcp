@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.13.6 (2026-05-28) — `adjustment` user-facing on LF and LF_AGE
+
+### Changed
+
+- **`LF.adjustment` and `LF_AGE.adjustment` are now user-settable.**
+  Previously hidden with `default: "20"` (seasonally adjusted). Now
+  exposed with explicit `values` so callers can request `original`
+  (sdmx_code 10), `seasonally_adjusted` (20, still the default), or
+  `trend` (30).
+
+  Backwards-compatible: the default behaviour is unchanged — callers
+  who do not pass `adjustment` still get the seasonally adjusted
+  series. New: callers can opt into the original or trend series
+  for analytical workflows.
+
+  Reported by Christian Klettner (Bizscisolve, 2026-05-28) in the
+  first detailed real-customer feedback received on the gateway.
+  His exact question: "I would expect to be able to access the
+  original and trend series, the API doesn't appear to permit
+  this, why is that?" — answered by this change.
+
+---
+
 ## 0.13.5 (2026-05-26) — CPI_MONTHLY historical-stitch with legacy CPI_M
 
 ### Added
