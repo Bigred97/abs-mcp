@@ -415,6 +415,55 @@ async def test_latest_with_explicit_filters_on_c21_g02_sa2_bypasses_defaults(mon
     assert captured["filters"] == user_filters
 
 
+def _stub_impl(captured):
+    async def fake_impl(dataset_id, filters, start, end, fmt, last_n=None):
+        captured["filters"] = filters
+        captured["start"] = start
+        from datetime import datetime, timezone
+
+        from abs_mcp.models import DataResponse
+        return DataResponse(
+            dataset_id=dataset_id, dataset_name="stub", query=filters or {},
+            period={"start": "2021", "end": "2021"}, row_count=1, records=[],
+            retrieved_at=datetime.now(timezone.utc),
+            source_url="https://www.abs.gov.au/", abs_url="https://www.abs.gov.au/",
+        )
+    return fake_impl
+
+
+async def test_get_data_bare_call_applies_latest_defaults(monkeypatch):
+    """0.13.8: `get_data(id)` with no filters AND no period must merge the
+    curated `latest_defaults` (same headline fallback as latest()), so heavy
+    multi-dimension dataflows don't wildcard every dimension and overrun ABS."""
+    from abs_mcp import server
+
+    captured: dict = {}
+    monkeypatch.setattr(server, "_get_data_impl", _stub_impl(captured))
+    await server.get_data("C21_G02_SA2")
+    assert captured["filters"] == {"region": "australia", "measure": "median_age"}
+
+
+async def test_get_data_with_period_does_not_apply_defaults(monkeypatch):
+    """An explicit period means a deliberate query — defaults must NOT be
+    merged (the caller wants the full unfiltered history they asked for)."""
+    from abs_mcp import server
+
+    captured: dict = {}
+    monkeypatch.setattr(server, "_get_data_impl", _stub_impl(captured))
+    await server.get_data("C21_G02_SA2", start_period="2021")
+    assert captured["filters"] is None  # defaults NOT injected
+
+
+async def test_get_data_with_filters_does_not_apply_defaults(monkeypatch):
+    """Explicit filters bypass the headline fallback entirely."""
+    from abs_mcp import server
+
+    captured: dict = {}
+    monkeypatch.setattr(server, "_get_data_impl", _stub_impl(captured))
+    await server.get_data("C21_G02_SA2", filters={"region": "nsw"})
+    assert captured["filters"] == {"region": "nsw"}
+
+
 def test_translate_filters_rejects_empty_value():
     lf = curated.get("LF")
     with pytest.raises(ValueError, match="empty value"):

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.13.8 (2026-06-02) — get_data applies latest_defaults on no-filter/no-period (heavy-dataflow fix)
+
+### Fixed
+
+- **`get_data()` now applies the curated `latest_defaults` when called with no filters AND no period** — the same headline fallback `latest()` already used. Previously asymmetric: `latest()` narrowed heavy multi-dimension dataflows to a 1-2 row headline, but a bare `get_data(id)` wildcarded EVERY dimension. For the heaviest dataflows that meant either tens of thousands of rows (`HSI_M`: ~62k in ~150s) or an outright ABS API rejection of the over-broad key (`ABS_ANNUAL_ERP_ASGS2021`, `ABS_NOM_VISA_CY` → 400). Surfaced by the ausdata-api gateway, whose raw passthrough calls `get_data` — these three failed only on the bare unfiltered query while every filtered query worked. Now the bare call returns the headline slice: HSI_M 166 rows/3s, NOM_VISA 38 rows/0.7s, ERP_ASGS 24 rows/8s. Explicit filters or an explicit period bypass the fallback, so deliberate broad/historical queries are unchanged. 213 unit tests green.
+
 ## 0.13.7 (2026-05-28) — SDMX pass-through (raw key + structure version)
 
 ### Added

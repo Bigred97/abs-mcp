@@ -829,6 +829,20 @@ async def get_data(
         unit (when homogeneous), period bounds, the resolved query echo,
         the ABS source URL, and the CC-BY 4.0 attribution string.
     """
+    # When called with NO filters AND NO period (a pure "latest unfiltered
+    # snapshot" request — e.g. a raw passthrough hitting this dataset), fall
+    # back to the curated `latest_defaults`, exactly as latest() does. Without
+    # this, heavy multi-dimension dataflows (ERP-by-ASGS, NOM-by-visa, HSI_M)
+    # wildcard EVERY dimension — which either returns tens of thousands of rows
+    # (HSI_M: ~62k) or makes the ABS API reject the over-broad key (ERP/NOM
+    # 400). latest() already narrowed these to a 1-2 row headline; get_data
+    # was the asymmetric gap. Explicit filters OR an explicit period bypass
+    # this entirely, so deliberate broad/historical queries keep working.
+    if not filters and start_period is None and end_period is None:
+        norm_id = _normalize_dataset_id(dataset_id)
+        cd = curated.get(norm_id)
+        if cd is not None and cd.latest_defaults:
+            filters = dict(cd.latest_defaults)
     return await _get_data_impl(dataset_id, filters, start_period, end_period, format)
 
 
