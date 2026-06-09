@@ -73,7 +73,7 @@ class DataResponse(BaseModel):
     row_count: int = Field(default=0, description="Number of observation rows in records.")
     records: list[Observation] | list[dict[str, Any]] = Field(default_factory=list)
     csv: str | None = None
-    source: str = "Australian Bureau of Statistics"
+    source: str = "Australian Bureau of Statistics (ABS)"
     # CC-BY 4.0 requires the attribution to travel WITH the data, not just be
     # reachable via a link. Mirrors rba-mcp's DataResponse.attribution shape.
     attribution: str = _ABS_ATTRIBUTION
@@ -173,7 +173,7 @@ class ReleaseCalendarResponse(BaseModel):
     horizon_days: int
     row_count: int
     releases: list[ReleaseEntry] = Field(default_factory=list)
-    source: str = "Australian Bureau of Statistics"
+    source: str = "Australian Bureau of Statistics (ABS)"
     source_url: str = "https://www.abs.gov.au/release-calendar"
     attribution: str = _ABS_ATTRIBUTION
     retrieved_at: datetime

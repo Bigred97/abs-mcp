@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.13.9 (2026-06-09) — source string normalized to match trust contract
+
+### Changed
+
+- **`source` default string now `"Australian Bureau of Statistics (ABS)"`** (was `"Australian Bureau of Statistics"`) to match the trust contract, in both `DataResponse` and `ReleaseCalendarResponse`.
+
 ## 0.13.8 (2026-06-02) — get_data applies latest_defaults on no-filter/no-period (heavy-dataflow fix)
 
 ### Fixed

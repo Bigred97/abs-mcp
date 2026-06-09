@@ -94,7 +94,7 @@ async def test_top_n_caps_at_available_rows(mocked_client):
 async def test_top_n_envelope_preserved(mocked_client):
     """Trust-contract fields survive the rank-and-slice transformation."""
     r = await server.top_n("LF", "unemployment_rate", n=3)
-    assert r.source == "Australian Bureau of Statistics"
+    assert r.source == "Australian Bureau of Statistics (ABS)"
     assert "Creative Commons" in r.attribution
     assert r.source_url
     assert r.source_url == r.abs_url  # source_url and legacy alias match
