@@ -356,10 +356,11 @@ async def test_latest_bare_call_on_c21_g02_sa2_resolves_default_filters(monkeypa
 
     captured: dict = {}
 
-    async def fake_impl(dataset_id, filters, start, end, fmt, last_n=None):
+    async def fake_impl(dataset_id, filters, start, end, fmt, last_n=None, limit=None):
         captured["dataset_id"] = dataset_id
         captured["filters"] = filters
         captured["last_n"] = last_n
+        captured["limit"] = limit
         # Build a minimal-but-real DataResponse so the caller sees row_count > 0.
         from datetime import datetime, timezone
 
@@ -391,7 +392,7 @@ async def test_latest_with_explicit_filters_on_c21_g02_sa2_bypasses_defaults(mon
 
     captured: dict = {}
 
-    async def fake_impl(dataset_id, filters, start, end, fmt, last_n=None):
+    async def fake_impl(dataset_id, filters, start, end, fmt, last_n=None, limit=None):
         captured["filters"] = filters
         from datetime import datetime, timezone
 

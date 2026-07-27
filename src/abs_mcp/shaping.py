@@ -279,3 +279,40 @@ def build_response(
         source_url=abs_url,
         abs_url=abs_url,
     )
+
+
+def truncate_records(records: list[Observation], cap: int) -> list[Observation]:
+    """Truncate `records` to `cap` items, keeping the most RECENT data.
+
+    Mirrors `ato_mcp.shaping._truncate_records` (same defect class, see
+    ../CLAUDE.md). Called on records already sorted ASCENDING by period
+    (oldest first) -- see the `underlying.sort(...)` call in
+    `build_response`, above.
+
+    - Time-series records (non-empty `period`, e.g. LF unemployment_rate):
+      tail-slice (`[-cap:]`). This matters most for `latest()`, which uses
+      `lastNObservations=1` -- EACH matched series carries its own last
+      period, and those periods differ across series (a state series may
+      have a newer/older latest month than a national series). Head-slicing
+      an ascending list would keep the STALEST series and silently drop the
+      most current ones; tail-slicing keeps the newest.
+    - Register/snapshot records (empty `period`, e.g. Census cross-section
+      rows with no time dimension): there is no chronological "latest", so
+      source order is what's meaningful -- keep head-slicing (`[:cap]`)
+      exactly as before.
+    - Mixed lists (some records periodic, some not): periodic rows are
+      tail-sliced first so the newest periods are never dropped, then any
+      leftover budget is filled from the front of the register segment.
+    """
+    periodic = [r for r in records if r.period]
+    registerish = [r for r in records if not r.period]
+
+    if not periodic:
+        return registerish[:cap]
+    if not registerish:
+        return periodic[-cap:]
+
+    kept_periodic = periodic[-cap:]
+    remaining = cap - len(kept_periodic)
+    kept_register = registerish[:remaining] if remaining > 0 else []
+    return kept_periodic + kept_register

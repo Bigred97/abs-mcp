@@ -7,6 +7,7 @@ module doesn't open the SQLite cache.
 from __future__ import annotations
 
 import asyncio
+import logging
 import re
 import threading
 from datetime import UTC, datetime
@@ -27,7 +28,9 @@ from .models import (
     DataResponse,
     ReleaseCalendarResponse,
 )
-from .shaping import build_response
+from .shaping import build_response, truncate_records
+
+logger = logging.getLogger(__name__)
 
 # ABS dataflow IDs are uppercase letters, digits, and underscores (e.g. LF, BA_GCCSA,
 # ABS_ANNUAL_ERP_ASGS2021). We validate so unencoded user input never reaches a URL.
@@ -420,6 +423,7 @@ async def _get_data_impl(
     last_n: int | None = None,
     raw_sdmx_key: str | None = None,
     structure_version: str | None = None,
+    limit: int | None = None,
 ) -> DataResponse:
     """Fetch data from ABS SDMX with optional pass-through mode.
 
@@ -659,6 +663,12 @@ async def _get_data_impl(
         and fmt_norm == "records"
     ):
         legacy_end = min(str(end_period) if end_period else "2025-09", "2025-09")
+        # Only the upstream fetch is best-effort — a genuine network/API
+        # failure against the frozen CPI_M dataflow should not block the
+        # primary response. The merge logic below is NOT wrapped: a bug
+        # there is a programming error, not an upstream failure, and must
+        # surface (or at least be logged) rather than silently vanish.
+        legacy_resp = None
         try:
             legacy_dsd = await client.get_datastructure("CPI_M")
             legacy_msg = await client.get_data(
@@ -680,6 +690,18 @@ async def _get_data_impl(
                 end_period=legacy_end,
                 sdmx_id="CPI_M",
             )
+        except Exception:
+            # Stitch is best-effort. If the legacy fetch fails, log it and
+            # return the primary response unchanged with no error to the
+            # customer.
+            logger.warning(
+                "CPI_MONTHLY legacy stitch fetch against CPI_M failed; "
+                "returning primary response unchanged.",
+                exc_info=True,
+            )
+            legacy_resp = None
+
+        if legacy_resp is not None:
             # Merge: legacy records (older) + primary records (newer),
             # dedupe by period, sort ascending. Primary wins on period
             # overlap (new dataflow has the canonical revisions).
@@ -699,6 +721,8 @@ async def _get_data_impl(
             resp.records = merged
             resp.row_count = len(merged)
             # Update the response period range to span the stitched window.
+            # `resp.period` is a plain dict (see models.DataResponse), not an
+            # object — use item assignment, not attribute assignment.
             if merged:
                 first_p = next(
                     (r.period for r in merged if getattr(r, "period", None)), None
@@ -708,12 +732,8 @@ async def _get_data_impl(
                     None,
                 )
                 if first_p and last_p and resp.period is not None:
-                    resp.period.start = first_p
-                    resp.period.end = last_p
-        except Exception:
-            # Stitch is best-effort. If legacy fetch fails, return primary
-            # response unchanged with no error to the customer.
-            pass
+                    resp.period["start"] = first_p
+                    resp.period["end"] = last_p
 
     # If any fetch in the chain (DSD or data) served a stale-cache fallback
     # because the upstream API was unreachable, propagate it to the response.
@@ -721,6 +741,22 @@ async def _get_data_impl(
     if stale:
         resp.stale = True
         resp.stale_reason = reason
+
+    # `limit` is only ever passed by latest() — get_data() never supplies it,
+    # so this cap cannot silently truncate a full-series get_data() call.
+    # Register-shaped datasets (e.g. C21_G02_SA2 ~2,400 SA2 areas x 8
+    # measures) would otherwise return thousands of rows with no cap.
+    if limit is not None and len(resp.records) > limit:
+        original_count = len(resp.records)
+        # truncate_records keeps the most RECENT rows for periodic data
+        # (tail-slice) and only head-slices period-less register rows --
+        # a naive resp.records[:limit] head-slice would keep the STALEST
+        # series when latest()'s lastNObservations=1 makes each series'
+        # last period differ (../CLAUDE.md truncation-direction convention).
+        resp.records = truncate_records(resp.records, limit)
+        resp.row_count = len(resp.records)
+        resp.truncated_at = original_count
+
     return resp
 
 
@@ -871,6 +907,23 @@ async def latest(
             ],
         ),
     ] = None,
+    limit: Annotated[
+        int,
+        Field(
+            description=(
+                "Maximum rows to return. Register-shaped datasets (e.g. "
+                "C21_G02_SA2 ~2,400 SA2 areas x 8 measures) would otherwise "
+                "return thousands of rows with no cap. Pass filters to "
+                "narrow to one region/measure, or raise `limit` only if you "
+                "need a bulk dump. Truncated responses set "
+                "DataResponse.truncated_at to the original row count so "
+                "agents can detect + surface the cap."
+            ),
+            ge=1,
+            le=10000,
+            examples=[50, 100, 500],
+        ),
+    ] = 50,
 ) -> DataResponse:
     """Return the most recent observation(s) for a dataflow.
 
@@ -900,7 +953,8 @@ async def latest(
 
     Returns:
         DataResponse with one most-recent observation per matched dimension
-        combination. Same envelope as get_data.
+        combination, capped at `limit` rows. Same envelope as get_data.
+        `truncated_at` is set to the original row count when the cap fires.
     """
     # When no filters are supplied, fall back to the YAML-curated
     # `latest_defaults` block (if present). Large register-style dataflows —
@@ -912,7 +966,9 @@ async def latest(
         cd = curated.get(norm_id)
         if cd is not None and cd.latest_defaults:
             filters = dict(cd.latest_defaults)
-    return await _get_data_impl(dataset_id, filters, None, None, "records", last_n=1)
+    return await _get_data_impl(
+        dataset_id, filters, None, None, "records", last_n=1, limit=limit
+    )
 
 
 @mcp.tool
