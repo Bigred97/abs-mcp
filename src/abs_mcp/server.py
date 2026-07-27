@@ -770,14 +770,16 @@ async def get_data(
         ),
     ],
     filters: Annotated[
-        dict[str, Any] | None,
+        dict[str, Any] | str | None,
         Field(
             description=(
                 "Dimension filters. For curated dataflows: plain-English keys and "
                 "values, e.g. {'region': 'nsw', 'measure': 'unemployment_rate'}. "
                 "For raw dataflows: SDMX dimension IDs and codes. Pass a list as "
                 "the value to query multiple values for a dimension. Whitespace "
-                "is stripped; empty list / empty value rejected with a hint."
+                "is stripped; empty list / empty value rejected with a hint. "
+                "A JSON-encoded string (e.g. '{\"region\": \"nsw\"}') is also "
+                "accepted and parsed server-side."
             ),
             examples=[
                 {"region": "nsw", "measure": "unemployment_rate"},
@@ -892,13 +894,14 @@ async def latest(
         ),
     ],
     filters: Annotated[
-        dict[str, Any] | None,
+        dict[str, Any] | str | None,
         Field(
             description=(
                 "Dimension filters. For curated dataflows: plain-English keys and "
                 "values. Without filters, expect one observation per dimension "
                 "combination (often hundreds) — pass at least region + measure for "
-                "a clean single number."
+                "a clean single number. A JSON-encoded string (e.g. "
+                "'{\"region\": \"nsw\"}') is also accepted and parsed server-side."
             ),
             examples=[
                 {"region": "nsw", "measure": "unemployment_rate"},
@@ -1010,12 +1013,13 @@ async def top_n(
         ),
     ] = 10,
     filters: Annotated[
-        dict[str, Any] | None,
+        dict[str, Any] | str | None,
         Field(
             description=(
                 "Optional additional dimension filters, same shape as get_data. "
                 "Do NOT include the 'measure' key here — that is supplied via "
-                "the `measure` parameter."
+                "the `measure` parameter. A JSON-encoded string (e.g. "
+                "'{\"sex\": \"persons\"}') is also accepted and parsed server-side."
             ),
             examples=[
                 {"sex": "persons"},

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.13.12 (2026-07-27) — `filters` accepts a JSON-encoded string over MCP transport
+
+### Fixed
+
+- **`get_data()`, `latest()`, and `top_n()` rejected `filters` sent as a JSON-encoded string with a raw Pydantic `dict_type` error, even though the lenient `_validate_filters()` helper already `json.loads()`s a string with its own actionable hint.** Every real MCP client transports tool arguments over JSON-RPC; FastMCP validates each incoming argument against the tool's Pydantic-derived input schema *before* the tool function body runs. Because the three `filters` parameters were declared `Annotated[dict[str, Any] | None, ...]` — a dict-only schema — a client sending `filters` as a JSON string (e.g. `'{"region": "nsw"}'`) was rejected at the schema-validation boundary; `_validate_filters()` never ran. Confirmed live via real MCP tool calls (not curl, not pytest) against `get_data`, `latest`, and `top_n`. Widened all three annotations to `dict[str, Any] | str | None` (description/examples unchanged) so a JSON-string argument reaches the existing helper, which parses it (or raises its own "filters must be a JSON object, got invalid JSON string: ..." hint on malformed JSON). No call-site logic changes were needed — `_get_data_impl` (used by `get_data`/`latest`) and `top_n` already called `_validate_filters()` unconditionally as the first thing done with `filters`.
+
+### Added
+
+- `tests/test_filters_json_string_protocol.py` — protocol-level regression coverage using `fastmcp.Client` (in-process, no network) to round-trip `get_data`/`latest`/`top_n` through the real MCP JSON-RPC/Pydantic validation path — the boundary the previous unit tests bypassed by calling the async functions directly with a Python dict. Verified these tests raise a bare Pydantic `dict_type` `ValidationError` against the pre-fix annotation and pass once the type is widened.
+
 ## 0.13.11 (2026-07-27) — CPI_MONTHLY stitch period fix + latest() row cap (correct truncation direction)
 
 ### Fixed
