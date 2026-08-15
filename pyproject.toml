@@ -19,6 +19,7 @@ keywords = [
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
@@ -50,8 +51,8 @@ dev = [
 abs-mcp = "abs_mcp.server:main"
 
 [project.urls]
-Homepage = "https://github.com/Bigred97/abs-mcp"
-Documentation = "https://github.com/Bigred97/abs-mcp#readme"
+Homepage = "https://ausdata.io"
+Documentation = "https://ausdata.io/sources/abs/"
 Repository = "https://github.com/Bigred97/abs-mcp"
 Issues = "https://github.com/Bigred97/abs-mcp/issues"
 Changelog = "https://github.com/Bigred97/abs-mcp/blob/main/CHANGELOG.md"

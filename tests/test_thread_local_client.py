@@ -30,7 +30,11 @@ def test_client_is_per_thread():
     # state from earlier tests in the same process.
     asyncio.run(server.reset_client_for_tests())
 
-    clients_by_thread: dict[int, int] = {}
+    # Hold the actual client OBJECTS, not id() snapshots: a freed client's
+    # address can be reused by the next allocation, so comparing ids of
+    # dead objects flakes (~1 in 10 gate runs). Live references make `is`
+    # comparisons sound.
+    clients_by_thread: dict[int, object] = {}
     errors: list[BaseException] = []
 
     def capture() -> None:
@@ -38,7 +42,7 @@ def test_client_is_per_thread():
             # Each worker thread runs its own fresh loop, mirroring the
             # ausdata-api gateway invocation pattern.
             client = asyncio.run(server._get_client())
-            clients_by_thread[threading.get_ident()] = id(client)
+            clients_by_thread[threading.get_ident()] = client
         except BaseException as exc:  # noqa: BLE001
             errors.append(exc)
 
@@ -51,8 +55,8 @@ def test_client_is_per_thread():
 
     assert not errors, f"thread workers raised: {errors!r}"
     assert len(clients_by_thread) == 2, "expected two distinct worker threads"
-    ids = list(clients_by_thread.values())
-    assert ids[0] != ids[1], "expected distinct client instances per thread"
+    c1, c2 = clients_by_thread.values()
+    assert c1 is not c2, "expected distinct client instances per thread"
 
 
 def test_reset_client_for_tests_is_thread_scoped():
@@ -63,8 +67,12 @@ def test_reset_client_for_tests_is_thread_scoped():
     """
     asyncio.run(server.reset_client_for_tests())
 
-    worker_client_id: list[int] = []
-    worker_client_after_main_reset: list[int] = []
+    # Hold OBJECTS, never bare id() values: the pre-reset main client and
+    # the dead worker thread's client get garbage-collected, and CPython
+    # reuses freed addresses — id(new) == id(old) then fails the identity
+    # asserts spuriously (observed 1-in-10 in the release gate). Keeping
+    # references pins the addresses, making identity comparison sound.
+    worker_clients: list[object] = []
 
     established = threading.Event()
     main_reset_done = threading.Event()
@@ -73,11 +81,11 @@ def test_reset_client_for_tests_is_thread_scoped():
     def worker() -> None:
         async def _do() -> None:
             c = await server._get_client()
-            worker_client_id.append(id(c))
+            worker_clients.append(c)
             established.set()
             main_reset_done.wait(timeout=5.0)
             c2 = await server._get_client()
-            worker_client_after_main_reset.append(id(c2))
+            worker_clients.append(c2)
             worker_resampled.set()
 
         asyncio.run(_do())
@@ -86,16 +94,17 @@ def test_reset_client_for_tests_is_thread_scoped():
     t.start()
     assert established.wait(timeout=5.0), "worker did not establish a client"
 
-    main_client_id_before = id(asyncio.run(server._get_client()))
+    main_client_before = asyncio.run(server._get_client())
     asyncio.run(server.reset_client_for_tests())
     main_reset_done.set()
 
     assert worker_resampled.wait(timeout=5.0), "worker did not re-sample its client"
     t.join()
 
-    assert worker_client_id[0] == worker_client_after_main_reset[0], (
+    assert len(worker_clients) == 2
+    assert worker_clients[0] is worker_clients[1], (
         "worker thread's client was cleared by a reset on a different thread"
     )
-    main_client_id_after = id(asyncio.run(server._get_client()))
-    assert main_client_id_after != main_client_id_before
-    assert main_client_id_after != worker_client_id[0]
+    main_client_after = asyncio.run(server._get_client())
+    assert main_client_after is not main_client_before
+    assert main_client_after is not worker_clients[0]

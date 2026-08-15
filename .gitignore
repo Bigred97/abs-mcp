@@ -36,3 +36,4 @@ tests/fixtures/WPI_dsd.xml
 tests/fixtures/ANA_AGG_dsd.xml
 tests/fixtures/AWE_dsd.xml
 tests/fixtures/ERP_Q_dsd.xml
+graphify-out/

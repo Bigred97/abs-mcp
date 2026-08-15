@@ -8,7 +8,7 @@ resolution-markers = [
 
 [[package]]
 name = "abs-mcp"
-version = "0.13.8"
+version = "0.13.9"
 source = { editable = "." }
 dependencies = [
     { name = "aiosqlite" },
