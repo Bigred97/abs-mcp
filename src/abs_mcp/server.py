@@ -16,7 +16,7 @@ from typing import Annotated, Any, Literal
 from fastmcp import FastMCP
 from pydantic import Field
 
-from . import curated
+from . import __version__, curated
 from .catalog import _ranker_context, describe_from_dsd, list_dataflows, search_in_memory
 from .client import ABSAPIError, ABSClient, get_stale_signal, reset_stale_signal
 from .release_calendar import fetch_release_calendar
@@ -49,7 +49,7 @@ _SDMX_VALUE_PATTERN = re.compile(r"^[A-Za-z0-9_\-]+$")
 # semantic garbage) but strict on URL safety.
 _PERIOD_SAFE_PATTERN = re.compile(r"^[A-Za-z0-9\-]+$")
 
-mcp = FastMCP("abs-mcp")
+mcp = FastMCP("abs-mcp", version=__version__)
 
 # Per-thread client cache. We deliberately avoid a module-global singleton:
 # gateways like ausdata-api invoke us from worker threads with fresh asyncio

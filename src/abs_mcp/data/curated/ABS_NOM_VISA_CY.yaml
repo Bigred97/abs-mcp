@@ -16,6 +16,15 @@ description: |
   (calendar year). Customers narrow to a specific visa category or
   region for deeper queries.
 
+  **Publication lag (verified 2026-08-16 against ABS's own SDMX
+  availability constraint):** ABS last updated this cube for calendar
+  year 2022 (availability window 2004–2022), even though the headline
+  Overseas Migration publication is at the 2024-25 financial year. The
+  latest period served here therefore trails the headline series by
+  design of the SOURCE, not this server. For current NOM totals use the
+  NOM dataset; use this cube for visa-composition analysis of the years
+  it covers.
+
   **Net Overseas Migration is NOT a published series here.** The ABS
   publishes arrivals and departures separately in this dataflow;
   compute net = arrivals - departures yourself. For 2022 (calendar

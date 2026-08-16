@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.13.13 (2026-08-16) — visa-NOM cube lag documented; real handshake version
+
+### Changed
+
+- **`ABS_NOM_VISA_CY`'s description now documents the source-side publication
+  lag**: ABS's own SDMX availability constraint for this cube ends at calendar
+  year 2022 while the headline Overseas Migration publication is at 2024-25
+  (verified 2026-08-16 against `availableconstraint/ABS_NOM_VISA_CY`). The
+  latest period served trails the headline series by design of the source, not
+  this server; callers wanting current totals are pointed at `NOM`.
+- **MCP handshake `serverInfo.version` now reports the real package version**
+  (previously FastMCP's own library version).
+
 ## 0.13.12 (2026-07-27) — `filters` accepts a JSON-encoded string over MCP transport
 
 ### Fixed
